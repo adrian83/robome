@@ -13,40 +13,45 @@
 		<scala.binary.version>2.11</scala.binary.version>
 
 		<!-- Akka -->
-		<akka.streams.version>2.0.4</akka.streams.version>
-		<akka.version>2.4.14</akka.version>
+		<akka.http.version>10.0.1</akka.http.version>
+		<akka.version>2.4.16</akka.version>
 
 		<!-- ScalaTest -->
 		<scalatest.version>2.2.4</scalatest.version>
 	</properties>
 
 	<dependencies>
-		<dependency>
+			<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http-experimental_${scala.binary.version}</artifactId>
-			<version>${akka.streams.version}</version>
+			<artifactId>akka-actor_2.11</artifactId>
+			<version>${akka.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http-spray-json-experimental_${scala.binary.version}</artifactId>
-			<version>${akka.streams.version}</version>
+			<artifactId>akka-http_${scala.binary.version}</artifactId>
+			<version>${akka.http.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http-xml-experimental_${scala.binary.version}</artifactId>
-			<version>${akka.streams.version}</version>
+			<artifactId>akka-http-spray-json_${scala.binary.version}</artifactId>
+			<version>${akka.http.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http-jackson-experimental_${scala.binary.version}</artifactId>
-			<version>${akka.streams.version}</version>
+			<artifactId>akka-http-xml_${scala.binary.version}</artifactId>
+			<version>${akka.http.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-http-jackson_${scala.binary.version}</artifactId>
+			<version>${akka.http.version}</version>
 		</dependency>
 
 		<!-- testing -->
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-http-testkit-experimental_${scala.binary.version}</artifactId>
-			<version>${akka.streams.version}</version>
+			<artifactId>akka-http-testkit_${scala.binary.version}</artifactId>
+			<version>${akka.http.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -55,6 +60,7 @@
 			<version>${scalatest.version}</version>
 			<scope>test</scope>
 		</dependency>
+
 	</dependencies>
 
 

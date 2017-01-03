@@ -1,53 +1,61 @@
 package ab.java.robome.server;
 
+import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.http.javadsl.model.HttpEntities;
+import akka.http.javadsl.model.HttpEntity.Chunked;
+import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.marshallers.jackson.Jackson;
+import akka.http.javadsl.ConnectHttp;
+import akka.http.javadsl.Http;
+import akka.http.javadsl.ServerBinding;
 import akka.http.javadsl.model.ContentType;
 import akka.http.javadsl.model.ContentTypes;
-import akka.http.javadsl.server.HttpApp;
+import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.values.PathMatcher;
-import akka.http.javadsl.server.values.PathMatchers;
-import akka.http.scaladsl.model.HttpEntity.Chunked;
+import akka.stream.ActorMaterializer;
+import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Source;
 import akka.util.ByteString;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 
 
-public class Server extends HttpApp {
+public class Server extends AllDirectives  {
 
 	public static void main(String[] args) throws IOException {
 
-		final ActorSystem system = ActorSystem.create();
 
-		final Server server = new Server();
-		server.bindRoute("127.0.0.1", 8080, system);
+	    final ActorSystem system = ActorSystem.create();
+	    final ActorMaterializer materializer = ActorMaterializer.create(system);
 
-		System.in.read();
-		system.shutdown();
+	    // HttpApp.bindRoute expects a route being provided by HttpApp.createRoute
+	    final Server app = new Server();
+	    final Route route = app.createRoute();
+
+	    final Flow<HttpRequest, HttpResponse, NotUsed> handler = route.flow(system, materializer);
+	    final CompletionStage<ServerBinding> binding = Http.get(system).bindAndHandle(handler, ConnectHttp.toHost("127.0.0.1", 8080), materializer);
+
+	    binding.exceptionally(failure -> {
+	      System.err.println("Something very bad happened! " + failure.getMessage());
+	      system.terminate();
+	      return null;
+	    });
+
+	    system.terminate();
+		
+		
+
 	}
 
-	@Override
 	public Route createRoute() {
-
-		PathMatcher<String> idExtractor = PathMatchers.segment();
-
 		return route(
-				get(
-						pathEndOrSingleSlash().route(complete(index())), 
-						path("ping").route(complete("PONG!"))),
+				get( () -> pathEndOrSingleSlash(() -> complete(index()))),
+				get( () -> path("ping", () -> complete(index())))
+			
 				
-				pathPrefix("tables").route(
-						get(
-								pathEndOrSingleSlash().route(handleWith(ctx -> ctx.completeAs(Jackson.json(), Collections.singletonList("tmp value")))),
-								path(idExtractor).route(handleWith1(idExtractor, (ctx, uuid) -> ctx.completeAs(Jackson.json(), Collections.singletonList("tmp value"))))
-							)
-
-				));
+			);
 	}
 
 	private HttpResponse index() {
