@@ -1,71 +1,83 @@
 package ab.java.robome.server;
 
+import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
-import akka.http.javadsl.model.HttpEntities;
-import akka.http.javadsl.model.HttpEntity.Chunked;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.ContentType;
-import akka.http.javadsl.model.ContentTypes;
+import akka.http.javadsl.marshallers.jackson.Jackson;
+import akka.http.javadsl.model.HttpRequest;
+import akka.http.javadsl.model.HttpResponse;
+import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
 
-import java.io.IOException;
+import ab.java.robome.table.model.NewTable;
+import ab.java.robome.table.model.Table;
+
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import static akka.http.javadsl.server.PathMatchers.longSegment;
 
-public class Server extends AllDirectives  {
+public class Server extends AllDirectives {
 
-	public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
+
+    ActorSystem system = ActorSystem.create("routes");
+
+    final Http http = Http.get(system);
+    final ActorMaterializer materializer = ActorMaterializer.create(system);
+
+    Server app = new Server();
+
+    final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = app.createRoute().flow(system, materializer);
+    final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
+      ConnectHttp.toHost("localhost", 8080), materializer);
+
+    System.out.println("Server online at http://localhost:8080/\nPress RETURN to stop...");
+    System.in.read(); 
+
+    binding
+      .thenCompose(ServerBinding::unbind) 
+      .thenAccept(unbound -> system.terminate()); 
+  }
 
 
-	    final ActorSystem system = ActorSystem.create();
-	    final ActorMaterializer materializer = ActorMaterializer.create(system);
+  private CompletionStage<Optional<Table>> fetchTable(long itemId) {
+    return CompletableFuture.completedFuture(Optional.of(new Table("foo", itemId)));
+  }
 
-	    // HttpApp.bindRoute expects a route being provided by HttpApp.createRoute
-	    final Server app = new Server();
-	    final Route route = app.createRoute();
 
-	    final Flow<HttpRequest, HttpResponse, NotUsed> handler = route.flow(system, materializer);
-	    final CompletionStage<ServerBinding> binding = Http.get(system).bindAndHandle(handler, ConnectHttp.toHost("127.0.0.1", 8080), materializer);
+  private CompletionStage<Done> saveNewTable(final NewTable order) {
+    return CompletableFuture.completedFuture(Done.getInstance());
+  }
 
-	    binding.exceptionally(failure -> {
-	      System.err.println("Something very bad happened! " + failure.getMessage());
-	      system.terminate();
-	      return null;
-	    });
+  private Route createRoute() {
 
-	    system.terminate();
-		
-		
-
-	}
-
-	public Route createRoute() {
-		return route(
-				get( () -> pathEndOrSingleSlash(() -> complete(index()))),
-				get( () -> path("ping", () -> complete(index())))
-			
-				
-			);
-	}
-
-	private HttpResponse index() {
-
-		final Source<ByteString, Object> data = Source.single("<html><body><h1>Hello Akka HTTP</h1></body></html>")
-				.map(ByteString::fromString).mapMaterializedValue(s -> null);
-
-		final ContentType ct = ContentTypes.TEXT_HTML_UTF8;
-		final Chunked chunked = HttpEntities.create(ct, data);
-		return HttpResponse.create().withEntity(chunked);
-	}
+    return route(
+      get(() ->
+        pathPrefix("tables", () ->
+          path(longSegment(), (Long id) -> {
+            final CompletionStage<Optional<Table>> futureMaybeTable = fetchTable(id);
+            return onSuccess(() -> futureMaybeTable, maybeItem ->
+              maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
+                .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
+            );
+          }))),
+      post(() ->
+        path("tables", () ->
+          entity(Jackson.unmarshaller(NewTable.class), table -> {
+            CompletionStage<Done> futureSaved = saveNewTable(table);
+            return onSuccess(() -> futureSaved, done ->
+              complete("new table created")
+            );
+          })))
+    );
+  }
 
 }
