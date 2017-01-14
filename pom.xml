@@ -6,6 +6,7 @@
 	<groupId>ab.java.robome</groupId>
 	<artifactId>robome</artifactId>
 	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
 
 	<properties>
 		<!-- Scala -->
@@ -74,7 +75,7 @@
 
 
 	<build>
-		<sourceDirectory>src</sourceDirectory>
+		<sourceDirectory>src/main/java</sourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
