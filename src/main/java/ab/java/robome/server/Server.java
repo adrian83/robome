@@ -25,6 +25,7 @@ import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.typesafe.config.Config;
 
 import static akka.http.javadsl.server.PathMatchers.longSegment;
 
@@ -36,6 +37,7 @@ public class Server extends AllDirectives {
 	  
 	 Injector injector = Guice.createInjector(new RobomeModule());
 	 TableController tableController = injector.getInstance(TableController.class);
+	 Config config = injector.getInstance(Config.class);
 	  
 
     ActorSystem system = ActorSystem.create("routes");
@@ -47,7 +49,7 @@ public class Server extends AllDirectives {
 
     final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = app.createRoute().flow(system, materializer);
     final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
-      ConnectHttp.toHost("localhost", 8080), materializer);
+      ConnectHttp.toHost(config.getString("server.host"), config.getInt("server.port")), materializer);
 
 
     
