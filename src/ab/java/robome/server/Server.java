@@ -14,19 +14,29 @@ import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
-
+import ab.java.robome.RobomeModule;
 import ab.java.robome.table.model.NewTable;
 import ab.java.robome.table.model.Table;
+import ab.java.robome.web.table.TableController;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
 import static akka.http.javadsl.server.PathMatchers.longSegment;
 
 public class Server extends AllDirectives {
+	
+	 
 
   public static void main(String[] args) throws Exception {
+	  
+	 Injector injector = Guice.createInjector(new RobomeModule());
+	 TableController tableController = injector.getInstance(TableController.class);
+	  
 
     ActorSystem system = ActorSystem.create("routes");
 
@@ -39,12 +49,15 @@ public class Server extends AllDirectives {
     final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
       ConnectHttp.toHost("localhost", 8080), materializer);
 
-    System.out.println("Server online at http://localhost:8080/\nPress RETURN to stop...");
-    System.in.read(); 
 
-    binding
-      .thenCompose(ServerBinding::unbind) 
-      .thenAccept(unbound -> system.terminate()); 
+    
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        binding
+        .thenCompose(ServerBinding::unbind) 
+        .thenAccept(unbound -> system.terminate()); 
+    }));
+
+
   }
 
 
