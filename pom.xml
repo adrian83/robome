@@ -22,7 +22,7 @@
 	</properties>
 
 	<dependencies>
-			<dependency>
+		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-actor_2.11</artifactId>
 			<version>${akka.version}</version>
@@ -47,6 +47,12 @@
 			<artifactId>akka-http-jackson_${scala.binary.version}</artifactId>
 			<version>${akka.http.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.lightbend.akka</groupId>
+			<artifactId>akka-stream-alpakka-cassandra_2.11</artifactId>
+			<version>0.6</version>
+		</dependency>
+
 
 		<!-- testing -->
 		<dependency>
@@ -61,14 +67,14 @@
 			<version>${scalatest.version}</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/com.google.inject/guice -->
-<dependency>
-    <groupId>com.google.inject</groupId>
-    <artifactId>guice</artifactId>
-    <version>4.1.0</version>
-</dependency>
-		
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+
 
 	</dependencies>
 
