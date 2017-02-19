@@ -3,7 +3,6 @@ package ab.java.robome.web.table;
 import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
@@ -16,44 +15,36 @@ import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import akka.stream.ActorMaterializer;
-import akka.stream.javadsl.Sink;
 
 public class TableController extends AllDirectives {
+	
+	protected static final String PATH = "tables";
 
 	private TableService tableService;
-	private ActorMaterializer actorMaterializer;
 
 	@Inject
-	public TableController(TableService tableService, ActorMaterializer actorMaterializer) {
+	public TableController(TableService tableService) {
 		this.tableService = tableService;
-		this.actorMaterializer = actorMaterializer;
 	}
 
 	public Route createRoute() {
 
-		return route(get(() -> pathPrefix("tables", () -> path(segment(), (String id) -> {
-
-
-			final CompletionStage<Optional<Table>> futureMaybeTable = tableService
-					.getTable(id)
-					.runWith(Sink.head(), actorMaterializer);
-			
-			return onSuccess(() -> futureMaybeTable,
-					
-					maybeItem -> maybeItem
-					.map(item -> completeOK(item, Jackson.marshaller()))
-					.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
-		}))), 
-				post(() -> path("tables", () -> entity(Jackson.unmarshaller(NewTable.class), table -> {
-			CompletionStage<Done> futureSaved = saveNewTable(table);
-			return onSuccess(() -> futureSaved, done -> complete("new table created"));
-		}))));
+		return route(
+				get(() -> pathPrefix(PATH, () -> path(segment(), this::getTableById))), 
+				post(() -> path(PATH, () -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable)))
+				);
 	}
 
-
-	private CompletionStage<Done> saveNewTable(final NewTable order) {
-		return CompletableFuture.completedFuture(Done.getInstance());
+	private Route getTableById(String tableId) {
+		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(tableId);
+		
+		return onSuccess(() -> futureMaybeTable, maybeItem -> maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
+				.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
 	}
-
+	
+	private Route persistTable(NewTable newTable) {
+		CompletionStage<Done> futureSaved = tableService.saveTable(newTable);
+		return onSuccess(() -> futureSaved, done -> complete("new table created"));
+	}
+	
 }

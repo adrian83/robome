@@ -27,8 +27,8 @@ import akka.stream.javadsl.Source;
 
 public class TableRepository {
 
-	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.table (id, name) VALUES (?, ?)";
-	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.table";
+	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (id, name) VALUES (?, ?)";
+	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
 	//private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.table WHERE id = ?";
 
 	private Session session;

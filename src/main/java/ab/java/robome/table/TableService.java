@@ -6,24 +6,37 @@ import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
 
+import ab.java.robome.table.model.NewTable;
 import ab.java.robome.table.model.Table;
+import akka.Done;
 import akka.NotUsed;
+import akka.stream.ActorMaterializer;
+import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 
 public class TableService {
 	
 	private TableRepository tableRepository;
+	private ActorMaterializer actorMaterializer;
 	
 	@Inject
-	public TableService(TableRepository repository) {
+	public TableService(TableRepository repository, ActorMaterializer actorMaterializer) {
 		this.tableRepository = repository;
+		this.actorMaterializer = actorMaterializer;
 	}
 	
-	public Source<Optional<Table>,CompletionStage<NotUsed>> getTable(String tableId) {
+	public CompletionStage<Optional<Table>>  getTable(String tableId) {
 		return Source.lazily(() -> Source.single(tableId))
 				.map(UUID::fromString)
-				.map(tableRepository::getById);
+				.map(tableRepository::getById)
+				.runWith(Sink.head(), actorMaterializer);
 	}
 	
+	public CompletionStage<Done> saveTable(NewTable newTable) {
+		Source<NewTable, CompletionStage<NotUsed>> source = Source.lazily(() -> Source.single(newTable));
+		Sink<NewTable, CompletionStage<Done>> sink = tableRepository.saveTable();
+		return source.runWith(sink, actorMaterializer);
+		
+	}
 
 }
