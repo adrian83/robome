@@ -29,7 +29,7 @@ public class TableRepository {
 
 	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (id, name) VALUES (?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
-	//private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.table WHERE id = ?";
+	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE id = ?";
 
 	private Session session;
 	private ActorSystem actorSystem;
@@ -53,7 +53,7 @@ public class TableRepository {
 	}
 	
 	public Optional<Table> getById(UUID tableId) {
-		PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
+		PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(tableId);
 		
 		ResultSet r = session.execute(bound);
