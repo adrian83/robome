@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
 
-import ab.java.robome.table.model.NewTable;
 import ab.java.robome.table.model.Table;
 import akka.Done;
 import akka.NotUsed;

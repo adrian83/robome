@@ -1,6 +1,5 @@
 package ab.java.robome.table;
 
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,7 +15,8 @@ import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.google.inject.Inject;
 
-import ab.java.robome.common.time.UTCUtils;
+import ab.java.robome.common.time.TimeUtils;
+import ab.java.robome.table.model.ImmutableTable;
 import ab.java.robome.table.model.Table;
 import ab.java.robome.table.model.TableState;
 import akka.Done;
@@ -46,17 +46,10 @@ public class TableRepository {
 	public Sink<Table, CompletionStage<Done>> saveTable() {
 		PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
 		
-		
-
 		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
-
-			
-			Date created = UTCUtils.toDate(tab.getCreatedAt());
-			Date modified = UTCUtils.toDate(tab.getModifiedAt());
-			
-			return statement.bind(tab.getId(), tab.getName(), tab.getState().name(), created, modified);
-					
-
+			Date created = TimeUtils.toDate(tab.createdAt());
+			Date modified = TimeUtils.toDate(tab.modifiedAt());
+			return statement.bind(tab.id(), tab.name(), tab.state().name(), created, modified);
 		};
 
 		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
@@ -74,15 +67,16 @@ public class TableRepository {
 		if (row == null) {
 			return Optional.empty();
 		}
+		
+		Table table = ImmutableTable.builder()
+				.id(row.get("id", UUID.class))
+				.name(row.getString("name"))
+				.state(TableState.valueOf(row.getString("state")))
+				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
+				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
+				.build();
 
-		UUID id = row.get("id", UUID.class);
-		String name = row.getString("name");
-		TableState state = TableState.valueOf(row.getString("state"));
-		Date created = row.getTimestamp("created_at");
-		Date modified = row.getTimestamp("modified_at");
-
-		return Optional
-				.of(new Table(id, name, state, UTCUtils.toUtcLocalDate(created), UTCUtils.toUtcLocalDate(modified)));
+		return Optional.of(table);
 	}
 
 	public Source<Row, NotUsed> getAllTables() {

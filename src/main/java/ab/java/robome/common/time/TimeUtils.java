@@ -1,7 +1,6 @@
 package ab.java.robome.common.time;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -10,9 +9,7 @@ import java.util.Date;
 
 
 
-public final class UTCUtils {
-
-	private static final Object UTC = "UTC";
+public final class TimeUtils {
 
 	public static LocalDateTime utcNow() {
 		ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
@@ -20,10 +17,7 @@ public final class UTCUtils {
 	}
 	
 	public static ZoneId utcZoneId() {
-		String zoneId = ZoneId.SHORT_IDS.get(UTC);
-		
-		// TODO fixme
-		return ZoneId.systemDefault();
+		return ZoneOffset.UTC;
 	}
 	
 	public static LocalDateTime toUtcLocalDate(Date date) {

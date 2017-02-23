@@ -2,6 +2,9 @@ package ab.java.robome;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.AbstractModule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -23,6 +26,7 @@ public class RobomeModule extends AbstractModule {
 		initializeActorSystem();
 		initializeActorMaterializer();
 		initializeCassandraSession();
+		initializeObjectMapper();
 	}
 
 	private void initializeConfig() {
@@ -50,6 +54,13 @@ public class RobomeModule extends AbstractModule {
 		Session session = Cluster.builder().addContactPoint(config.getString("cassandra.host"))
 				.withPort(config.getInt("cassandra.port")).build().connect();
 		this.bind(Session.class).toInstance(session);
+	}
+	
+	private void initializeObjectMapper() {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		mapper.registerModule(new JavaTimeModule());
+		this.bind(ObjectMapper.class).toInstance(mapper);
 	}
 
 }

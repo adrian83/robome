@@ -3,48 +3,24 @@ package ab.java.robome.table.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.immutables.value.Value;
 
-public class Table {
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-	final UUID id;
-	final String name;
-	final TableState state;
-	final LocalDateTime createdAt;
-	final LocalDateTime modifiedAt;
-	
-	@JsonCreator
-	public Table(UUID id, String name, TableState state, LocalDateTime createdAt, LocalDateTime modifiedAt) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.state = state;
-		this.createdAt = createdAt;
-		this.modifiedAt = modifiedAt;
-	}
+@Value.Immutable
+@JsonSerialize(as = ImmutableTable.class)
+@JsonDeserialize(as = ImmutableTable.class)
+public interface Table {
 
-	public UUID getId() {
-		return id;
-	}
+	UUID id();
 
-	public String getName() {
-		return name;
-	}
+	String name();
 
-	public TableState getState() {
-		return state;
-	}
+	TableState state();
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+	LocalDateTime createdAt();
 
-	public LocalDateTime getModifiedAt() {
-		return modifiedAt;
-	}
-
-	
-	
+	LocalDateTime modifiedAt();
 
 }
