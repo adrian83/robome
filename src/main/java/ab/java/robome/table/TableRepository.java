@@ -1,5 +1,7 @@
 package ab.java.robome.table;
 
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -12,11 +14,11 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.utils.UUIDs;
 import com.google.inject.Inject;
 
-import ab.java.robome.table.model.NewTable;
+import ab.java.robome.common.time.UTCUtils;
 import ab.java.robome.table.model.Table;
+import ab.java.robome.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -27,7 +29,8 @@ import akka.stream.javadsl.Source;
 
 public class TableRepository {
 
-	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (id, name) VALUES (?, ?)";
+	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (id, name, state, "
+			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
 	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE id = ?";
 
@@ -40,32 +43,46 @@ public class TableRepository {
 		this.actorSystem = actorSystem;
 	}
 
-	public Sink<NewTable, CompletionStage<Done>> saveTable() {
+	public Sink<Table, CompletionStage<Done>> saveTable() {
 		PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
+		
+		
 
-		BiFunction<NewTable, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
-			return statement.bind(UUIDs.random(), tab.getName());
+		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
+
+			
+			Date created = UTCUtils.toDate(tab.getCreatedAt());
+			Date modified = UTCUtils.toDate(tab.getModifiedAt());
+			
+			return statement.bind(tab.getId(), tab.getName(), tab.getState().name(), created, modified);
+					
+
 		};
 
-		Sink<NewTable, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder,
-				session, actorSystem.dispatcher());
+		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
+				actorSystem.dispatcher());
 		return sink;
 	}
-	
+
 	public Optional<Table> getById(UUID tableId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(tableId);
-		
+
 		ResultSet r = session.execute(bound);
-		
+
 		Row row = r.one();
-		if(row == null){
+		if (row == null) {
 			return Optional.empty();
 		}
-		
+
 		UUID id = row.get("id", UUID.class);
 		String name = row.getString("name");
-		return Optional.of(new Table(name,id));
+		TableState state = TableState.valueOf(row.getString("state"));
+		Date created = row.getTimestamp("created_at");
+		Date modified = row.getTimestamp("modified_at");
+
+		return Optional
+				.of(new Table(id, name, state, UTCUtils.toUtcLocalDate(created), UTCUtils.toUtcLocalDate(modified)));
 	}
 
 	public Source<Row, NotUsed> getAllTables() {

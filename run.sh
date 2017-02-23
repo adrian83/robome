@@ -1,4 +1,3 @@
-docker run --name some-cassandra -v /my/own/datadir:/var/lib/cassandra -d cassandra:tag
 
 
 #!/bin/bash
@@ -8,6 +7,7 @@ usage() {
     Usage: $(basename $0) <command>
     run-docker            Starts systemd Docker daemon.
     run-cass              Starts Cassandra docker image.
+    run-cass-init         Initializes Cassandra database.
     run-infra             Starts Docker and Cassandra
 EOF
 	exit 1
@@ -33,6 +33,11 @@ run-infra() {
 	set +e
 }
 
+run-cass-init() {
+	set -e
+		cqlsh 127.0.0.1 9043 -f src/main/resources/cassandra.cql
+	set +e
+}
 
 CMD="$1"
 shift
@@ -45,6 +50,9 @@ case "$CMD" in
 	;;
 	run-infra)
 		run-infra
+	;;
+	run-cass-init)
+		run-cass-init
 	;;
 	*)
 		usage

@@ -2,14 +2,22 @@ package ab.java.robome.web.table;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
 
+import ab.java.robome.common.time.UTCUtils;
 import ab.java.robome.table.TableService;
 import ab.java.robome.table.model.NewTable;
 import ab.java.robome.table.model.Table;
+import ab.java.robome.table.model.TableState;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.StatusCodes;
@@ -43,7 +51,13 @@ public class TableController extends AllDirectives {
 	}
 	
 	private Route persistTable(NewTable newTable) {
-		CompletionStage<Done> futureSaved = tableService.saveTable(newTable);
+		
+
+		LocalDateTime utcNow = UTCUtils.utcNow();
+		
+		Table table = new Table(UUID.randomUUID(), newTable.getName(), TableState.ACTIVE, utcNow, utcNow);
+		
+		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete("new table created"));
 	}
 	

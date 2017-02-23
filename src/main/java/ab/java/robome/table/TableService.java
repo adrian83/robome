@@ -32,9 +32,9 @@ public class TableService {
 				.runWith(Sink.head(), actorMaterializer);
 	}
 	
-	public CompletionStage<Done> saveTable(NewTable newTable) {
-		Source<NewTable, CompletionStage<NotUsed>> source = Source.lazily(() -> Source.single(newTable));
-		Sink<NewTable, CompletionStage<Done>> sink = tableRepository.saveTable();
+	public CompletionStage<Done> saveTable(Table newTable) {
+		Source<Table, CompletionStage<NotUsed>> source = Source.lazily(() -> Source.single(newTable));
+		Sink<Table, CompletionStage<Done>> sink = tableRepository.saveTable();
 		return source.runWith(sink, actorMaterializer);
 		
 	}
