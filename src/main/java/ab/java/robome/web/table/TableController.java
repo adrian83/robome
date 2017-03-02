@@ -24,7 +24,7 @@ import akka.http.javadsl.server.Route;
 
 public class TableController extends AllDirectives {
 	
-	protected static final String PATH = "tables";
+	public static final String PATH = "tables";
 
 	private TableService tableService;
 	private ObjectMapper objectMapper;
