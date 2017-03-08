@@ -18,7 +18,9 @@ import ab.java.robome.table.model.Table;
 import ab.java.robome.table.model.TableState;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
+import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
+import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
@@ -54,17 +56,24 @@ public class TableController extends AllDirectives {
 		
 
 		LocalDateTime utcNow = TimeUtils.utcNow();
+		UUID id = UUID.randomUUID();
+		
+		Location locationHeader = Location.create("/" + TableController.PATH + "/" + id.toString());
+
 		
 		Table table = ImmutableTable.builder()
-				.id(UUID.randomUUID())
+				.id(id)
 				.name(newTable.getName())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)
 				.build();
+		
+		HttpResponse response = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
-		return onSuccess(() -> futureSaved, done -> complete("new table created"));
+		return onSuccess(() -> futureSaved, done -> complete(response));
+		
 	}
 	
 }

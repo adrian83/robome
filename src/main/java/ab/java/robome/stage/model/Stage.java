@@ -1,7 +1,6 @@
 package ab.java.robome.stage.model;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.immutables.value.Value;
 
@@ -15,9 +14,7 @@ import ab.java.robome.table.model.TableState;
 @JsonDeserialize(as = ImmutableStage.class)
 public interface Stage {
 
-	UUID id();
-	
-	UUID tableId();
+	StageId stageId();
 
 	String name();
 
