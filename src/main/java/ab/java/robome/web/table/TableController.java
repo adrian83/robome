@@ -16,15 +16,15 @@ import ab.java.robome.table.model.ImmutableTable;
 import ab.java.robome.table.model.NewTable;
 import ab.java.robome.table.model.Table;
 import ab.java.robome.table.model.TableState;
+import ab.java.robome.web.common.AbstractController;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
-import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class TableController extends AllDirectives {
+public class TableController extends AbstractController {
 	
 	public static final String PATH = "tables";
 

@@ -35,7 +35,10 @@ public class Server {
 		TableController tableController = injector.getInstance(TableController.class);
 		StageController stageController = injector.getInstance(StageController.class);
 
-		Route route = createRoutes(() -> tableController.createRoute(), () -> stageController.createRoute());
+		Route route = createRoutes(
+				() -> tableController.createRoute(), 
+				() -> stageController.createRoute()
+				);
 
 		ActorSystem system = injector.getInstance(ActorSystem.class);
 		ActorMaterializer materializer = injector.getInstance(ActorMaterializer.class);

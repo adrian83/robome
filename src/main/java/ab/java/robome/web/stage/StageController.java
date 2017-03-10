@@ -18,16 +18,16 @@ import ab.java.robome.stage.model.NewStage;
 import ab.java.robome.stage.model.Stage;
 import ab.java.robome.stage.model.StageId;
 import ab.java.robome.table.model.TableState;
+import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.table.TableController;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
-import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class StageController extends AllDirectives {
+public class StageController extends AbstractController {
 	
 	public static final String PATH = "stages";
 
@@ -71,8 +71,7 @@ public class StageController extends AllDirectives {
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
 		
-		Location locationHeader = Location.create("/" + TableController.PATH + "/" + tableId
-				+ "/" + PATH + "/" + id.toString());
+		Location locationHeader = locationFor(TableController.PATH, tableId, PATH, id.toString());
 		
 		StageId stageId = ImmutableStageId.builder()
 				.id(id)
