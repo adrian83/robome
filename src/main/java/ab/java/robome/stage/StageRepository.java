@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -20,17 +21,18 @@ import ab.java.robome.stage.model.Stage;
 import ab.java.robome.stage.model.StageId;
 import ab.java.robome.table.model.TableState;
 import akka.Done;
+import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
 import akka.stream.javadsl.Sink;
+import akka.stream.javadsl.Source;
 
 public class StageRepository {
 
 	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (id, table_id, name, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
-	//private static final String SELECT_TABLE_STAGES_STMT = "SELECT * FROM robome.stages WHERE table_id = ?";
 	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND id = ?";
-	
+	private static final String SELECT_STAGES_BY_TABLE_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ?";
 
 	private Session session;
 	private ActorSystem actorSystem;
@@ -54,8 +56,19 @@ public class StageRepository {
 				actorSystem.dispatcher());
 		return sink;
 	}
+	
+	public Source<Stage,NotUsed> getTableStages(UUID tableUuid) {
+		PreparedStatement preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
+		BoundStatement bound = preparedStatement.bind(tableUuid);
+		
+		return Source.from(session.execute(bound)
+				.all()
+				.stream()
+				.map(this::fromRow)
+				.collect(Collectors.toList()));
+	}
 
-	public Optional<Stage> getById(StageId stageId) {
+	public Source<Optional<Stage>, NotUsed> getById(StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(stageId.tableId(), stageId.id());
 
@@ -63,9 +76,14 @@ public class StageRepository {
 
 		Row row = r.one();
 		if (row == null) {
-			return Optional.empty();
+			return Source.single(Optional.empty());
 		}
-		
+
+		Stage stage = fromRow(row);
+		return Source.single( Optional.of(stage));
+	}
+
+	private Stage fromRow(Row row) {
 		StageId id = ImmutableStageId.builder()
 				.id(row.get("id", UUID.class))
 				.tableId(row.get("table_id", UUID.class))
@@ -78,10 +96,9 @@ public class StageRepository {
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
 				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
 				.build();
-
-		return Optional.of(stage);
+		return stage;
 	}
-
+	
 
 	
 	

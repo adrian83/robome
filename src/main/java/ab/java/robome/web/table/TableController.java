@@ -3,6 +3,7 @@ package ab.java.robome.web.table;
 import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -37,16 +38,26 @@ public class TableController extends AbstractController {
 		this.objectMapper = objectMapper;
 	}
 
-	public Route createRoute() {
+	public Route createRoute() { 
 
 		return route(
+
 				get(() -> pathPrefix(PATH, () -> path(segment(), this::getTableById))), 
-				post(() -> path(PATH, () -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable)))
+				post(() -> path(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable)))),
+				get(() -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTables())))
 				);
 	}
 
+	private Route getTables(){
+		final CompletionStage<List<Table>> futureTables = tableService.getTables();
+		
+		return onSuccess(() -> futureTables, tables -> completeOK(tables, Jackson.marshaller(objectMapper)));
+	}
+	
 	private Route getTableById(String tableId) {
-		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(tableId);
+		UUID tableUuid = UUID.fromString(tableId);
+		
+		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(tableUuid);
 		
 		return onSuccess(() -> futureMaybeTable, maybeItem -> maybeItem.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
 				.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));

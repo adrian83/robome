@@ -3,6 +3,7 @@ package ab.java.robome.web.stage;
 import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -43,15 +44,19 @@ public class StageController extends AbstractController {
 	public Route createRoute() {
 
 		return route(
-				get(() -> pathPrefix(TableController.PATH, () -> path(segment(), tableId -> pathPrefix(PATH, () -> path(segment(), stageId -> getStageById(tableId, stageId)))))),
-				//post(() ->  path(TableController.PATH, () -> path(segment(), tableId -> path(PATH, () -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e) )))))
-				post(() ->  pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e) )))))
-				//post(() ->  path(PATH, () -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage("57a20049-a59f-422f-bc37-8e9a4961ffc7", e) )))
-				
-	
+				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathPrefix(segment(), stageId -> getStageById(tableId, stageId)))))),
+				post(() ->  pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e) ))))),
+				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId))))))
 				);
 	}
 
+	private Route getTableStages(String tableId) {
+		UUID tableUuid = UUID.fromString(tableId);
+		
+		final CompletionStage<List<Stage>> futureStages = stageService.getTableStages(tableUuid);
+		return onSuccess(() -> futureStages, stages -> completeOK(stages, Jackson.marshaller(objectMapper)));
+	}
+	
 	private Route getStageById(String tableId, String stageId) {
 		
 		StageId id = ImmutableStageId.builder()

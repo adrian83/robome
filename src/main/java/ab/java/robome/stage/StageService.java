@@ -1,6 +1,8 @@
 package ab.java.robome.stage;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
@@ -25,9 +27,13 @@ public class StageService {
 	}
 
 	public CompletionStage<Optional<Stage>> getStage(StageId stageId) {
-		return Source.lazily(() -> Source.single(stageId))
-				.map(stageRepository::getById)
+		return stageRepository.getById(stageId)
 				.runWith(Sink.head(), actorMaterializer);
+	}
+	
+	public CompletionStage<List<Stage>> getTableStages(UUID tableUuid) {
+		return stageRepository.getTableStages(tableUuid)
+				.runWith(Sink.seq(), actorMaterializer);
 	}
 	
 	public CompletionStage<Done> saveStage(Stage newStage) {

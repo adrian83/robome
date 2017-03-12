@@ -57,7 +57,7 @@ public class TableRepository {
 		return sink;
 	}
 
-	public Optional<Table> getById(UUID tableId) {
+	public Source<Optional<Table>,NotUsed> getById(UUID tableId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(tableId);
 
@@ -65,9 +65,19 @@ public class TableRepository {
 
 		Row row = r.one();
 		if (row == null) {
-			return Optional.empty();
+			return Source.single(Optional.empty());
 		}
 		
+		return Source.single(Optional.of(fromRow(row)));
+	}
+
+	public Source<Table, NotUsed> getAllTables() {
+		final Statement stmt = new SimpleStatement(SELECT_ALL_STMT);
+		Source<Row, NotUsed> source = CassandraSource.create(stmt, session);
+		return source.map(this::fromRow);
+	}
+	
+	private Table fromRow(Row row) {
 		Table table = ImmutableTable.builder()
 				.id(row.get("id", UUID.class))
 				.name(row.getString("name"))
@@ -75,14 +85,7 @@ public class TableRepository {
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
 				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
 				.build();
-
-		return Optional.of(table);
-	}
-
-	public Source<Row, NotUsed> getAllTables() {
-		final Statement stmt = new SimpleStatement(SELECT_ALL_STMT).setFetchSize(1000);
-		Source<Row, NotUsed> source = CassandraSource.create(stmt, session);
-		return source;
+		return table;
 	}
 
 }

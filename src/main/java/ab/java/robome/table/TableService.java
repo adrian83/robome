@@ -1,5 +1,6 @@
 package ab.java.robome.table;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -24,18 +25,21 @@ public class TableService {
 		this.actorMaterializer = actorMaterializer;
 	}
 	
-	public CompletionStage<Optional<Table>>  getTable(String tableId) {
-		return Source.lazily(() -> Source.single(tableId))
-				.map(UUID::fromString)
-				.map(tableRepository::getById)
+	public CompletionStage<Optional<Table>>  getTable(UUID tableUuid) {
+		return tableRepository.getById(tableUuid)
 				.runWith(Sink.head(), actorMaterializer);
 	}
 	
 	public CompletionStage<Done> saveTable(Table newTable) {
-		Source<Table, CompletionStage<NotUsed>> source = Source.lazily(() -> Source.single(newTable));
+		Source<Table, NotUsed> source = Source.single(newTable);
 		Sink<Table, CompletionStage<Done>> sink = tableRepository.saveTable();
 		return source.runWith(sink, actorMaterializer);
 		
+	}
+
+	public CompletionStage<List<Table>> getTables() {
+		return tableRepository.getAllTables()
+				.runWith(Sink.seq(), actorMaterializer);
 	}
 
 }
