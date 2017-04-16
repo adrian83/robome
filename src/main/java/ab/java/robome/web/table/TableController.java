@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
@@ -18,8 +19,10 @@ import ab.java.robome.table.model.NewTable;
 import ab.java.robome.table.model.Table;
 import ab.java.robome.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
+import ab.java.robome.web.common.validation.ValidationError;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
+import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
@@ -39,9 +42,7 @@ public class TableController extends AbstractController {
 	}
 
 	public Route createRoute() { 
-
 		return route(
-
 				get(() -> pathPrefix(PATH, () -> path(segment(), this::getTableById))), 
 				post(() -> path(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable)))),
 				get(() -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTables())))
@@ -65,13 +66,20 @@ public class TableController extends AbstractController {
 	
 	private Route persistTable(NewTable newTable) {
 		
+		List<ValidationError> validationErrors = new NewTableValidator().validate(newTable);
+		if (!validationErrors.isEmpty()) {
+			 HttpResponse response = HttpResponse.create()
+					 .withStatus(StatusCodes.BAD_REQUEST)
+					 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors));
+			 return complete(response);
+		}
+		
 
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
 		
 		Location locationHeader = Location.create("/" + TableController.PATH + "/" + id.toString());
 
-		
 		Table table = ImmutableTable.builder()
 				.id(id)
 				.name(newTable.getName())
@@ -80,11 +88,21 @@ public class TableController extends AbstractController {
 				.modifiedAt(utcNow)
 				.build();
 		
-		HttpResponse response = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
+		HttpResponse response = HttpResponse.create()
+				.withStatus(StatusCodes.CREATED)
+				.addHeader(locationHeader);
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete(response));
 		
+	}
+
+	private String toBytes(List<ValidationError> validationErrors) {
+		try {
+			return objectMapper.writeValueAsString(validationErrors);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 }

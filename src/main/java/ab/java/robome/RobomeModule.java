@@ -11,6 +11,9 @@ import com.typesafe.config.ConfigFactory;
 
 import akka.actor.ActorSystem;
 import akka.http.javadsl.ConnectHttp;
+import akka.http.javadsl.marshallers.jackson.Jackson;
+import akka.http.javadsl.marshalling.Marshaller;
+import akka.http.javadsl.model.RequestEntity;
 import akka.stream.ActorMaterializer;
 
 public class RobomeModule extends AbstractModule {
@@ -27,6 +30,7 @@ public class RobomeModule extends AbstractModule {
 		initializeActorMaterializer();
 		initializeCassandraSession();
 		initializeObjectMapper();
+		initializeMarshaller();
 	}
 
 	private void initializeConfig() {
@@ -57,10 +61,20 @@ public class RobomeModule extends AbstractModule {
 	}
 	
 	private void initializeObjectMapper() {
+		ObjectMapper mapper = createObjectMapper();
+		this.bind(ObjectMapper.class).toInstance(mapper);
+	}
+	
+	private void initializeMarshaller() {
+		Marshaller<Object, RequestEntity> marshaller = Jackson.marshaller(createObjectMapper());
+		this.bind(Marshaller.class).toInstance(marshaller);
+	}
+	
+	private ObjectMapper createObjectMapper() {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		mapper.registerModule(new JavaTimeModule());
-		this.bind(ObjectMapper.class).toInstance(mapper);
+		return mapper;
 	}
 
 }
