@@ -37,8 +37,8 @@ public class TableController extends AbstractController {
 
 	@Inject
 	public TableController(TableService tableService, ObjectMapper objectMapper) {
+		super(objectMapper);
 		this.tableService = tableService;
-		this.objectMapper = objectMapper;
 	}
 
 	public Route createRoute() { 

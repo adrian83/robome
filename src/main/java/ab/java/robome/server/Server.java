@@ -11,6 +11,7 @@ import akka.http.javadsl.server.Route;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
 import ab.java.robome.RobomeModule;
+import ab.java.robome.web.activity.ActivityController;
 import ab.java.robome.web.stage.StageController;
 import ab.java.robome.web.table.TableController;
 
@@ -34,10 +35,12 @@ public class Server {
 
 		TableController tableController = injector.getInstance(TableController.class);
 		StageController stageController = injector.getInstance(StageController.class);
+		ActivityController activityController = injector.getInstance(ActivityController.class);
 
 		Route route = createRoutes(
 				() -> tableController.createRoute(), 
-				() -> stageController.createRoute()
+				() -> stageController.createRoute(),
+				() -> activityController.createRoute()
 				);
 
 		ActorSystem system = injector.getInstance(ActorSystem.class);

@@ -33,12 +33,11 @@ public class StageController extends AbstractController {
 	public static final String PATH = "stages";
 
 	private StageService stageService;
-	private ObjectMapper objectMapper;
 
 	@Inject
 	public StageController(StageService stageService, ObjectMapper objectMapper) {
+		super(objectMapper);
 		this.stageService = stageService;
-		this.objectMapper = objectMapper;
 	}
 
 	public Route createRoute() {
