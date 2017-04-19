@@ -33,7 +33,6 @@ public class TableController extends AbstractController {
 	public static final String PATH = "tables";
 
 	private TableService tableService;
-	private ObjectMapper objectMapper;
 
 	@Inject
 	public TableController(TableService tableService, ObjectMapper objectMapper) {
@@ -43,9 +42,9 @@ public class TableController extends AbstractController {
 
 	public Route createRoute() { 
 		return route(
-				get(() -> pathPrefix(PATH, () -> path(segment(), this::getTableById))), 
-				post(() -> path(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable)))),
-				get(() -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTables())))
+				get(() -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTables()))),
+				get(() -> pathPrefix(PATH, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
+				post(() -> path(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 

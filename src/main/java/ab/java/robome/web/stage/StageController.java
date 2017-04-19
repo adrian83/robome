@@ -43,8 +43,8 @@ public class StageController extends AbstractController {
 	public Route createRoute() {
 
 		return route(
-				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathPrefix(segment(), stageId -> getStageById(tableId, stageId)))))),
-				post(() ->  pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e) ))))),
+				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathPrefix(segment(), stageId -> pathEndOrSingleSlash(() -> getStageById(tableId, stageId))))))),
+				post(() ->  pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e))))))),
 				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId))))))
 				);
 	}

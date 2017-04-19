@@ -48,7 +48,7 @@ public class ActivityController extends AbstractController {
 	public Route createRoute() {
 
 		return route(
-				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathPrefix(segment(), activityId -> getActivityById(tableId, stageId, activityId)))))))),
+				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathPrefix(segment(), activityId -> pathEndOrSingleSlash(() -> getActivityById(tableId, stageId, activityId))))))))),
 				post(() ->  pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> entity(Jackson.unmarshaller(NewActivity.class), e -> persistActivity(tableId, stageId, e)))))))),
 				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getStageActivities(tableId, stageId))))))))
 				);
