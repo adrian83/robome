@@ -1,4 +1,4 @@
-package ab.java.robome.activity.model;
+package ab.java.robome.domain.activity.model;
 
 import java.util.UUID;
 

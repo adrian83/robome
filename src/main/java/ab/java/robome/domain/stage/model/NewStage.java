@@ -1,4 +1,4 @@
-package ab.java.robome.stage.model;
+package ab.java.robome.domain.stage.model;
 
 import org.immutables.value.Value;
 

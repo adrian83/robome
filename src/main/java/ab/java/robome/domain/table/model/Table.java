@@ -1,4 +1,4 @@
-package ab.java.robome.table.model;
+package ab.java.robome.domain.table.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

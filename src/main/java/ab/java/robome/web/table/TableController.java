@@ -13,11 +13,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
 import ab.java.robome.common.time.TimeUtils;
-import ab.java.robome.table.TableService;
-import ab.java.robome.table.model.ImmutableTable;
-import ab.java.robome.table.model.NewTable;
-import ab.java.robome.table.model.Table;
-import ab.java.robome.table.model.TableState;
+import ab.java.robome.domain.table.TableService;
+import ab.java.robome.domain.table.model.ImmutableTable;
+import ab.java.robome.domain.table.model.NewTable;
+import ab.java.robome.domain.table.model.Table;
+import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.common.validation.ValidationError;
 import akka.Done;

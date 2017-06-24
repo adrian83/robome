@@ -1,4 +1,4 @@
-package ab.java.robome.activity;
+package ab.java.robome.domain.activity;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,9 +6,9 @@ import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
 
-import ab.java.robome.activity.model.Activity;
-import ab.java.robome.activity.model.ActivityId;
-import ab.java.robome.stage.model.StageId;
+import ab.java.robome.domain.activity.model.Activity;
+import ab.java.robome.domain.activity.model.ActivityId;
+import ab.java.robome.domain.stage.model.StageId;
 import akka.Done;
 import akka.NotUsed;
 import akka.stream.ActorMaterializer;

@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.google.common.base.Strings;
 
-import ab.java.robome.table.model.NewTable;
+import ab.java.robome.domain.table.model.NewTable;
 import ab.java.robome.web.common.validation.ImmutableValidationError;
 import ab.java.robome.web.common.validation.ValidationError;
 

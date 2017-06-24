@@ -1,4 +1,4 @@
-package ab.java.robome.table;
+package ab.java.robome.domain.table;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
 
-import ab.java.robome.table.model.Table;
+import ab.java.robome.domain.table.model.Table;
 import akka.Done;
 import akka.NotUsed;
 import akka.stream.ActorMaterializer;

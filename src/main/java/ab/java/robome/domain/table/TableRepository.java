@@ -1,4 +1,4 @@
-package ab.java.robome.table;
+package ab.java.robome.domain.table;
 
 import java.util.Date;
 import java.util.Optional;
@@ -16,9 +16,9 @@ import com.datastax.driver.core.Statement;
 import com.google.inject.Inject;
 
 import ab.java.robome.common.time.TimeUtils;
-import ab.java.robome.table.model.ImmutableTable;
-import ab.java.robome.table.model.Table;
-import ab.java.robome.table.model.TableState;
+import ab.java.robome.domain.table.model.ImmutableTable;
+import ab.java.robome.domain.table.model.Table;
+import ab.java.robome.domain.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;

@@ -1,4 +1,4 @@
-package ab.java.robome.activity.model;
+package ab.java.robome.domain.stage.model;
 
 import java.time.LocalDateTime;
 
@@ -7,14 +7,15 @@ import org.immutables.value.Value;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import ab.java.robome.table.model.TableState;
+import ab.java.robome.domain.table.model.TableState;
+
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableActivity.class)
-@JsonDeserialize(as = ImmutableActivity.class)
-public interface Activity {
+@JsonSerialize(as = ImmutableStage.class)
+@JsonDeserialize(as = ImmutableStage.class)
+public interface Stage {
 
-	ActivityId id();
+	StageId stageId();
 
 	String name();
 
@@ -24,4 +25,5 @@ public interface Activity {
 
 	LocalDateTime modifiedAt();
 
+	
 }

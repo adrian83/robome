@@ -1,4 +1,4 @@
-package ab.java.robome.activity;
+package ab.java.robome.domain.activity;
 
 import java.util.Date;
 import java.util.Optional;
@@ -14,14 +14,13 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.google.inject.Inject;
 
-import ab.java.robome.activity.model.Activity;
-import ab.java.robome.activity.model.ActivityId;
-import ab.java.robome.activity.model.ImmutableActivity;
-import ab.java.robome.activity.model.ImmutableActivityId;
 import ab.java.robome.common.time.TimeUtils;
-import ab.java.robome.stage.model.StageId;
-import ab.java.robome.table.model.TableState;
-
+import ab.java.robome.domain.activity.model.Activity;
+import ab.java.robome.domain.activity.model.ActivityId;
+import ab.java.robome.domain.activity.model.ImmutableActivity;
+import ab.java.robome.domain.activity.model.ImmutableActivityId;
+import ab.java.robome.domain.stage.model.StageId;
+import ab.java.robome.domain.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
