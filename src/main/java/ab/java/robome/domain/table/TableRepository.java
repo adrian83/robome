@@ -17,7 +17,9 @@ import com.google.inject.Inject;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.table.model.ImmutableTable;
+import ab.java.robome.domain.table.model.ImmutableTableId;
 import ab.java.robome.domain.table.model.Table;
+import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
@@ -78,8 +80,13 @@ public class TableRepository {
 	}
 	
 	private Table fromRow(Row row) {
+		
+		TableId id = ImmutableTableId.builder()
+				.tableId(row.get("id", UUID.class))
+				.build();
+		
 		Table table = ImmutableTable.builder()
-				.id(row.get("id", UUID.class))
+				.id(id)
 				.name(row.getString("name"))
 				.state(TableState.valueOf(row.getString("state")))
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))

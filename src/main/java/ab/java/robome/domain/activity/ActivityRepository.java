@@ -60,7 +60,7 @@ public class ActivityRepository {
 	
 	public Source<Activity, NotUsed> getStageActivities(StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(stageId.tableId(), stageId.id());
+		BoundStatement bound = preparedStatement.bind(stageId.tableId(), stageId.stageId());
 		
 		return Source.from(session.execute(bound)
 				.all()

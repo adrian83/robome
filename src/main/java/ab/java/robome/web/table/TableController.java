@@ -15,8 +15,10 @@ import com.google.inject.Inject;
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.table.TableService;
 import ab.java.robome.domain.table.model.ImmutableTable;
+import ab.java.robome.domain.table.model.ImmutableTableId;
 import ab.java.robome.domain.table.model.NewTable;
 import ab.java.robome.domain.table.model.Table;
+import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.common.validation.ValidationError;
@@ -78,9 +80,11 @@ public class TableController extends AbstractController {
 		UUID id = UUID.randomUUID();
 		
 		Location locationHeader = Location.create("/" + TableController.PATH + "/" + id.toString());
+		
+		TableId tableId = ImmutableTableId.builder().tableId(id).build();
 
 		Table table = ImmutableTable.builder()
-				.id(id)
+				.id(tableId)
 				.name(newTable.getName())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)

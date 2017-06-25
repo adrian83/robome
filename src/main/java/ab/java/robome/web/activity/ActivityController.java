@@ -59,7 +59,7 @@ public class ActivityController extends AbstractController {
 		UUID stageUuid = UUID.fromString(stageIdStr);
 		
 		StageId stageId = ImmutableStageId.builder()
-				.id(stageUuid)
+				.stageId(stageUuid)
 				.tableId(tableUuid)
 				.build();
 		

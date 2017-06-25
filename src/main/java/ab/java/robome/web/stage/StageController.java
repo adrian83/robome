@@ -59,7 +59,7 @@ public class StageController extends AbstractController {
 	private Route getStageById(String tableId, String stageId) {
 		
 		StageId id = ImmutableStageId.builder()
-				.id(UUID.fromString(stageId))
+				.stageId(UUID.fromString(stageId))
 				.tableId(UUID.fromString(tableId))
 				.build();
 		
@@ -78,7 +78,7 @@ public class StageController extends AbstractController {
 		Location locationHeader = locationFor(TableController.PATH, tableId, PATH, id.toString());
 		
 		StageId stageId = ImmutableStageId.builder()
-				.id(id)
+				.stageId(id)
 				.tableId(UUID.fromString(tableId))
 				.build();
 		
@@ -90,7 +90,9 @@ public class StageController extends AbstractController {
 				.modifiedAt(utcNow)
 				.build();
 
-		HttpResponse redirectResponse = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
+		HttpResponse redirectResponse = HttpResponse.create()
+				.withStatus(StatusCodes.CREATED)
+				.addHeader(locationHeader);
 		
 		CompletionStage<Done> futureSaved = stageService.saveStage(stage);
 		return onSuccess(() -> futureSaved, done -> complete(redirectResponse));

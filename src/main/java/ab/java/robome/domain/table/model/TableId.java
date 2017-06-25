@@ -1,4 +1,4 @@
-package ab.java.robome.domain.stage.model;
+package ab.java.robome.domain.table.model;
 
 import java.util.UUID;
 
@@ -9,11 +9,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableStageId.class)
-@JsonDeserialize(as = ImmutableStageId.class)
-public interface StageId {
+@JsonSerialize(as = ImmutableTableId.class)
+@JsonDeserialize(as = ImmutableTableId.class)
+public interface TableId {
 
-	UUID stageId();
-	
 	UUID tableId();
+
 }

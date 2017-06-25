@@ -49,7 +49,7 @@ public class StageRepository {
 		BiFunction<Stage, PreparedStatement, BoundStatement> statementBinder = (stage, statement) -> {
 			Date created = TimeUtils.toDate(stage.createdAt());
 			Date modified = TimeUtils.toDate(stage.modifiedAt());
-			return statement.bind(stage.stageId().id(), stage.stageId().tableId(), stage.name(), stage.state().name(), created, modified);
+			return statement.bind(stage.stageId().stageId(), stage.stageId().tableId(), stage.name(), stage.state().name(), created, modified);
 		};
 
 		Sink<Stage, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
@@ -70,7 +70,7 @@ public class StageRepository {
 
 	public Source<Optional<Stage>, NotUsed> getById(StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(stageId.tableId(), stageId.id());
+		BoundStatement bound = preparedStatement.bind(stageId.tableId(), stageId.stageId());
 
 		ResultSet r = session.execute(bound);
 
@@ -85,7 +85,7 @@ public class StageRepository {
 
 	private Stage fromRow(Row row) {
 		StageId id = ImmutableStageId.builder()
-				.id(row.get("id", UUID.class))
+				.stageId(row.get("id", UUID.class))
 				.tableId(row.get("table_id", UUID.class))
 				.build();
 		
