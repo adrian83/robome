@@ -34,7 +34,6 @@ public class TableService {
 		Source<Table, NotUsed> source = Source.single(newTable);
 		Sink<Table, CompletionStage<Done>> sink = tableRepository.saveTable();
 		return source.runWith(sink, actorMaterializer);
-		
 	}
 
 	public CompletionStage<List<Table>> getTables() {

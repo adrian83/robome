@@ -30,9 +30,9 @@ import akka.stream.javadsl.Source;
 
 public class ActivityRepository {
 
-	private static final String INSERT_ACTIVITY_STMT = "INSERT INTO robome.activities (id, stage_id, table_id, name, state, "
+	private static final String INSERT_ACTIVITY_STMT = "INSERT INTO robome.activities (activity_id, stage_id, table_id, name, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
-	private static final String SELECT_ACTIVITY_BY_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND id = ?";
+	private static final String SELECT_ACTIVITY_BY_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND activity_id = ?";
 	private static final String SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ?";
 
 	private Session session;
@@ -86,7 +86,7 @@ public class ActivityRepository {
 
 	private Activity fromRow(Row row) {
 		ActivityId id = ImmutableActivityId.builder()
-				.id(row.get("id", UUID.class))
+				.id(row.get("activity_id", UUID.class))
 				.stageId(row.get("stage_id", UUID.class))
 				.tableId(row.get("table_id", UUID.class))
 				.build();

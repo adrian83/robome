@@ -29,9 +29,9 @@ import akka.stream.javadsl.Source;
 
 public class StageRepository {
 
-	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (id, table_id, name, state, "
+	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, name, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
-	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND id = ?";
+	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ?";
 	private static final String SELECT_STAGES_BY_TABLE_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ?";
 
 	private Session session;
@@ -85,7 +85,7 @@ public class StageRepository {
 
 	private Stage fromRow(Row row) {
 		StageId id = ImmutableStageId.builder()
-				.stageId(row.get("id", UUID.class))
+				.stageId(row.get("stage_id", UUID.class))
 				.tableId(row.get("table_id", UUID.class))
 				.build();
 		

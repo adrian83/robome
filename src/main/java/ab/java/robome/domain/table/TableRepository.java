@@ -31,10 +31,10 @@ import akka.stream.javadsl.Source;
 
 public class TableRepository {
 
-	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (id, name, state, "
+	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, name, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
-	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE id = ?";
+	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE table_id = ?";
 
 	private Session session;
 	private ActorSystem actorSystem;
@@ -82,7 +82,7 @@ public class TableRepository {
 	private Table fromRow(Row row) {
 		
 		TableId id = ImmutableTableId.builder()
-				.tableId(row.get("id", UUID.class))
+				.tableId(row.get("table_id", UUID.class))
 				.build();
 		
 		Table table = ImmutableTable.builder()

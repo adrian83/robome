@@ -2,8 +2,16 @@ DROP  KEYSPACE IF EXISTS robome;
 
 CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
   
+ CREATE TABLE robome.users (
+  email varchar,
+  password_hash varchar,
+  created_at timestamp,
+  modified_at timestamp,
+  PRIMARY KEY (email)
+);
+  
  CREATE TABLE robome.tables (
-  id uuid,
+  table_id uuid,
   name varchar,
   state varchar,
   created_at timestamp,
@@ -13,7 +21,7 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
 
  CREATE TABLE robome.stages (
   table_id uuid,
-  id uuid,
+  stage_id uuid,
   name varchar,
   state varchar,
   created_at timestamp,
@@ -24,7 +32,7 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
  CREATE TABLE robome.activities (
   table_id uuid,
   stage_id uuid,
-  id uuid,
+  activity_id uuid,
   name varchar,
   state varchar,
   created_at timestamp,

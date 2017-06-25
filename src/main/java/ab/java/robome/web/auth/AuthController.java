@@ -5,6 +5,10 @@ import java.util.concurrent.CompletionStage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+
+import ab.java.robome.domain.user.UserService;
+import ab.java.robome.domain.user.model.ImmutableUser;
+import ab.java.robome.domain.user.model.User;
 import ab.java.robome.web.auth.model.Login;
 import ab.java.robome.web.auth.model.Register;
 import ab.java.robome.web.common.AbstractController;
@@ -19,11 +23,12 @@ public class AuthController extends AbstractController {
 
 	public static final String PATH = "auth";
 	
-
+	private UserService userService;
 	
 	@Inject
-	public AuthController(ObjectMapper objectMapper) {
+	public AuthController(UserService userService, ObjectMapper objectMapper) {
 		super(objectMapper);
+		this.userService = userService;
 	}
 	
 
@@ -57,15 +62,20 @@ public class AuthController extends AbstractController {
 	
 	private Route registerUser(Register register) {
 		
-		Location locationHeader = Location.create("/" + PATH + "/" );
+		Location locationHeader = Location.create("/" + PATH + "/" + "login" );
 		
 		System.out.println("REGISTER USER: " + register);
 		
 		HttpResponse response = HttpResponse.create()
 				.withStatus(StatusCodes.CREATED)
 				.addHeader(locationHeader);
+		
+		User user = ImmutableUser.builder()
+				.email(register.email())
+				.passwordHash("abc")
+				.build();
 
-		CompletionStage<Done> futureSaved = CompletableFuture.completedFuture(Done.getInstance());
+		CompletionStage<Done> futureSaved = userService.saveUser(user);
 		return onSuccess(() -> futureSaved, done -> complete(response));
 		
 	}
