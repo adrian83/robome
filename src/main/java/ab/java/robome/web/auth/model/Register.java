@@ -11,4 +11,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public interface Register {
 
 	String email();
+	
+	String password();
+	
+	String repeatedPassword();
+	
 }

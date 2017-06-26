@@ -1,5 +1,7 @@
 package ab.java.robome.domain.user.model;
 
+import java.time.LocalDateTime;
+
 import org.immutables.value.Value;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -14,5 +16,9 @@ public interface User {
 	String email();
 	
 	String passwordHash();
+
+	LocalDateTime createdAt();
+
+	LocalDateTime modifiedAt();
 
 }

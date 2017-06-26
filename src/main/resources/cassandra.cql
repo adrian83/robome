@@ -16,7 +16,7 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
   state varchar,
   created_at timestamp,
   modified_at timestamp,
-  PRIMARY KEY (id, name)
+  PRIMARY KEY (table_id, name)
 );
 
  CREATE TABLE robome.stages (
@@ -26,7 +26,7 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
   state varchar,
   created_at timestamp,
   modified_at timestamp,
-  PRIMARY KEY (table_id, id)
+  PRIMARY KEY (table_id, stage_id)
 );
 
  CREATE TABLE robome.activities (
@@ -37,5 +37,5 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
   state varchar,
   created_at timestamp,
   modified_at timestamp,
-  PRIMARY KEY (table_id, stage_id, id)
+  PRIMARY KEY (table_id, stage_id, activity_id)
 );
