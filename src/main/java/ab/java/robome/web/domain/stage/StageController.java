@@ -1,4 +1,4 @@
-package ab.java.robome.web.stage;
+package ab.java.robome.web.domain.stage;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.typesafe.config.Config;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.stage.StageService;
@@ -20,7 +21,7 @@ import ab.java.robome.domain.stage.model.Stage;
 import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
-import ab.java.robome.web.table.TableController;
+import ab.java.robome.web.domain.table.TableController;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -35,17 +36,17 @@ public class StageController extends AbstractController {
 	private StageService stageService;
 
 	@Inject
-	public StageController(StageService stageService, ObjectMapper objectMapper) {
-		super(objectMapper);
+	public StageController(StageService stageService, Config config, ObjectMapper objectMapper) {
+		super(objectMapper, config);
 		this.stageService = stageService;
 	}
 
 	public Route createRoute() {
 
 		return route(
-				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathPrefix(segment(), stageId -> pathEndOrSingleSlash(() -> getStageById(tableId, stageId))))))),
-				post(() ->  pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e))))))),
-				get(() -> pathPrefix(TableController.PATH, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId))))))
+				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathPrefix(segment(), stageId -> pathEndOrSingleSlash(() -> getStageById(tableId, stageId))))))),
+				post(() ->  pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e))))))),
+				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId))))))
 				);
 	}
 
@@ -75,7 +76,7 @@ public class StageController extends AbstractController {
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
 		
-		Location locationHeader = locationFor(TableController.PATH, tableId, PATH, id.toString());
+		Location locationHeader = locationFor(TableController.TABLES, tableId, PATH, id.toString());
 		
 		StageId stageId = ImmutableStageId.builder()
 				.stageId(id)

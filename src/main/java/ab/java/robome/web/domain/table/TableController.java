@@ -1,4 +1,4 @@
-package ab.java.robome.web.table;
+package ab.java.robome.web.domain.table;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
@@ -8,23 +8,22 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.typesafe.config.Config;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.table.TableService;
 import ab.java.robome.domain.table.model.ImmutableTable;
 import ab.java.robome.domain.table.model.ImmutableTableId;
-import ab.java.robome.domain.table.model.NewTable;
 import ab.java.robome.domain.table.model.Table;
 import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.common.validation.ValidationError;
+import ab.java.robome.web.domain.table.model.NewTable;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
@@ -32,21 +31,21 @@ import akka.http.javadsl.server.Route;
 
 public class TableController extends AbstractController {
 	
-	public static final String PATH = "tables";
+	public static final String TABLES = "tables";
 
 	private TableService tableService;
 
 	@Inject
-	public TableController(TableService tableService, ObjectMapper objectMapper) {
-		super(objectMapper);
+	public TableController(TableService tableService, Config config, ObjectMapper objectMapper) {
+		super(objectMapper, config);
 		this.tableService = tableService;
 	}
 
 	public Route createRoute() { 
 		return route(
-				get(() -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTables()))),
-				get(() -> pathPrefix(PATH, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
-				post(() -> path(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
+				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> getTables()))),
+				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
+				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 
@@ -67,19 +66,16 @@ public class TableController extends AbstractController {
 	
 	private Route persistTable(NewTable newTable) {
 		
-		List<ValidationError> validationErrors = new NewTableValidator().validate(newTable);
+		List<ValidationError> validationErrors = newTable.validate(config);
 		if (!validationErrors.isEmpty()) {
-			 HttpResponse response = HttpResponse.create()
-					 .withStatus(StatusCodes.BAD_REQUEST)
-					 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors));
-			 return complete(response);
+			 return onValidationErrors(validationErrors);
 		}
 		
 
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
 		
-		Location locationHeader = Location.create("/" + TableController.PATH + "/" + id.toString());
+		Location locationHeader = Location.create("/" + TableController.TABLES + "/" + id.toString());
 		
 		TableId tableId = ImmutableTableId.builder().tableId(id).build();
 
@@ -97,15 +93,6 @@ public class TableController extends AbstractController {
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete(response));
-		
 	}
 
-	private String toBytes(List<ValidationError> validationErrors) {
-		try {
-			return objectMapper.writeValueAsString(validationErrors);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 }

@@ -1,4 +1,4 @@
-package ab.java.robome.web.activity;
+package ab.java.robome.web.domain.activity;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 

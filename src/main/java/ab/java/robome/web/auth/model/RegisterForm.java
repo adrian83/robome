@@ -1,20 +1,35 @@
-package ab.java.robome.web.auth;
+package ab.java.robome.web.auth.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.base.Strings;
+import org.immutables.value.Value;
 
-import ab.java.robome.web.auth.model.Register;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.base.Strings;
+import com.typesafe.config.Config;
+
 import ab.java.robome.web.common.validation.ImmutableValidationError;
+import ab.java.robome.web.common.validation.Validable;
 import ab.java.robome.web.common.validation.ValidationError;
 
-public class RegisterValidator {
+@Value.Immutable
+@JsonSerialize(as = ImmutableRegister.class)
+@JsonDeserialize(as = ImmutableRegister.class)
+public interface RegisterForm extends Validable {
 
-	public List<ValidationError> validate(Register register) {
+	String email();
+	
+	String password();
+	
+	String repeatedPassword();
+	
+
+	default List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
 		
-		if (Strings.isNullOrEmpty(register.email())) {
+		if (Strings.isNullOrEmpty(email())) {
 			ValidationError error = ImmutableValidationError.builder()
 					.field("email")
 					.messageCode("register.email.empty")
@@ -24,7 +39,7 @@ public class RegisterValidator {
 			errors.add(error);
 		}
 		
-		if (Strings.isNullOrEmpty(register.password())) {
+		if (Strings.isNullOrEmpty(password())) {
 			
 			ValidationError error = ImmutableValidationError.builder()
 					.field("password")
@@ -34,7 +49,7 @@ public class RegisterValidator {
 			
 			errors.add(error);
 			
-		} else if(!register.password().equals(register.repeatedPassword())) {
+		} else if(!password().equals(repeatedPassword())) {
 			
 			ValidationError error = ImmutableValidationError.builder()
 					.field("repeatedPassword")
@@ -46,5 +61,4 @@ public class RegisterValidator {
 		
 		return errors;
 	}
-	
 }

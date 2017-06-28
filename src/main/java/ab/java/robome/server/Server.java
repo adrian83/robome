@@ -13,8 +13,8 @@ import akka.stream.javadsl.Flow;
 import ab.java.robome.RobomeModule;
 import ab.java.robome.web.activity.ActivityController;
 import ab.java.robome.web.auth.AuthController;
-import ab.java.robome.web.stage.StageController;
-import ab.java.robome.web.table.TableController;
+import ab.java.robome.web.domain.stage.StageController;
+import ab.java.robome.web.domain.table.TableController;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
