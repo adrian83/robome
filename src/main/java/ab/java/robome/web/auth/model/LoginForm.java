@@ -15,8 +15,8 @@ import ab.java.robome.web.common.validation.Validable;
 import ab.java.robome.web.common.validation.ValidationError;
 
 @Value.Immutable
-@JsonSerialize(as = ImmutableLogin.class)
-@JsonDeserialize(as = ImmutableLogin.class)
+@JsonSerialize(as = ImmutableLoginForm.class)
+@JsonDeserialize(as = ImmutableLoginForm.class)
 public interface LoginForm extends Validable {
 
 	String email();
