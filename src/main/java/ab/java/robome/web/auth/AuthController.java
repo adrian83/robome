@@ -1,9 +1,12 @@
 package ab.java.robome.web.auth;
 
+import java.security.Key;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -25,6 +28,8 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 public class AuthController extends AbstractController {
 
@@ -63,6 +68,16 @@ public class AuthController extends AbstractController {
 		Location locationHeader = Location.create("/" + AUTH + "/" );
 		
 		System.out.println("LOGIN USER: " + login);
+		
+		Key key = new SecretKeySpec(config.getString("security.key").getBytes(), 
+				SignatureAlgorithm.HS512.getValue()); //  MacProvider.generateKey();
+		
+		String compactJws = Jwts.builder()
+				  .setSubject("Joe")
+				  .signWith(SignatureAlgorithm.HS512, key)
+				  .compact();
+		
+		System.out.println("JWS: " + compactJws);
 		
 		HttpResponse response = HttpResponse.create()
 				.withStatus(StatusCodes.CREATED)
