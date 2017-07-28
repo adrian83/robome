@@ -3,7 +3,7 @@ package ab.java.robome.web.auth;
 import java.security.Key;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -27,6 +27,7 @@ import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
+import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.Route;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -50,7 +51,7 @@ public class AuthController extends AbstractController {
 				post(() -> pathPrefix(AUTH, 
 						() -> pathPrefix("register", 
 								() -> pathEndOrSingleSlash(
-										() ->  entity(Jackson.unmarshaller(RegisterForm.class), this::registerUser))))),
+										() -> entity(Jackson.unmarshaller(RegisterForm.class), this::registerUser))))),
 				post(() -> pathPrefix(AUTH, 
 						() -> pathPrefix(LOGIN, 
 								() -> pathEndOrSingleSlash(
@@ -72,19 +73,29 @@ public class AuthController extends AbstractController {
 		Key key = new SecretKeySpec(config.getString("security.key").getBytes(), 
 				SignatureAlgorithm.HS512.getValue()); //  MacProvider.generateKey();
 		
-		String compactJws = Jwts.builder()
-				  .setSubject("Joe")
-				  .signWith(SignatureAlgorithm.HS512, key)
-				  .compact();
-		
-		System.out.println("JWS: " + compactJws);
-		
-		HttpResponse response = HttpResponse.create()
-				.withStatus(StatusCodes.CREATED)
-				.addHeader(locationHeader);
 
-		CompletionStage<Done> futureSaved = CompletableFuture.completedFuture(Done.getInstance());
-		return onSuccess(() -> futureSaved, done -> complete(response));
+		 CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.email());
+		 
+		 CompletionStage<HttpResponse> futureResponse = futureUser.thenApply(maybeUser -> maybeUser.map(user -> {
+			 if(BCrypt.checkpw(login.password(), user.passwordHash())) {
+					String compactJws = Jwts.builder()
+							  .setSubject("Joe")
+							  .signWith(SignatureAlgorithm.HS512, key)
+							  .compact();
+					
+					System.out.println("JWS: " + compactJws);
+					
+					RawHeader jwtHeader = RawHeader.create("jwt", compactJws);
+					
+					return HttpResponse.create()
+							.withStatus(StatusCodes.OK)
+							.addHeaders(headers(locationHeader, jwtHeader));
+			 } else {
+				 return HttpResponse.create().withStatus(StatusCodes.NOT_FOUND);
+			 }
+		 }).orElse(HttpResponse.create().withStatus(StatusCodes.NOT_FOUND)));
+		 
+		return completeWithFuture(futureResponse);
 		
 	}
 	

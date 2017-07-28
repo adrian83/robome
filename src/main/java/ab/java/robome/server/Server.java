@@ -11,8 +11,8 @@ import akka.http.javadsl.server.Route;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
 import ab.java.robome.RobomeModule;
-import ab.java.robome.web.activity.ActivityController;
 import ab.java.robome.web.auth.AuthController;
+import ab.java.robome.web.domain.activity.ActivityController;
 import ab.java.robome.web.domain.stage.StageController;
 import ab.java.robome.web.domain.table.TableController;
 

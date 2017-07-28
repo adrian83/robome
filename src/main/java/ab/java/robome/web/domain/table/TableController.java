@@ -43,13 +43,16 @@ public class TableController extends AbstractController {
 
 	public Route createRoute() { 
 		return route(
-				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> getTables()))),
+				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> getTables(jwtToken))))),
 				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 
-	private Route getTables(){
+	private Route getTables(Optional<String> jwtToken){
+		
+		System.out.println("JWT: " + jwtToken.orElseGet(() -> "NO JWT TOKEN"));
+		
 		final CompletionStage<List<Table>> futureTables = tableService.getTables();
 		
 		return onSuccess(() -> futureTables, tables -> completeOK(tables, Jackson.marshaller(objectMapper)));

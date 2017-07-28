@@ -1,9 +1,12 @@
 package ab.java.robome.domain.user;
 
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.google.inject.Inject;
 
+import ab.java.robome.domain.table.model.Table;
 import ab.java.robome.domain.user.model.User;
 import akka.Done;
 import akka.NotUsed;
@@ -28,4 +31,8 @@ public class UserService {
 		return source.runWith(sink, actorMaterializer);
 	}
 	
+	public CompletionStage<Optional<User>> findUserByEmail(String email) {
+		return userRepository.getByEmail(email)
+				.runWith(Sink.head(), actorMaterializer);
+	}
 }

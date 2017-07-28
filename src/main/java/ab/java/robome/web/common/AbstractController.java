@@ -10,6 +10,7 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.web.common.validation.ValidationError;
 import akka.http.javadsl.model.ContentTypes;
+import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
@@ -28,6 +29,10 @@ public class AbstractController extends AllDirectives {
 
 	protected Location locationFor(String ... pathElems) {
 		return  Location.create(Arrays.stream(pathElems).collect(Collectors.joining("/")));
+	}
+	
+	protected List<HttpHeader> headers(HttpHeader ...headers) {
+		return Arrays.asList(headers);
 	}
 	
 	protected String toBytes(Object object) {
