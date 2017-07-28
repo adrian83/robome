@@ -2,11 +2,12 @@ package ab.java.robome.web.auth;
 
 import java.security.Key;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-import javax.crypto.spec.SecretKeySpec;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -22,6 +23,7 @@ import ab.java.robome.web.auth.model.LoginForm;
 import ab.java.robome.web.auth.model.RegisterForm;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.common.validation.ValidationError;
+import ab.java.robome.web.security.SecurityUtils;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -32,17 +34,20 @@ import akka.http.javadsl.server.Route;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+
 public class AuthController extends AbstractController {
 
 	public static final String AUTH = "auth";
 	public static final String LOGIN = "login";
 		
 	private UserService userService;
+	private SecurityUtils securityUtils;
 	
 	@Inject
-	public AuthController(UserService userService, Config config, ObjectMapper objectMapper) {
+	public AuthController(UserService userService, SecurityUtils securityUtils, Config config, ObjectMapper objectMapper) {
 		super(objectMapper, config);
 		this.userService = userService;
+		this.securityUtils = securityUtils;
 	}
 	
 
@@ -70,16 +75,20 @@ public class AuthController extends AbstractController {
 		
 		System.out.println("LOGIN USER: " + login);
 		
-		Key key = new SecretKeySpec(config.getString("security.key").getBytes(), 
-				SignatureAlgorithm.HS512.getValue()); //  MacProvider.generateKey();
+		Key key = securityUtils.getSecurityKey();
 		
 
 		 CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.email());
 		 
 		 CompletionStage<HttpResponse> futureResponse = futureUser.thenApply(maybeUser -> maybeUser.map(user -> {
 			 if(BCrypt.checkpw(login.password(), user.passwordHash())) {
+				 
+				 Map<String, Object> claims = new HashMap<>();
+				 claims.put("user_email", user.email());
+				 
 					String compactJws = Jwts.builder()
 							  .setSubject("Joe")
+							  .setClaims(claims)
 							  .signWith(SignatureAlgorithm.HS512, key)
 							  .compact();
 					

@@ -22,6 +22,7 @@ import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.common.validation.ValidationError;
 import ab.java.robome.web.domain.table.model.NewTable;
+import ab.java.robome.web.security.SecurityUtils;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -33,25 +34,25 @@ public class TableController extends AbstractController {
 	
 	public static final String TABLES = "tables";
 
-	private TableService tableService;
+	private TableService tableService;	
+	private SecurityUtils securityUtils;
 
 	@Inject
-	public TableController(TableService tableService, Config config, ObjectMapper objectMapper) {
+	public TableController(TableService tableService, SecurityUtils securityUtils, Config config, ObjectMapper objectMapper) {
 		super(objectMapper, config);
 		this.tableService = tableService;
+		this.securityUtils = securityUtils;
 	}
 
 	public Route createRoute() { 
 		return route(
-				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> getTables(jwtToken))))),
+				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> securityUtils.can(jwtToken, () -> getTables()))))),
 				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 
-	private Route getTables(Optional<String> jwtToken){
-		
-		System.out.println("JWT: " + jwtToken.orElseGet(() -> "NO JWT TOKEN"));
+	private Route getTables(){
 		
 		final CompletionStage<List<Table>> futureTables = tableService.getTables();
 		
