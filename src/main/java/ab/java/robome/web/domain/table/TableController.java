@@ -23,6 +23,7 @@ import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.common.validation.ValidationError;
 import ab.java.robome.web.domain.table.model.NewTable;
 import ab.java.robome.web.security.SecurityUtils;
+import ab.java.robome.web.security.UserData;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -46,13 +47,13 @@ public class TableController extends AbstractController {
 
 	public Route createRoute() { 
 		return route(
-				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> securityUtils.can(jwtToken, () -> getTables()))))),
+				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> securityUtils.authorized(jwtToken, userData -> getTables(userData)))))),
 				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 
-	private Route getTables(){
+	private Route getTables(UserData userData){
 		
 		final CompletionStage<List<Table>> futureTables = tableService.getTables();
 		
