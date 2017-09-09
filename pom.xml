@@ -14,7 +14,7 @@
 		<scala.binary.version>2.11</scala.binary.version>
 
 		<!-- Akka -->
-		<akka.http.version>10.0.1</akka.http.version>
+		<akka.http.version>10.0.7</akka.http.version>
 		<akka.version>2.4.16</akka.version>
 
 		<!-- ScalaTest -->
