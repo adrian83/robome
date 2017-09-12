@@ -20,6 +20,8 @@ import ab.java.robome.domain.table.model.Table;
 import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
+import ab.java.robome.web.common.response.Cors;
+import ab.java.robome.web.common.response.Options;
 import ab.java.robome.web.common.validation.ValidationError;
 import ab.java.robome.web.domain.table.model.NewTable;
 import ab.java.robome.web.security.SecurityUtils;
@@ -47,12 +49,18 @@ public class TableController extends AbstractController {
 
 	public Route createRoute() { 
 		return route(
+				options(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(this::handleCreateTableOptions))),
+
 				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> securityUtils.authorized(jwtToken, userData -> getTables(userData)))))),
 				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 
+	private Route handleCreateTableOptions() {
+		return complete(new Options().withHeaders(JWT_TOKEN , "Content-Type").withMethods("POST").response());
+	}
+	
 	private Route getTables(UserData userData){
 		
 		final CompletionStage<List<Table>> futureTables = tableService.getTables();
@@ -94,7 +102,12 @@ public class TableController extends AbstractController {
 		
 		HttpResponse response = HttpResponse.create()
 				.withStatus(StatusCodes.CREATED)
-				.addHeader(locationHeader);
+				.addHeaders(
+						headers(
+								locationHeader, 
+								Cors.origin("*"), 
+								Cors.methods("POST"), 
+								Cors.headers(JWT_TOKEN , "Content-Type")));
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete(response));

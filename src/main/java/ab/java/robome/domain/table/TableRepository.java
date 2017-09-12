@@ -51,7 +51,7 @@ public class TableRepository {
 		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
 			Date created = TimeUtils.toDate(tab.createdAt());
 			Date modified = TimeUtils.toDate(tab.modifiedAt());
-			return statement.bind(tab.id(), tab.title(), tab.state().name(), created, modified);
+			return statement.bind(tab.id().tableId(), tab.title(), tab.state().name(), created, modified);
 		};
 
 		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,

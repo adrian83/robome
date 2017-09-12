@@ -15,10 +15,12 @@ import ab.java.robome.web.common.validation.ValidationError;
 public class NewTable implements Validable {
 
 	final String title;
+	final String description;
 
 	@JsonCreator
-	public NewTable(@JsonProperty("title") String title) {
+	public NewTable(@JsonProperty("title") String title, @JsonProperty("description") String description) {
 		this.title = title;
+		this.description = description;
 	}
 
 	public String getTitle() {
