@@ -31,7 +31,7 @@ import akka.stream.javadsl.Source;
 
 public class TableRepository {
 
-	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, name, state, "
+	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, title, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
 	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE table_id = ?";
@@ -51,7 +51,7 @@ public class TableRepository {
 		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
 			Date created = TimeUtils.toDate(tab.createdAt());
 			Date modified = TimeUtils.toDate(tab.modifiedAt());
-			return statement.bind(tab.id(), tab.name(), tab.state().name(), created, modified);
+			return statement.bind(tab.id(), tab.title(), tab.state().name(), created, modified);
 		};
 
 		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
@@ -62,15 +62,8 @@ public class TableRepository {
 	public Source<Optional<Table>,NotUsed> getById(UUID tableId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(tableId);
-
 		ResultSet r = session.execute(bound);
-
-		Row row = r.one();
-		if (row == null) {
-			return Source.single(Optional.empty());
-		}
-		
-		return Source.single(Optional.of(fromRow(row)));
+		return Source.single(Optional.ofNullable(r.one()).map(this::fromRow));
 	}
 
 	public Source<Table, NotUsed> getAllTables() {
@@ -87,7 +80,7 @@ public class TableRepository {
 		
 		Table table = ImmutableTable.builder()
 				.id(id)
-				.name(row.getString("name"))
+				.title(row.getString("title"))
 				.state(TableState.valueOf(row.getString("state")))
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
 				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))

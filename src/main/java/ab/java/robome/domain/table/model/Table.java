@@ -14,7 +14,7 @@ public interface Table {
 
 	TableId id();
 
-	String name();
+	String title();
 
 	TableState state();
 

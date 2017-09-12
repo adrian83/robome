@@ -86,7 +86,7 @@ public class TableController extends AbstractController {
 
 		Table table = ImmutableTable.builder()
 				.id(tableId)
-				.name(newTable.getName())
+				.title(newTable.getTitle())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)

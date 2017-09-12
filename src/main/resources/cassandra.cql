@@ -12,7 +12,7 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
   
  CREATE TABLE robome.tables (
   table_id uuid,
-  name varchar,
+  title varchar,
   state varchar,
   created_at timestamp,
   modified_at timestamp,

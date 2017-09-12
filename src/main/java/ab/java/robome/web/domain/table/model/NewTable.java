@@ -14,26 +14,26 @@ import ab.java.robome.web.common.validation.ValidationError;
 
 public class NewTable implements Validable {
 
-	final String name;
+	final String title;
 
 	@JsonCreator
-	public NewTable(@JsonProperty("name") String name) {
-		this.name = name;
+	public NewTable(@JsonProperty("title") String title) {
+		this.title = title;
 	}
 
-	public String getName() {
-		return name;
+	public String getTitle() {
+		return title;
 	}
 
 	@Override
 	public List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
 		
-		if (Strings.isNullOrEmpty(getName())) {
+		if (Strings.isNullOrEmpty(getTitle())) {
 			ValidationError error = ImmutableValidationError.builder()
-					.field("name")
-					.messageCode("table.create.name.empty")
-					.message("Table name cannot be empty")
+					.field("title")
+					.messageCode("table.create.title.empty")
+					.message("Table title cannot be empty")
 					.build();
 			
 			errors.add(error);
