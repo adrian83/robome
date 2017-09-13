@@ -22,7 +22,8 @@ import akka.http.javadsl.server.Route;
 
 public class AbstractController extends AllDirectives {
 	
-	protected static final String JWT_TOKEN = "JwtToken";
+	
+	protected static final String CORS_ORIGIN_KEY = "cors.origin";
 	
 	protected ObjectMapper objectMapper;
 	protected Config config;
@@ -41,7 +42,11 @@ public class AbstractController extends AllDirectives {
 	}
 	
 	protected RawHeader jwt(String token) {
-		return RawHeader.create(JWT_TOKEN, token);
+		return RawHeader.create(ab.java.robome.web.common.HttpHeader.JWT_TOKEN.getText(), token);
+	}
+	
+	protected String corsOrigin() {
+		return config.getString(CORS_ORIGIN_KEY);
 	}
 	
 	protected List<HttpHeader> headers(HttpHeader ...headers) {

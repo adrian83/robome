@@ -20,6 +20,8 @@ import ab.java.robome.domain.table.model.Table;
 import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
+import ab.java.robome.web.common.HttpHeader;
+import ab.java.robome.web.common.HttpMethod;
 import ab.java.robome.web.common.response.Cors;
 import ab.java.robome.web.common.response.Options;
 import ab.java.robome.web.common.validation.ValidationError;
@@ -28,6 +30,7 @@ import ab.java.robome.web.security.SecurityUtils;
 import ab.java.robome.web.security.UserData;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
+import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
@@ -51,21 +54,42 @@ public class TableController extends AbstractController {
 		return route(
 				options(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(this::handleCreateTableOptions))),
 
-				get(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(() -> optionalHeaderValueByName("jwt", jwtToken -> securityUtils.authorized(jwtToken, userData -> getTables(userData)))))),
+				get(() -> pathPrefix(
+						TABLES, 
+						() -> pathEndOrSingleSlash(
+								() -> optionalHeaderValueByName(
+										HttpHeader.JWT_TOKEN.getText(), 
+										jwtToken -> securityUtils.authorized(
+												jwtToken, 
+												userData -> getTables(userData)))))),
+				
 				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
 				);
 	}
 
-	private Route handleCreateTableOptions() {
-		return complete(new Options().withHeaders(JWT_TOKEN , "Content-Type").withMethods("POST").response());
-	}
+
 	
 	private Route getTables(UserData userData){
 		
-		final CompletionStage<List<Table>> futureTables = tableService.getTables();
+		final CompletionStage<List<Table>> futureTables = tableService.getTables(userData.email());
 		
-		return onSuccess(() -> futureTables, tables -> completeOK(tables, Jackson.marshaller(objectMapper)));
+		return onSuccess(() -> futureTables, tables -> {
+			HttpResponse response = HttpResponse.create()
+					 .withStatus(StatusCodes.OK)
+					 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(tables))
+					 .addHeaders(headers(
+							 Cors.headers(
+									 HttpHeader.JWT_TOKEN.getText(), 
+									 HttpHeader.CONTENT_TYPE.getText()), 
+							 Cors.methods(
+									 HttpMethod.POST.name(), 
+									 HttpMethod.GET.name()),
+							 Cors.origin(corsOrigin()), 
+							 jwt(userData.token())
+							 ));
+			return complete(response);
+		});
 	}
 	
 	private Route getTableById(String tableId) {
@@ -95,6 +119,7 @@ public class TableController extends AbstractController {
 		Table table = ImmutableTable.builder()
 				.id(tableId)
 				.title(newTable.getTitle())
+				.email("adrian@interia.pl")
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)
@@ -107,10 +132,22 @@ public class TableController extends AbstractController {
 								locationHeader, 
 								Cors.origin("*"), 
 								Cors.methods("POST"), 
-								Cors.headers(JWT_TOKEN , "Content-Type")));
+								Cors.headers(HttpHeader.JWT_TOKEN.getText() , "Content-Type")));
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete(response));
 	}
 
+	private Route handleCreateTableOptions() {
+		HttpResponse response = new Options()
+				.withHeaders(
+						HttpHeader.JWT_TOKEN.getText(), 
+						HttpHeader.CONTENT_TYPE.getText())
+				.withMethods(HttpMethod.POST.name())
+				.withOrigin(corsOrigin())
+				.response();
+		
+		return complete(response);
+	}
+	
 }

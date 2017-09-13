@@ -22,6 +22,8 @@ import ab.java.robome.domain.user.model.User;
 import ab.java.robome.web.auth.model.LoginForm;
 import ab.java.robome.web.auth.model.RegisterForm;
 import ab.java.robome.web.common.AbstractController;
+import ab.java.robome.web.common.HttpHeader;
+import ab.java.robome.web.common.HttpMethod;
 import ab.java.robome.web.common.response.Cors;
 import ab.java.robome.web.common.response.Options;
 import ab.java.robome.web.common.validation.ValidationError;
@@ -31,6 +33,7 @@ import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
+import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.Route;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -69,13 +72,7 @@ public class AuthController extends AbstractController {
 				);
 	}
 	
-	private Route handleLoginOptions() {
-		return complete(new Options().withHeaders(JWT_TOKEN , "Content-Type").withMethods("POST").response());
-	}
-	
-	private Route handleRegisterOptions() {
-		return complete(new Options().withHeaders(JWT_TOKEN , "Content-Type").withMethods("POST").response());
-	}
+
 
 	private Route loginUser(LoginForm login) {
 		
@@ -112,24 +109,34 @@ public class AuthController extends AbstractController {
 							.addHeaders(headers(
 									locationHeader, 
 									jwt(compactJws), 
-									Cors.origin("*"), 
-									Cors.methods("POST"), 
-									Cors.headers(JWT_TOKEN , "Content-Type"), 
+									Cors.origin(corsOrigin()), 
+									Cors.methods(HttpMethod.POST.name()), 
+									Cors.headers(
+											 HttpHeader.JWT_TOKEN.getText(), 
+											 HttpHeader.CONTENT_TYPE.getText()), 
+									RawHeader.create("Access-Control-Expose-Headers", HttpHeader.JWT_TOKEN.getText()),
+									
 									json()));
 			 } else {
 				 return HttpResponse.create()
 						 .withStatus(StatusCodes.NOT_FOUND)
 						 .addHeaders(headers(
-									Cors.origin("*"), 
-									Cors.methods("POST"), 
-									Cors.headers(JWT_TOKEN , "Content-Type"), 
+									Cors.origin(corsOrigin()), 
+									Cors.methods(HttpMethod.POST.name()), 
+									Cors.headers(
+											 HttpHeader.JWT_TOKEN.getText(), 
+											 HttpHeader.CONTENT_TYPE.getText()), 
 								 json()));
 			 }
-		 }).orElse(HttpResponse.create().withStatus(StatusCodes.NOT_FOUND).addHeaders(headers(
-					Cors.origin("*"), 
-					Cors.methods("POST"), 
-					Cors.headers(JWT_TOKEN , "Content-Type"), 
-					json()))));
+		 }).orElse(HttpResponse.create()
+				 .withStatus(StatusCodes.NOT_FOUND)
+				 .addHeaders(
+						 headers(
+								 Cors.origin(corsOrigin()), 
+								 Cors.methods(HttpMethod.POST.name()), 
+								 Cors.headers(
+										 HttpHeader.JWT_TOKEN.getText(), 
+										 HttpHeader.CONTENT_TYPE.getText())))));
 		 
 		return completeWithFuture(futureResponse);
 		
@@ -151,7 +158,15 @@ public class AuthController extends AbstractController {
 		
 		HttpResponse response = HttpResponse.create()
 				.withStatus(StatusCodes.CREATED)
-				.addHeader(locationHeader);
+				 .addHeaders(
+						 headers(
+								 locationHeader,
+								 Cors.origin(corsOrigin()), 
+								 Cors.methods(HttpMethod.POST.name()), 
+								 Cors.headers(
+										 HttpHeader.JWT_TOKEN.getText(), 
+										 HttpHeader.CONTENT_TYPE.getText())));
+
 		
 		User user = ImmutableUser.builder()
 				.email(register.email())
@@ -164,4 +179,29 @@ public class AuthController extends AbstractController {
 		return onSuccess(() -> futureSaved, done -> complete(response));
 		
 	}
+	
+	private Route handleLoginOptions() {
+		HttpResponse response = new Options()
+				.withHeaders(
+						HttpHeader.JWT_TOKEN.getText(), 
+						HttpHeader.CONTENT_TYPE.getText())
+				.withMethods(HttpMethod.POST.name())
+				.withOrigin(corsOrigin())
+				.response();
+		
+		return complete(response);
+	}
+	
+	private Route handleRegisterOptions() {
+		HttpResponse response = new Options()
+				.withHeaders(
+						HttpHeader.JWT_TOKEN.getText(), 
+						HttpHeader.CONTENT_TYPE.getText())
+				.withMethods(HttpMethod.POST.name())
+				.withOrigin(corsOrigin())
+				.response();
+		
+		return complete(response);
+	}
+	
 }

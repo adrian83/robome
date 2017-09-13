@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public interface Table {
 
 	TableId id();
+	
+	String email();
 
 	String title();
 

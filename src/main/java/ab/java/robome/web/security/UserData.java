@@ -7,4 +7,6 @@ public interface UserData {
 
 	String email();
 	
+	String token();
+	
 }

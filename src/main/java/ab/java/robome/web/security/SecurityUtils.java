@@ -74,6 +74,7 @@ public class SecurityUtils extends AllDirectives {
 
 		return ImmutableUserData.builder()
 				.email(email)
+				.token(jwtToken)
 				.build();
 	}
 
