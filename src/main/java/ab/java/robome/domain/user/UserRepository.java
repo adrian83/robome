@@ -2,6 +2,7 @@ package ab.java.robome.domain.user;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 
@@ -25,8 +26,8 @@ import akka.stream.javadsl.Source;
 public class UserRepository {
 	
 	private static final String SELECT_USER_BY_EMAIL = "SELECT * FROM robome.users WHERE email = ?";
-	private static final String INSERT_USER_STMT = "INSERT INTO robome.users (email, password_hash, "
-			+ "created_at, modified_at) VALUES (?, ?, ?, ?)";
+	private static final String INSERT_USER_STMT = "INSERT INTO robome.users (id, email, password_hash, "
+			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?)";
 	
 	private Session session;
 	private ActorSystem actorSystem;
@@ -40,21 +41,14 @@ public class UserRepository {
 	public Source<Optional<User>, NotUsed> getByEmail(String email) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_USER_BY_EMAIL);
 		BoundStatement bound = preparedStatement.bind(email);
-
 		ResultSet r = session.execute(bound);
-
-		Row row = r.one();
-		if (row == null) {
-			return Source.single(Optional.empty());
-		}
-
-		User user = fromRow(row);
-		return Source.single(Optional.of(user));
+		return Source.single(Optional.ofNullable(r.one()).map(this::fromRow));
 	}
 
 	private User fromRow(Row row) {
 		
 		User user = ImmutableUser.builder()
+				.id(row.get("id", UUID.class))
 				.email(row.getString("email"))
 				.passwordHash(row.getString("password_hash"))
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
@@ -70,7 +64,7 @@ public class UserRepository {
 		BiFunction<User, PreparedStatement, BoundStatement> statementBinder = (user, statement) -> {
 			Date created = TimeUtils.toDate(user.createdAt());
 			Date modified = TimeUtils.toDate(user.modifiedAt());
-			return statement.bind(user.email(), user.passwordHash(), created, modified);
+			return statement.bind(user.id(), user.email(), user.passwordHash(), created, modified);
 		};
 
 		Sink<User, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,

@@ -66,7 +66,7 @@ public class AbstractController extends AllDirectives {
 				 .withStatus(StatusCodes.BAD_REQUEST)
 				 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors))
 				 .addHeaders(headers(
-						 Cors.headers("Content-Type"), 
+						 Cors.allowHeaders("Content-Type"), 
 						 Cors.origin("*"), 
 						 Cors.methods("POST")
 						 ));

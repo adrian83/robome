@@ -36,8 +36,8 @@ public class TableService {
 		return source.runWith(sink, actorMaterializer);
 	}
 
-	public CompletionStage<List<Table>> getTables(String email) {
-		return tableRepository.getUserTables(email)
+	public CompletionStage<List<Table>> getTables(UUID userId) {
+		return tableRepository.getUserTables(userId)
 				.runWith(Sink.seq(), actorMaterializer);
 	}
 

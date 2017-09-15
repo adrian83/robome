@@ -44,7 +44,8 @@ public class TableController extends AbstractController {
 	private SecurityUtils securityUtils;
 
 	@Inject
-	public TableController(TableService tableService, SecurityUtils securityUtils, Config config, ObjectMapper objectMapper) {
+	public TableController(TableService tableService, SecurityUtils securityUtils, 
+			Config config, ObjectMapper objectMapper) {
 		super(objectMapper, config);
 		this.tableService = tableService;
 		this.securityUtils = securityUtils;
@@ -53,6 +54,7 @@ public class TableController extends AbstractController {
 	public Route createRoute() { 
 		return route(
 				options(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(this::handleCreateTableOptions))),
+				options(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(this::handleCreateTableOptions)))),
 
 				get(() -> pathPrefix(
 						TABLES, 
@@ -63,8 +65,19 @@ public class TableController extends AbstractController {
 												jwtToken, 
 												userData -> getTables(userData)))))),
 				
-				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(() -> getTableById(tableId))))), 
-				post(() -> path(TABLES, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewTable.class), this::persistTable))))
+				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(
+						() -> optionalHeaderValueByName(
+								HttpHeader.JWT_TOKEN.getText(), 
+								jwtToken -> securityUtils.authorized(
+										jwtToken, 
+										userData -> getTableById(tableId, userData))))))), 
+				
+				post(() -> path(TABLES, () -> pathEndOrSingleSlash(
+						() -> optionalHeaderValueByName(
+								HttpHeader.JWT_TOKEN.getText(), 
+								jwtToken -> securityUtils.authorized(
+										jwtToken, 
+										userData -> entity(Jackson.unmarshaller(NewTable.class), newTable -> this.persistTable(newTable, userData)))))))
 				);
 	}
 
@@ -72,27 +85,27 @@ public class TableController extends AbstractController {
 	
 	private Route getTables(UserData userData){
 		
-		final CompletionStage<List<Table>> futureTables = tableService.getTables(userData.email());
+		final CompletionStage<List<Table>> futureTables = tableService.getTables(userData.id());
 		
 		return onSuccess(() -> futureTables, tables -> {
 			HttpResponse response = HttpResponse.create()
 					 .withStatus(StatusCodes.OK)
 					 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(tables))
 					 .addHeaders(headers(
-							 Cors.headers(
+							 Cors.allowHeaders(
 									 HttpHeader.JWT_TOKEN.getText(), 
 									 HttpHeader.CONTENT_TYPE.getText()), 
 							 Cors.methods(
 									 HttpMethod.POST.name(), 
 									 HttpMethod.GET.name()),
 							 Cors.origin(corsOrigin()), 
-							 jwt(userData.token())
-							 ));
+							 jwt(userData.token())));
+			
 			return complete(response);
 		});
 	}
 	
-	private Route getTableById(String tableId) {
+	private Route getTableById(String tableId, UserData userData) {
 		UUID tableUuid = UUID.fromString(tableId);
 		
 		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(tableUuid);
@@ -101,7 +114,7 @@ public class TableController extends AbstractController {
 				.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
 	}
 	
-	private Route persistTable(NewTable newTable) {
+	private Route persistTable(NewTable newTable, UserData userData) {
 		
 		List<ValidationError> validationErrors = newTable.validate(config);
 		if (!validationErrors.isEmpty()) {
@@ -114,12 +127,14 @@ public class TableController extends AbstractController {
 		
 		Location locationHeader = Location.create("/" + TableController.TABLES + "/" + id.toString());
 		
-		TableId tableId = ImmutableTableId.builder().tableId(id).build();
+		TableId tableId = ImmutableTableId.builder()
+				.tableId(id)
+				.build();
 
 		Table table = ImmutableTable.builder()
 				.id(tableId)
 				.title(newTable.getTitle())
-				.email("adrian@interia.pl")
+				.userId(userData.id())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)
@@ -132,7 +147,7 @@ public class TableController extends AbstractController {
 								locationHeader, 
 								Cors.origin("*"), 
 								Cors.methods("POST"), 
-								Cors.headers(HttpHeader.JWT_TOKEN.getText() , "Content-Type")));
+								Cors.allowHeaders(HttpHeader.JWT_TOKEN.getText() , "Content-Type")));
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete(response));
@@ -143,7 +158,7 @@ public class TableController extends AbstractController {
 				.withHeaders(
 						HttpHeader.JWT_TOKEN.getText(), 
 						HttpHeader.CONTENT_TYPE.getText())
-				.withMethods(HttpMethod.POST.name())
+				.withMethods(HttpMethod.POST.name(), HttpMethod.GET.name())
 				.withOrigin(corsOrigin())
 				.response();
 		

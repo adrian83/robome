@@ -41,7 +41,7 @@ public class Options {
 		List<HttpHeader> httpHeaders = Lists.newArrayList(
 				Cors.origin(origin), 
 				Cors.methods(methods), 
-				Cors.headers(headers));
+				Cors.allowHeaders(headers));
 		
 		return HttpResponse.create()
 				.withStatus(StatusCodes.OK)

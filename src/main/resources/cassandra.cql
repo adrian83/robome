@@ -1,23 +1,26 @@
-DROP  KEYSPACE IF EXISTS robome;
+DROP KEYSPACE IF EXISTS robome;
 
 CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
   
  CREATE TABLE robome.users (
+  id uuid, 
   email varchar,
   password_hash varchar,
   created_at timestamp,
   modified_at timestamp,
-  PRIMARY KEY (email)
+  PRIMARY KEY (id)
 );
+
+CREATE INDEX uemail ON robome.users (email);
   
  CREATE TABLE robome.tables (
   table_id uuid,
-  email varchar,
+  user_id uuid,
   title varchar,
   state varchar,
   created_at timestamp,
   modified_at timestamp,
-  PRIMARY KEY (email, table_id)
+  PRIMARY KEY (user_id, table_id)
 );
 
  CREATE TABLE robome.stages (

@@ -17,8 +17,12 @@ public class Cors {
 		return RawHeader.create("Access-Control-Allow-Methods", join(methods));
 	}
 	
-	public static RawHeader headers(String ... headers) {
+	public static RawHeader allowHeaders(String ... headers) {
 		return RawHeader.create("Access-Control-Allow-Headers", join(headers));
+	}
+	
+	public static RawHeader exposeHeaders(String ... headers) {
+		return RawHeader.create("Access-Control-Expose-Headers", join(headers));
 	}
 	
 	private static String join(String ... values) {

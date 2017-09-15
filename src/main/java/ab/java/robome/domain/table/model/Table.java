@@ -1,6 +1,7 @@
 package ab.java.robome.domain.table.model;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.immutables.value.Value;
 
@@ -14,7 +15,7 @@ public interface Table {
 
 	TableId id();
 	
-	String email();
+	UUID userId();
 
 	String title();
 

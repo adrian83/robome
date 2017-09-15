@@ -31,10 +31,11 @@ import akka.stream.javadsl.Source;
 
 public class TableRepository {
 
-	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, email, title, state, "
+	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, "
+			+ "user_id, title, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
-	private static final String SELECT_BY_EMAIL_STMT = "SELECT * FROM robome.tables WHERE email = ?";
+	private static final String SELECT_BY_EMAIL_STMT = "SELECT * FROM robome.tables WHERE user_id = ?";
 	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE table_id = ?";
 
 	private Session session;
@@ -52,7 +53,7 @@ public class TableRepository {
 		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
 			Date created = TimeUtils.toDate(tab.createdAt());
 			Date modified = TimeUtils.toDate(tab.modifiedAt());
-			return statement.bind(tab.id().tableId(), tab.email(), tab.title(), tab.state().name(), created, modified);
+			return statement.bind(tab.id().tableId(), tab.userId(), tab.title(), tab.state().name(), created, modified);
 		};
 
 		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
@@ -82,17 +83,18 @@ public class TableRepository {
 		Table table = ImmutableTable.builder()
 				.id(id)
 				.title(row.getString("title"))
-				.email(row.getString("email"))
+				.userId(row.getUUID("user_id"))
 				.state(TableState.valueOf(row.getString("state")))
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
 				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
 				.build();
+		
 		return table;
 	}
 
-	public Source<Table,NotUsed> getUserTables(String email) {
+	public Source<Table,NotUsed> getUserTables(UUID userId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_BY_EMAIL_STMT);
-		BoundStatement bound = preparedStatement.bind(email);
+		BoundStatement bound = preparedStatement.bind(userId);
 		Source<Row, NotUsed> source = CassandraSource.create(bound, session);
 		return source.map(this::fromRow);
 		

@@ -2,6 +2,7 @@ package ab.java.robome.web.security;
 
 import java.security.Key;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -68,12 +69,14 @@ public class SecurityUtils extends AllDirectives {
 				.setSigningKey(key)
 				.parseClaimsJws(jwtToken);
 
-		String email = jwt.getBody()
-				.get("user_email")
-				.toString();
+		Claims body = jwt.getBody();
+		
+		String email = body.get("user_email").toString();
+		UUID userId = UUID.fromString(body.get("user_id").toString());
 
 		return ImmutableUserData.builder()
 				.email(email)
+				.id(userId)
 				.token(jwtToken)
 				.build();
 	}

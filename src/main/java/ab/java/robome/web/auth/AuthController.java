@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 
@@ -81,8 +82,6 @@ public class AuthController extends AbstractController {
 			return onValidationErrors(validationErrors);
 		}
 		
-		Location locationHeader = Location.create("/" + AUTH + "/" );
-		
 		System.out.println("LOGIN USER: " + login);
 		
 		Key key = securityUtils.getSecurityKey();
@@ -95,6 +94,7 @@ public class AuthController extends AbstractController {
 				 
 				 Map<String, Object> claims = new HashMap<>();
 				 claims.put("user_email", user.email());
+				 claims.put("user_id", user.id().toString());
 				 
 					String compactJws = Jwts.builder()
 							  .setSubject("Joe")
@@ -107,26 +107,22 @@ public class AuthController extends AbstractController {
 					return HttpResponse.create()
 							.withStatus(StatusCodes.OK)
 							.addHeaders(headers(
-									locationHeader, 
 									jwt(compactJws), 
 									Cors.origin(corsOrigin()), 
 									Cors.methods(HttpMethod.POST.name()), 
-									Cors.headers(
+									Cors.exposeHeaders(HttpHeader.JWT_TOKEN.getText()),
+									Cors.allowHeaders(
 											 HttpHeader.JWT_TOKEN.getText(), 
-											 HttpHeader.CONTENT_TYPE.getText()), 
-									RawHeader.create("Access-Control-Expose-Headers", HttpHeader.JWT_TOKEN.getText()),
-									
-									json()));
+											 HttpHeader.CONTENT_TYPE.getText())));
 			 } else {
 				 return HttpResponse.create()
 						 .withStatus(StatusCodes.NOT_FOUND)
 						 .addHeaders(headers(
 									Cors.origin(corsOrigin()), 
 									Cors.methods(HttpMethod.POST.name()), 
-									Cors.headers(
+									Cors.allowHeaders(
 											 HttpHeader.JWT_TOKEN.getText(), 
-											 HttpHeader.CONTENT_TYPE.getText()), 
-								 json()));
+											 HttpHeader.CONTENT_TYPE.getText())));
 			 }
 		 }).orElse(HttpResponse.create()
 				 .withStatus(StatusCodes.NOT_FOUND)
@@ -134,7 +130,7 @@ public class AuthController extends AbstractController {
 						 headers(
 								 Cors.origin(corsOrigin()), 
 								 Cors.methods(HttpMethod.POST.name()), 
-								 Cors.headers(
+								 Cors.allowHeaders(
 										 HttpHeader.JWT_TOKEN.getText(), 
 										 HttpHeader.CONTENT_TYPE.getText())))));
 		 
@@ -148,8 +144,7 @@ public class AuthController extends AbstractController {
 		if (!validationErrors.isEmpty()) {
 			return onValidationErrors(validationErrors);
 		}
-		
-		Location locationHeader = locationFor(AUTH, LOGIN);
+
 		
 		System.out.println("REGISTER USER: " + register);
 		LocalDateTime utcNow = TimeUtils.utcNow();
@@ -160,15 +155,15 @@ public class AuthController extends AbstractController {
 				.withStatus(StatusCodes.CREATED)
 				 .addHeaders(
 						 headers(
-								 locationHeader,
 								 Cors.origin(corsOrigin()), 
 								 Cors.methods(HttpMethod.POST.name()), 
-								 Cors.headers(
+								 Cors.allowHeaders(
 										 HttpHeader.JWT_TOKEN.getText(), 
 										 HttpHeader.CONTENT_TYPE.getText())));
 
 		
 		User user = ImmutableUser.builder()
+				.id(UUID.randomUUID())
 				.email(register.email())
 				.passwordHash(hashedPassword)
 				.createdAt(utcNow)
