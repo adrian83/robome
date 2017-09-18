@@ -10,6 +10,7 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.web.common.response.Cors;
 import ab.java.robome.web.common.validation.ValidationError;
+import ab.java.robome.web.security.SecurityUtils;
 import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
@@ -25,10 +26,13 @@ public class AbstractController extends AllDirectives {
 	
 	protected static final String CORS_ORIGIN_KEY = "cors.origin";
 	
+	protected SecurityUtils securityUtils;
+	
 	protected ObjectMapper objectMapper;
 	protected Config config;
 	
-	protected AbstractController(ObjectMapper objectMapper, Config config) {
+	protected AbstractController(SecurityUtils securityUtils, ObjectMapper objectMapper, Config config) {
+		this.securityUtils = securityUtils;
 		this.objectMapper = objectMapper;
 		this.config = config;
 	}
@@ -42,7 +46,7 @@ public class AbstractController extends AllDirectives {
 	}
 	
 	protected RawHeader jwt(String token) {
-		return RawHeader.create(ab.java.robome.web.common.HttpHeader.JWT_TOKEN.getText(), token);
+		return RawHeader.create(ab.java.robome.web.common.HttpHeader.AUTHORIZATION.getText(), token);
 	}
 	
 	protected String corsOrigin() {

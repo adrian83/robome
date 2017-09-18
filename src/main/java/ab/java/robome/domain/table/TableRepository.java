@@ -32,8 +32,8 @@ import akka.stream.javadsl.Source;
 public class TableRepository {
 
 	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, "
-			+ "user_id, title, state, "
-			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
+			+ "user_id, title, description, state, created_at, modified_at) "
+			+ "VALUES (?, ?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
 	private static final String SELECT_BY_EMAIL_STMT = "SELECT * FROM robome.tables WHERE user_id = ?";
 	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE table_id = ?";
@@ -53,7 +53,14 @@ public class TableRepository {
 		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
 			Date created = TimeUtils.toDate(tab.createdAt());
 			Date modified = TimeUtils.toDate(tab.modifiedAt());
-			return statement.bind(tab.id().tableId(), tab.userId(), tab.title(), tab.state().name(), created, modified);
+			return statement.bind(
+					tab.id().tableId(), 
+					tab.userId(), 
+					tab.title(), 
+					tab.description(), 
+					tab.state().name(), 
+					created, 
+					modified);
 		};
 
 		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
@@ -83,6 +90,7 @@ public class TableRepository {
 		Table table = ImmutableTable.builder()
 				.id(id)
 				.title(row.getString("title"))
+				.description(row.getString("description"))
 				.userId(row.getUUID("user_id"))
 				.state(TableState.valueOf(row.getString("state")))
 				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))

@@ -33,8 +33,6 @@ import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.Location;
-import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.Route;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -47,13 +45,12 @@ public class AuthController extends AbstractController {
 	public static final String REGISTER = "register";
 		
 	private UserService userService;
-	private SecurityUtils securityUtils;
 	
 	@Inject
-	public AuthController(UserService userService, SecurityUtils securityUtils, Config config, ObjectMapper objectMapper) {
-		super(objectMapper, config);
+	public AuthController(UserService userService, SecurityUtils securityUtils, 
+			Config config, ObjectMapper objectMapper) {
+		super(securityUtils, objectMapper, config);
 		this.userService = userService;
-		this.securityUtils = securityUtils;
 	}
 	
 
@@ -110,9 +107,9 @@ public class AuthController extends AbstractController {
 									jwt(compactJws), 
 									Cors.origin(corsOrigin()), 
 									Cors.methods(HttpMethod.POST.name()), 
-									Cors.exposeHeaders(HttpHeader.JWT_TOKEN.getText()),
+									Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText()),
 									Cors.allowHeaders(
-											 HttpHeader.JWT_TOKEN.getText(), 
+											 HttpHeader.AUTHORIZATION.getText(), 
 											 HttpHeader.CONTENT_TYPE.getText())));
 			 } else {
 				 return HttpResponse.create()
@@ -121,7 +118,7 @@ public class AuthController extends AbstractController {
 									Cors.origin(corsOrigin()), 
 									Cors.methods(HttpMethod.POST.name()), 
 									Cors.allowHeaders(
-											 HttpHeader.JWT_TOKEN.getText(), 
+											 HttpHeader.AUTHORIZATION.getText(), 
 											 HttpHeader.CONTENT_TYPE.getText())));
 			 }
 		 }).orElse(HttpResponse.create()
@@ -131,7 +128,7 @@ public class AuthController extends AbstractController {
 								 Cors.origin(corsOrigin()), 
 								 Cors.methods(HttpMethod.POST.name()), 
 								 Cors.allowHeaders(
-										 HttpHeader.JWT_TOKEN.getText(), 
+										 HttpHeader.AUTHORIZATION.getText(), 
 										 HttpHeader.CONTENT_TYPE.getText())))));
 		 
 		return completeWithFuture(futureResponse);
@@ -158,7 +155,7 @@ public class AuthController extends AbstractController {
 								 Cors.origin(corsOrigin()), 
 								 Cors.methods(HttpMethod.POST.name()), 
 								 Cors.allowHeaders(
-										 HttpHeader.JWT_TOKEN.getText(), 
+										 HttpHeader.AUTHORIZATION.getText(), 
 										 HttpHeader.CONTENT_TYPE.getText())));
 
 		
@@ -178,7 +175,7 @@ public class AuthController extends AbstractController {
 	private Route handleLoginOptions() {
 		HttpResponse response = new Options()
 				.withHeaders(
-						HttpHeader.JWT_TOKEN.getText(), 
+						HttpHeader.AUTHORIZATION.getText(), 
 						HttpHeader.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.POST.name())
 				.withOrigin(corsOrigin())
@@ -190,7 +187,7 @@ public class AuthController extends AbstractController {
 	private Route handleRegisterOptions() {
 		HttpResponse response = new Options()
 				.withHeaders(
-						HttpHeader.JWT_TOKEN.getText(), 
+						HttpHeader.AUTHORIZATION.getText(), 
 						HttpHeader.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.POST.name())
 				.withOrigin(corsOrigin())

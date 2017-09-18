@@ -18,18 +18,27 @@ import akka.http.javadsl.server.Route;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 
 public class SecurityUtils extends AllDirectives {
 
+	private static final String BEARER = "Bearer ";
+	
 	private Config config;
+	
+
 
 	@Inject
 	public SecurityUtils(Config config) {
 		this.config = config;
 	}
 
+	public String createAuthorizationToken(String jwtToken) {
+		return BEARER + jwtToken;
+	}
+	
 	public Key getSecurityKey() {
 		return new SecretKeySpec(config.getString("security.key").getBytes(), SignatureAlgorithm.HS512.getValue());
 	}
@@ -45,10 +54,15 @@ public class SecurityUtils extends AllDirectives {
 	public Route procedeIfValidToken(Optional<String> maybeJwtToken, Function<UserData, Route> inner) {
 		return maybeJwtToken.map(jwtToken -> {
 			try {
-				UserData userData = fromJwsToken(jwtToken);
+				
+				if(jwtToken.startsWith(BEARER)) {
+					throw new MalformedJwtException("Invalid JWT token");
+				}
+				
+				UserData userData = fromJwsToken(jwtToken.replaceFirst(BEARER, ""));
 				return inner.apply(userData);
 				
-			} catch (SignatureException e) {
+			} catch (SignatureException | MalformedJwtException e) {
 				return complete(HttpResponse.create()
 						.withStatus(StatusCodes.UNAUTHORIZED));
 				

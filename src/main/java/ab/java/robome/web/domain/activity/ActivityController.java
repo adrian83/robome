@@ -24,6 +24,7 @@ import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.domain.table.TableController;
+import ab.java.robome.web.security.SecurityUtils;
 import ab.java.robome.web.domain.stage.StageController;
 
 import akka.Done;
@@ -40,8 +41,9 @@ public class ActivityController extends AbstractController {
 	private ActivityService activityService;
 	
 	@Inject
-	public ActivityController(ObjectMapper objectMapper, Config config, ActivityService activityService) {
-		super(objectMapper, config);
+	public ActivityController(ObjectMapper objectMapper, SecurityUtils securityUtils, 
+			Config config, ActivityService activityService) {
+		super(securityUtils, objectMapper, config);
 		this.activityService = activityService;
 	}
 	

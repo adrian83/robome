@@ -18,6 +18,8 @@ public interface Table {
 	UUID userId();
 
 	String title();
+	
+	String description();
 
 	TableState state();
 

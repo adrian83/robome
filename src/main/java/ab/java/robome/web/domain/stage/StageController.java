@@ -22,6 +22,7 @@ import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
 import ab.java.robome.web.domain.table.TableController;
+import ab.java.robome.web.security.SecurityUtils;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -36,8 +37,9 @@ public class StageController extends AbstractController {
 	private StageService stageService;
 
 	@Inject
-	public StageController(StageService stageService, Config config, ObjectMapper objectMapper) {
-		super(objectMapper, config);
+	public StageController(StageService stageService, SecurityUtils securityUtils, 
+			Config config, ObjectMapper objectMapper) {
+		super(securityUtils, objectMapper, config);
 		this.stageService = stageService;
 	}
 

@@ -27,6 +27,10 @@ public class NewTable implements Validable {
 		return title;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
 	@Override
 	public List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
@@ -36,6 +40,16 @@ public class NewTable implements Validable {
 					.field("title")
 					.messageCode("table.create.title.empty")
 					.message("Table title cannot be empty")
+					.build();
+			
+			errors.add(error);
+		}
+		
+		if (Strings.isNullOrEmpty(getDescription())) {
+			ValidationError error = ImmutableValidationError.builder()
+					.field("description")
+					.messageCode("table.create.description.empty")
+					.message("Table description cannot be empty")
 					.build();
 			
 			errors.add(error);
