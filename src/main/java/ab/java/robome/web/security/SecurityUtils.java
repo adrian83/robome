@@ -1,6 +1,8 @@
 package ab.java.robome.web.security;
 
 import java.security.Key;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -11,6 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
+import ab.java.robome.domain.user.model.User;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.AllDirectives;
@@ -26,6 +29,11 @@ public class SecurityUtils extends AllDirectives {
 
 	private static final String BEARER = "Bearer ";
 	
+	private static final String USER_EMAIL = "user_email ";
+	private static final String USER_ID = "user_id ";
+	
+	private static final SignatureAlgorithm ALGORITHM = SignatureAlgorithm.HS512;
+	
 	private Config config;
 	
 
@@ -34,13 +42,26 @@ public class SecurityUtils extends AllDirectives {
 	public SecurityUtils(Config config) {
 		this.config = config;
 	}
+	
+	public String createJWTToken(User user) {
+		Map<String, Object> claims = new HashMap<>();
+		claims.put(USER_EMAIL, user.email());
+		claims.put(USER_ID, user.id().toString());
+		 
+		String compactJws = Jwts.builder()
+				.setSubject("UserData")
+				.setClaims(claims)
+				.signWith(ALGORITHM, getSecurityKey())
+				.compact();
+		return compactJws;
+	}
 
-	public String createAuthorizationToken(String jwtToken) {
-		return BEARER + jwtToken;
+	public String createAuthorizationToken(User user) {
+		return BEARER + createJWTToken(user);
 	}
 	
 	public Key getSecurityKey() {
-		return new SecretKeySpec(config.getString("security.key").getBytes(), SignatureAlgorithm.HS512.getValue());
+		return new SecretKeySpec(config.getString("security.key").getBytes(), ALGORITHM.getValue());
 	}
 
 	public Route authorized(Optional<String> maybeJwtToken, Supplier<Route> inner) {
@@ -85,8 +106,8 @@ public class SecurityUtils extends AllDirectives {
 
 		Claims body = jwt.getBody();
 		
-		String email = body.get("user_email").toString();
-		UUID userId = UUID.fromString(body.get("user_id").toString());
+		String email = body.get(USER_EMAIL).toString();
+		UUID userId = UUID.fromString(body.get(USER_ID).toString());
 
 		return ImmutableUserData.builder()
 				.email(email)

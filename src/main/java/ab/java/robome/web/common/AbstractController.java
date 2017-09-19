@@ -19,7 +19,6 @@ import akka.http.javadsl.model.headers.ContentType;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
 
 public class AbstractController extends AllDirectives {
 	
@@ -65,8 +64,8 @@ public class AbstractController extends AllDirectives {
 		}
 	}
 	
-	protected Route onValidationErrors(List<ValidationError> validationErrors){
-		 HttpResponse response = HttpResponse.create()
+	protected HttpResponse response400(List<ValidationError> validationErrors){
+		 return HttpResponse.create()
 				 .withStatus(StatusCodes.BAD_REQUEST)
 				 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors))
 				 .addHeaders(headers(
@@ -74,7 +73,12 @@ public class AbstractController extends AllDirectives {
 						 Cors.origin("*"), 
 						 Cors.methods("POST")
 						 ));
-		 	
-		 return complete(response);
 	}
+	
+	protected HttpResponse response404() {
+		return HttpResponse.create()
+				.withStatus(StatusCodes.NOT_FOUND)
+				.addHeader(Cors.origin(corsOrigin()));
+	}
+	
 }

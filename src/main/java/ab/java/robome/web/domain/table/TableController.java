@@ -116,7 +116,7 @@ public class TableController extends AbstractController {
 		
 		List<ValidationError> validationErrors = newTable.validate(config);
 		if (!validationErrors.isEmpty()) {
-			 return onValidationErrors(validationErrors);
+			 return complete(response400(validationErrors));
 		}
 		
 

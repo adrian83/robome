@@ -1,10 +1,7 @@
 package ab.java.robome.web.auth;
 
-import java.security.Key;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -34,8 +31,6 @@ import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.Route;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 
 public class AuthController extends AbstractController {
@@ -59,12 +54,16 @@ public class AuthController extends AbstractController {
 				options(() -> pathPrefix(AUTH, () -> pathPrefix(REGISTER, () -> pathEndOrSingleSlash(this::handleRegisterOptions)))),
 				options(() -> pathPrefix(AUTH, () -> pathPrefix(LOGIN, () -> pathEndOrSingleSlash(this::handleLoginOptions)))),
 
-				post(() -> pathPrefix(AUTH, 
-						() -> pathPrefix(REGISTER, 
+				post(() -> pathPrefix(
+						AUTH, 
+						() -> pathPrefix(
+								REGISTER, 
 								() -> pathEndOrSingleSlash(
 										() -> entity(Jackson.unmarshaller(RegisterForm.class), this::registerUser))))),
-				post(() -> pathPrefix(AUTH, 
-						() -> pathPrefix(LOGIN, 
+				post(() -> pathPrefix(
+						AUTH, 
+						() -> pathPrefix(
+								LOGIN, 
 								() -> pathEndOrSingleSlash(
 										() ->  entity(Jackson.unmarshaller(LoginForm.class), this::loginUser)))))
 				);
@@ -76,60 +75,25 @@ public class AuthController extends AbstractController {
 		
 		List<ValidationError> validationErrors = login.validate(config);
 		if (!validationErrors.isEmpty()) {
-			return onValidationErrors(validationErrors);
+			return complete(response400(validationErrors));
 		}
 		
-		System.out.println("LOGIN USER: " + login);
-		
-		Key key = securityUtils.getSecurityKey();
-		
 
-		 CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.email());
+		CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.email());
 		 
-		 CompletionStage<HttpResponse> futureResponse = futureUser.thenApply(maybeUser -> maybeUser.map(user -> {
-			 if(BCrypt.checkpw(login.password(), user.passwordHash())) {
-				 
-				 Map<String, Object> claims = new HashMap<>();
-				 claims.put("user_email", user.email());
-				 claims.put("user_id", user.id().toString());
-				 
-					String compactJws = Jwts.builder()
-							  .setSubject("Joe")
-							  .setClaims(claims)
-							  .signWith(SignatureAlgorithm.HS512, key)
-							  .compact();
-					
-					System.out.println("JWS: " + compactJws);
-					
-					return HttpResponse.create()
-							.withStatus(StatusCodes.OK)
-							.addHeaders(headers(
-									jwt(compactJws), 
-									Cors.origin(corsOrigin()), 
-									Cors.methods(HttpMethod.POST.name()), 
-									Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText()),
-									Cors.allowHeaders(
-											 HttpHeader.AUTHORIZATION.getText(), 
-											 HttpHeader.CONTENT_TYPE.getText())));
+		CompletionStage<HttpResponse> futureResponse = futureUser.thenApply(maybeUser -> maybeUser.map(user -> {
+			if(BCrypt.checkpw(login.password(), user.passwordHash())) {
+			
+				return HttpResponse.create()
+						.withStatus(StatusCodes.OK)
+						.addHeaders(headers(
+								jwt(securityUtils.createAuthorizationToken(user)), 
+								Cors.origin(corsOrigin())));
+				
 			 } else {
-				 return HttpResponse.create()
-						 .withStatus(StatusCodes.NOT_FOUND)
-						 .addHeaders(headers(
-									Cors.origin(corsOrigin()), 
-									Cors.methods(HttpMethod.POST.name()), 
-									Cors.allowHeaders(
-											 HttpHeader.AUTHORIZATION.getText(), 
-											 HttpHeader.CONTENT_TYPE.getText())));
+				 return response404();
 			 }
-		 }).orElse(HttpResponse.create()
-				 .withStatus(StatusCodes.NOT_FOUND)
-				 .addHeaders(
-						 headers(
-								 Cors.origin(corsOrigin()), 
-								 Cors.methods(HttpMethod.POST.name()), 
-								 Cors.allowHeaders(
-										 HttpHeader.AUTHORIZATION.getText(), 
-										 HttpHeader.CONTENT_TYPE.getText())))));
+		 }).orElse(response404()));
 		 
 		return completeWithFuture(futureResponse);
 		
@@ -139,13 +103,20 @@ public class AuthController extends AbstractController {
 		
 		List<ValidationError> validationErrors = register.validate(config);
 		if (!validationErrors.isEmpty()) {
-			return onValidationErrors(validationErrors);
+			return complete(response400(validationErrors));
 		}
 
 		
-		System.out.println("REGISTER USER: " + register);
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		String hashedPassword = BCrypt.hashpw(register.password(), BCrypt.gensalt());
+
+		User user = ImmutableUser.builder()
+				.id(UUID.randomUUID())
+				.email(register.email())
+				.passwordHash(hashedPassword)
+				.createdAt(utcNow)
+				.modifiedAt(utcNow)
+				.build();
 
 		
 		HttpResponse response = HttpResponse.create()
@@ -157,15 +128,6 @@ public class AuthController extends AbstractController {
 								 Cors.allowHeaders(
 										 HttpHeader.AUTHORIZATION.getText(), 
 										 HttpHeader.CONTENT_TYPE.getText())));
-
-		
-		User user = ImmutableUser.builder()
-				.id(UUID.randomUUID())
-				.email(register.email())
-				.passwordHash(hashedPassword)
-				.createdAt(utcNow)
-				.modifiedAt(utcNow)
-				.build();
 
 		CompletionStage<Done> futureSaved = userService.saveUser(user);
 		return onSuccess(() -> futureSaved, done -> complete(response));
