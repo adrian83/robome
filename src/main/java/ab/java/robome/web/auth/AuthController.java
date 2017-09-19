@@ -88,7 +88,10 @@ public class AuthController extends AbstractController {
 						.withStatus(StatusCodes.OK)
 						.addHeaders(headers(
 								jwt(securityUtils.createAuthorizationToken(user)), 
-								Cors.origin(corsOrigin())));
+								Cors.origin(corsOrigin()),
+								Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText()),
+								Cors.allowHeaders(HttpHeader.AUTHORIZATION.getText()),
+								Cors.methods(HttpMethod.POST.name())));
 				
 			 } else {
 				 return response404();

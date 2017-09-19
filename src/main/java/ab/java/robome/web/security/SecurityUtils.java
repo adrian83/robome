@@ -76,7 +76,7 @@ public class SecurityUtils extends AllDirectives {
 		return maybeJwtToken.map(jwtToken -> {
 			try {
 				
-				if(jwtToken.startsWith(BEARER)) {
+				if(!jwtToken.startsWith(BEARER)) {
 					throw new MalformedJwtException("Invalid JWT token");
 				}
 				
