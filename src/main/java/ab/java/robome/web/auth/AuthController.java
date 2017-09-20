@@ -89,9 +89,7 @@ public class AuthController extends AbstractController {
 						.addHeaders(headers(
 								jwt(securityUtils.createAuthorizationToken(user)), 
 								Cors.origin(corsOrigin()),
-								Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText()),
-								Cors.allowHeaders(HttpHeader.AUTHORIZATION.getText()),
-								Cors.methods(HttpMethod.POST.name())));
+								Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText())));
 				
 			 } else {
 				 return response404();
@@ -124,13 +122,7 @@ public class AuthController extends AbstractController {
 		
 		HttpResponse response = HttpResponse.create()
 				.withStatus(StatusCodes.CREATED)
-				 .addHeaders(
-						 headers(
-								 Cors.origin(corsOrigin()), 
-								 Cors.methods(HttpMethod.POST.name()), 
-								 Cors.allowHeaders(
-										 HttpHeader.AUTHORIZATION.getText(), 
-										 HttpHeader.CONTENT_TYPE.getText())));
+				 .addHeader(Cors.origin(corsOrigin()));
 
 		CompletionStage<Done> futureSaved = userService.saveUser(user);
 		return onSuccess(() -> futureSaved, done -> complete(response));

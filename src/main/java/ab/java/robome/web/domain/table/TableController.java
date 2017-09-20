@@ -90,14 +90,7 @@ public class TableController extends AbstractController {
 					 .withStatus(StatusCodes.OK)
 					 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(tables))
 					 .addHeaders(headers(
-							 Cors.allowHeaders(
-									 HttpHeader.AUTHORIZATION.getText(), 
-									 HttpHeader.CONTENT_TYPE.getText()), 
-							 Cors.methods(
-									 HttpMethod.POST.name(), 
-									 HttpMethod.GET.name()),
-							 Cors.origin(corsOrigin()), 
-							 jwt(userData.token())));
+							 Cors.origin(corsOrigin())));
 			
 			return complete(response);
 		});
@@ -123,7 +116,7 @@ public class TableController extends AbstractController {
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
 		
-		Location locationHeader = Location.create("/" + TableController.TABLES + "/" + id.toString());
+		Location locationHeader = this.locationFor(TableController.TABLES, id.toString());
 		
 		TableId tableId = ImmutableTableId.builder()
 				.tableId(id)
@@ -144,9 +137,7 @@ public class TableController extends AbstractController {
 				.addHeaders(
 						headers(
 								locationHeader, 
-								Cors.origin("*"), 
-								Cors.methods("POST"), 
-								Cors.allowHeaders(HttpHeader.AUTHORIZATION.getText() , "Content-Type")));
+								Cors.origin(corsOrigin())));
 
 		CompletionStage<Done> futureSaved = tableService.saveTable(table);
 		return onSuccess(() -> futureSaved, done -> complete(response));
