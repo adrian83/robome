@@ -25,8 +25,8 @@ public class TableService {
 		this.actorMaterializer = actorMaterializer;
 	}
 	
-	public CompletionStage<Optional<Table>> getTable(UUID tableUuid) {
-		return tableRepository.getById(tableUuid)
+	public CompletionStage<Optional<Table>> getTable(UUID userId, UUID tableUuid) {
+		return tableRepository.getById(userId, tableUuid)
 				.runWith(Sink.head(), actorMaterializer);
 	}
 	

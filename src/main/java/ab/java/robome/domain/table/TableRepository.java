@@ -36,7 +36,7 @@ public class TableRepository {
 			+ "VALUES (?, ?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
 	private static final String SELECT_BY_EMAIL_STMT = "SELECT * FROM robome.tables WHERE user_id = ?";
-	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE table_id = ?";
+	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE user_id = ? AND table_id = ?";
 
 	private Session session;
 	private ActorSystem actorSystem;
@@ -68,9 +68,9 @@ public class TableRepository {
 		return sink;
 	}
 
-	public Source<Optional<Table>,NotUsed> getById(UUID tableId) {
+	public Source<Optional<Table>,NotUsed> getById(UUID userId, UUID tableId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(tableId);
+		BoundStatement bound = preparedStatement.bind(userId, tableId);
 		ResultSet r = session.execute(bound);
 		return Source.single(Optional.ofNullable(r.one()).map(this::fromRow));
 	}

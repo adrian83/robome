@@ -70,6 +70,13 @@ public class TableController extends AbstractController {
 										jwtToken, 
 										userData -> getTableById(tableId, userData))))))), 
 				
+				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(
+						() -> optionalHeaderValueByName(
+								HttpHeader.AUTHORIZATION.getText(), 
+								jwtToken -> securityUtils.authorized(
+										jwtToken, 
+										userData -> entity(Jackson.unmarshaller(NewTable.class), updatedTable -> this.updateTable(updatedTable, userData)))))))), 
+				
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(
 						() -> optionalHeaderValueByName(
 								HttpHeader.AUTHORIZATION.getText(), 
@@ -99,10 +106,58 @@ public class TableController extends AbstractController {
 	private Route getTableById(String tableId, UserData userData) {
 		UUID tableUuid = UUID.fromString(tableId);
 		
-		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(tableUuid);
+		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(userData.id(), tableUuid);
 		
-		return onSuccess(() -> futureMaybeTable, maybeItem -> maybeItem.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
-				.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
+		return onSuccess(
+				() -> futureMaybeTable, 
+				maybeTable-> maybeTable.map(table -> { 
+					HttpResponse response = HttpResponse.create()
+							 .withStatus(StatusCodes.OK)
+							 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(table))
+							 .addHeaders(headers(
+									 Cors.origin(corsOrigin())));
+					
+					return complete(response);
+					})
+				.orElseGet(() -> complete(response404())));
+	}
+	
+	private Route updateTable(NewTable newTable, UserData userData) {
+		
+		List<ValidationError> validationErrors = newTable.validate(config);
+		if (!validationErrors.isEmpty()) {
+			 return complete(response400(validationErrors));
+		}
+		
+
+		LocalDateTime utcNow = TimeUtils.utcNow();
+		UUID id = UUID.randomUUID();
+		
+		Location locationHeader = this.locationFor(TableController.TABLES, id.toString());
+		
+		TableId tableId = ImmutableTableId.builder()
+				.tableId(id)
+				.build();
+
+		Table table = ImmutableTable.builder()
+				.id(tableId)
+				.title(newTable.getTitle())
+				.userId(userData.id())
+				.description(newTable.getDescription())
+				.state(TableState.ACTIVE)
+				.createdAt(utcNow)
+				.modifiedAt(utcNow)
+				.build();
+		
+		HttpResponse response = HttpResponse.create()
+				.withStatus(StatusCodes.CREATED)
+				.addHeaders(
+						headers(
+								locationHeader, 
+								Cors.origin(corsOrigin())));
+
+		CompletionStage<Done> futureSaved = tableService.saveTable(table);
+		return onSuccess(() -> futureSaved, done -> complete(response));
 	}
 	
 	private Route persistTable(NewTable newTable, UserData userData) {
