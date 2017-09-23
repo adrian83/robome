@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +53,7 @@ public class TableController extends AbstractController {
 	public Route createRoute() { 
 		return route(
 				options(() -> pathPrefix(TABLES, () -> pathEndOrSingleSlash(this::handleCreateTableOptions))),
-				options(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(this::handleCreateTableOptions)))),
+				options(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(this::handleUpdateTableOptions)))),
 
 				get(() -> pathPrefix(
 						TABLES, 
@@ -70,12 +71,19 @@ public class TableController extends AbstractController {
 										jwtToken, 
 										userData -> getTableById(tableId, userData))))))), 
 				
-				get(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(
+				delete(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(
 						() -> optionalHeaderValueByName(
 								HttpHeader.AUTHORIZATION.getText(), 
 								jwtToken -> securityUtils.authorized(
 										jwtToken, 
-										userData -> entity(Jackson.unmarshaller(NewTable.class), updatedTable -> this.updateTable(updatedTable, userData)))))))), 
+										userData -> deleteTable(tableId, userData))))))), 
+				
+				put(() -> pathPrefix(TABLES, () -> pathPrefix(segment(), tableId -> pathEndOrSingleSlash(
+						() -> optionalHeaderValueByName(
+								HttpHeader.AUTHORIZATION.getText(), 
+								jwtToken -> securityUtils.authorized(
+										jwtToken, 
+										userData -> entity(Jackson.unmarshaller(NewTable.class), updatedTable -> this.updateTable(tableId, updatedTable, userData)))))))), 
 				
 				post(() -> path(TABLES, () -> pathEndOrSingleSlash(
 						() -> optionalHeaderValueByName(
@@ -122,7 +130,26 @@ public class TableController extends AbstractController {
 				.orElseGet(() -> complete(response404())));
 	}
 	
-	private Route updateTable(NewTable newTable, UserData userData) {
+	private Route deleteTable(String tableId, UserData userData) {
+		UUID tableUuid = UUID.fromString(tableId);
+		
+		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(userData.id(), tableUuid);
+		
+		return onSuccess(
+				() -> futureMaybeTable, 
+				maybeTable-> maybeTable.map(table -> { 
+					HttpResponse response = HttpResponse.create()
+							 .withStatus(StatusCodes.OK)
+							 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(table))
+							 .addHeaders(headers(
+									 Cors.origin(corsOrigin())));
+					
+					return complete(response);
+					})
+				.orElseGet(() -> complete(response404())));
+	}
+	
+	private Route updateTable(String tableIdStr, NewTable newTable, UserData userData) {
 		
 		List<ValidationError> validationErrors = newTable.validate(config);
 		if (!validationErrors.isEmpty()) {
@@ -131,7 +158,7 @@ public class TableController extends AbstractController {
 		
 
 		LocalDateTime utcNow = TimeUtils.utcNow();
-		UUID id = UUID.randomUUID();
+		UUID id = UUID.fromString(tableIdStr);
 		
 		Location locationHeader = this.locationFor(TableController.TABLES, id.toString());
 		
@@ -139,15 +166,24 @@ public class TableController extends AbstractController {
 				.tableId(id)
 				.build();
 
-		Table table = ImmutableTable.builder()
-				.id(tableId)
-				.title(newTable.getTitle())
-				.userId(userData.id())
-				.description(newTable.getDescription())
-				.state(TableState.ACTIVE)
-				.createdAt(utcNow)
-				.modifiedAt(utcNow)
-				.build();
+		CompletionStage<Optional<Done>> futureMaybeTable = tableService.getTable(userData.id(), id)
+				.thenApply(maybeTable -> maybeTable.map(table -> {
+					Table updatedTable = ImmutableTable.builder()
+							.id(tableId)
+							.title(newTable.getTitle())
+							.userId(userData.id())
+							.description(newTable.getDescription())
+							.state(TableState.ACTIVE)
+							.createdAt(table.createdAt())
+							.modifiedAt(utcNow)
+							.build();
+					return updatedTable; 
+				}))
+				.thenCompose(maybeTable ->  maybeTable
+						.map(table -> tableService.saveTable(table)
+								.thenApply(done -> Optional.ofNullable(done)))
+						.orElseGet(() -> CompletableFuture.completedFuture(Optional.empty())));
+
 		
 		HttpResponse response = HttpResponse.create()
 				.withStatus(StatusCodes.CREATED)
@@ -156,8 +192,7 @@ public class TableController extends AbstractController {
 								locationHeader, 
 								Cors.origin(corsOrigin())));
 
-		CompletionStage<Done> futureSaved = tableService.saveTable(table);
-		return onSuccess(() -> futureSaved, done -> complete(response));
+		return onSuccess(() -> futureMaybeTable, maybeDone -> complete(maybeDone.map(done -> response).orElse(response404())));
 	}
 	
 	private Route persistTable(NewTable newTable, UserData userData) {
@@ -204,6 +239,18 @@ public class TableController extends AbstractController {
 						HttpHeader.AUTHORIZATION.getText(), 
 						HttpHeader.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.POST.name(), HttpMethod.GET.name())
+				.withOrigin(corsOrigin())
+				.response();
+		
+		return complete(response);
+	}
+	
+	private Route handleUpdateTableOptions() {
+		HttpResponse response = new Options()
+				.withHeaders(
+						HttpHeader.AUTHORIZATION.getText(), 
+						HttpHeader.CONTENT_TYPE.getText())
+				.withMethods(HttpMethod.PUT.name(), HttpMethod.GET.name(), HttpMethod.DELETE.name())
 				.withOrigin(corsOrigin())
 				.response();
 		
