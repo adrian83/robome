@@ -1,0 +1,49 @@
+>|[\ See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# dependencies
+/robome-fe/node_modules
+
+# testing
+/robome-fe/coverage
+
+# production
+/robome-fe/build
+
+# misc
+/robome-fe/.DS_Store
+/robome-fe/.env
+/robome-fe/npm-debug.log
+
+
+/trends-be/bin
+/trends-be/build
+/robome-be/.settings
+/robome-be/infra/*/
+
+
+/robome-be/.gradle
+/robome-be/build/
+!/robome-be/gradle/wrapper/gradle-wrapper.jar
+
+### STS ###
+/robome-be/.apt_generated
+/robome-be/.classpath
+/robome-be/.factorypath
+/robome-be/.project
+/robome-be/.settings
+/robome-be/.springBeans
+
+### IntelliJ IDEA ###
+/robome-be/.idea
+/robome-be/*.iws
+/robome-be/*.iml
+/robome-be/*.ipr
+
+### NetBeans ###
+/robome-be/nbproject/private/
+/robome-be/build/
+/robome-be/nbbuild/
+/robome-be/dist/
+/robome-be/nbdist/
+/robome-be/.nb-gradle/
+/robome-be/target/
