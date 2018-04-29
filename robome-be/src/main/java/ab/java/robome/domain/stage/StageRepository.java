@@ -18,8 +18,6 @@ import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.stage.model.Stage;
 import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
-import ab.java.robome.domain.stage.model.ImmutableStage;
-import ab.java.robome.domain.stage.model.ImmutableStageId;
 import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -47,9 +45,12 @@ public class StageRepository {
 		PreparedStatement preparedStatement = session.prepare(INSERT_STAGE_STMT);
 		
 		BiFunction<Stage, PreparedStatement, BoundStatement> statementBinder = (stage, statement) -> {
-			Date created = TimeUtils.toDate(stage.createdAt());
-			Date modified = TimeUtils.toDate(stage.modifiedAt());
-			return statement.bind(stage.stageId().stageId(), stage.stageId().tableId(), stage.name(), stage.state().name(), created, modified);
+			Date created = TimeUtils.toDate(stage.getCreatedAt());
+			Date modified = TimeUtils.toDate(stage.getModifiedAt());
+			return statement.bind(
+					stage.getStageId().getStageId(), 
+					stage.getStageId().getTableId(), 
+					stage.getName(), stage.getState().name(), created, modified);
 		};
 
 		Sink<Stage, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
@@ -70,7 +71,7 @@ public class StageRepository {
 
 	public Source<Optional<Stage>, NotUsed> getById(StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(stageId.tableId(), stageId.stageId());
+		BoundStatement bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId());
 
 		ResultSet r = session.execute(bound);
 
@@ -84,12 +85,12 @@ public class StageRepository {
 	}
 
 	private Stage fromRow(Row row) {
-		StageId id = ImmutableStageId.builder()
+		StageId id = StageId.builder()
 				.stageId(row.get("stage_id", UUID.class))
 				.tableId(row.get("table_id", UUID.class))
 				.build();
 		
-		Stage stage = ImmutableStage.builder()
+		Stage stage = Stage.builder()
 				.stageId(id)
 				.name(row.getString("name"))
 				.state(TableState.valueOf(row.getString("state")))

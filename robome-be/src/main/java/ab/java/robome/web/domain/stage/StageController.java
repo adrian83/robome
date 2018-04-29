@@ -14,8 +14,6 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.stage.StageService;
-import ab.java.robome.domain.stage.model.ImmutableStage;
-import ab.java.robome.domain.stage.model.ImmutableStageId;
 import ab.java.robome.domain.stage.model.NewStage;
 import ab.java.robome.domain.stage.model.Stage;
 import ab.java.robome.domain.stage.model.StageId;
@@ -61,7 +59,7 @@ public class StageController extends AbstractController {
 	
 	private Route getStageById(String tableId, String stageId) {
 		
-		StageId id = ImmutableStageId.builder()
+		StageId id = StageId.builder()
 				.stageId(UUID.fromString(stageId))
 				.tableId(UUID.fromString(tableId))
 				.build();
@@ -80,14 +78,14 @@ public class StageController extends AbstractController {
 		
 		Location locationHeader = locationFor(TableController.TABLES, tableId, PATH, id.toString());
 		
-		StageId stageId = ImmutableStageId.builder()
+		StageId stageId = StageId.builder()
 				.stageId(id)
 				.tableId(UUID.fromString(tableId))
 				.build();
 		
-		Stage stage = ImmutableStage.builder()
+		Stage stage = Stage.builder()
 				.stageId(stageId)
-				.name(newStage.name())
+				.name(newStage.getName())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)

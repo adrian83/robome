@@ -2,20 +2,15 @@ package ab.java.robome.domain.activity.model;
 
 import java.util.UUID;
 
-import org.immutables.value.Value;
+import lombok.Builder;
+import lombok.Value;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+@Builder
+@Value
+public class ActivityId  {
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableActivityId.class)
-@JsonDeserialize(as = ImmutableActivityId.class)
-public interface ActivityId {
-
-	UUID id();
-	
-	UUID tableId();
-	
-	UUID stageId();
+	private UUID activityId;
+	private UUID tableId;
+	private UUID stageId;
 	
 }

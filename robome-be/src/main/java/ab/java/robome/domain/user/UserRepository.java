@@ -14,7 +14,6 @@ import com.datastax.driver.core.Session;
 import com.google.inject.Inject;
 
 import ab.java.robome.common.time.TimeUtils;
-import ab.java.robome.domain.user.model.ImmutableUser;
 import ab.java.robome.domain.user.model.User;
 import akka.Done;
 import akka.NotUsed;
@@ -47,7 +46,7 @@ public class UserRepository {
 
 	private User fromRow(Row row) {
 		
-		User user = ImmutableUser.builder()
+		User user = User.builder()
 				.id(row.get("id", UUID.class))
 				.email(row.getString("email"))
 				.passwordHash(row.getString("password_hash"))
@@ -62,9 +61,9 @@ public class UserRepository {
 		PreparedStatement preparedStatement = session.prepare(INSERT_USER_STMT);
 		
 		BiFunction<User, PreparedStatement, BoundStatement> statementBinder = (user, statement) -> {
-			Date created = TimeUtils.toDate(user.createdAt());
-			Date modified = TimeUtils.toDate(user.modifiedAt());
-			return statement.bind(user.id(), user.email(), user.passwordHash(), created, modified);
+			Date created = TimeUtils.toDate(user.getCreatedAt());
+			Date modified = TimeUtils.toDate(user.getModifiedAt());
+			return statement.bind(user.getId(), user.getEmail(), user.getPasswordHash(), created, modified);
 		};
 
 		Sink<User, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,

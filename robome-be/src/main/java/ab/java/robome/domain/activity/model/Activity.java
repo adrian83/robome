@@ -2,26 +2,18 @@ package ab.java.robome.domain.activity.model;
 
 import java.time.LocalDateTime;
 
-import org.immutables.value.Value;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import ab.java.robome.domain.table.model.TableState;
+import lombok.Builder;
+import lombok.Value;
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableActivity.class)
-@JsonDeserialize(as = ImmutableActivity.class)
-public interface Activity {
+@Builder
+@Value
+public class Activity {
 
-	ActivityId id();
-
-	String name();
-
-	TableState state();
-
-	LocalDateTime createdAt();
-
-	LocalDateTime modifiedAt();
+	private ActivityId id;
+	private String name;
+	private TableState state;
+	private LocalDateTime createdAt;
+	private LocalDateTime modifiedAt;
 
 }

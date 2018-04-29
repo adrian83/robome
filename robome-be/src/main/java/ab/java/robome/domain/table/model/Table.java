@@ -3,28 +3,19 @@ package ab.java.robome.domain.table.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.immutables.value.Value;
+import lombok.Builder;
+import lombok.Value;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+@Builder
+@Value
+public class Table {
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableTable.class)
-@JsonDeserialize(as = ImmutableTable.class)
-public interface Table {
-
-	TableId id();
-	
-	UUID userId();
-
-	String title();
-	
-	String description();
-
-	TableState state();
-
-	LocalDateTime createdAt();
-
-	LocalDateTime modifiedAt();
+	private TableId id;
+	private UUID userId;
+	private String title;
+	private String description;
+	private TableState state;
+	private LocalDateTime createdAt;
+	private LocalDateTime modifiedAt;
 
 }

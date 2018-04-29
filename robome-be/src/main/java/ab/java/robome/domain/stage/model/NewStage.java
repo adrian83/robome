@@ -1,16 +1,13 @@
 package ab.java.robome.domain.stage.model;
 
-import org.immutables.value.Value;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Builder;
+import lombok.Value;
 
-
-@Value.Immutable
-@JsonSerialize(as = ImmutableNewStage.class)
-@JsonDeserialize(as = ImmutableNewStage.class)
-public interface NewStage {
+@Builder
+@Value
+public class NewStage {
 	
-	String name();
+	private String name;
 	
 }

@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.typesafe.config.Config;
 
-import ab.java.robome.web.common.validation.ImmutableValidationError;
 import ab.java.robome.web.common.validation.Validable;
 import ab.java.robome.web.common.validation.ValidationError;
 
@@ -36,7 +35,7 @@ public class NewTable implements Validable {
 		List<ValidationError> errors = new ArrayList<>();
 		
 		if (Strings.isNullOrEmpty(getTitle())) {
-			ValidationError error = ImmutableValidationError.builder()
+			ValidationError error = ValidationError.builder()
 					.field("title")
 					.messageCode("table.create.title.empty")
 					.message("Table title cannot be empty")
@@ -46,7 +45,7 @@ public class NewTable implements Validable {
 		}
 		
 		if (Strings.isNullOrEmpty(getDescription())) {
-			ValidationError error = ImmutableValidationError.builder()
+			ValidationError error = ValidationError.builder()
 					.field("description")
 					.messageCode("table.create.description.empty")
 					.message("Table description cannot be empty")

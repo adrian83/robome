@@ -45,8 +45,8 @@ public class SecurityUtils extends AllDirectives {
 	
 	public String createJWTToken(User user) {
 		Map<String, Object> claims = new HashMap<>();
-		claims.put(USER_EMAIL, user.email());
-		claims.put(USER_ID, user.id().toString());
+		claims.put(USER_EMAIL, user.getEmail());
+		claims.put(USER_ID, user.getId().toString());
 		 
 		String compactJws = Jwts.builder()
 				.setSubject("UserData")
@@ -109,7 +109,7 @@ public class SecurityUtils extends AllDirectives {
 		String email = body.get(USER_EMAIL).toString();
 		UUID userId = UUID.fromString(body.get(USER_ID).toString());
 
-		return ImmutableUserData.builder()
+		return UserData.builder()
 				.email(email)
 				.id(userId)
 				.token(jwtToken)

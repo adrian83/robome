@@ -3,25 +3,18 @@ package ab.java.robome.domain.user.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.immutables.value.Value;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Builder;
+import lombok.Value;
 
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableUser.class)
-@JsonDeserialize(as = ImmutableUser.class)
-public interface User {
+@Builder
+@Value
+public class User {
 	
-	UUID id();
-	
-	String email();
-	
-	String passwordHash();
-
-	LocalDateTime createdAt();
-
-	LocalDateTime modifiedAt();
+	private UUID id;
+	private String email;
+	private String passwordHash;
+	private LocalDateTime createdAt;
+	private LocalDateTime modifiedAt;
 
 }

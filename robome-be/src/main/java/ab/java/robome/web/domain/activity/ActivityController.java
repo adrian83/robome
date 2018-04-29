@@ -16,10 +16,7 @@ import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.activity.ActivityService;
 import ab.java.robome.domain.activity.model.Activity;
 import ab.java.robome.domain.activity.model.ActivityId;
-import ab.java.robome.domain.activity.model.ImmutableActivity;
-import ab.java.robome.domain.activity.model.ImmutableActivityId;
 import ab.java.robome.domain.activity.model.NewActivity;
-import ab.java.robome.domain.stage.model.ImmutableStageId;
 import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
@@ -61,7 +58,7 @@ public class ActivityController extends AbstractController {
 		UUID tableUuid = UUID.fromString(tableIdStr);
 		UUID stageUuid = UUID.fromString(stageIdStr);
 		
-		StageId stageId = ImmutableStageId.builder()
+		StageId stageId = StageId.builder()
 				.stageId(stageUuid)
 				.tableId(tableUuid)
 				.build();
@@ -72,8 +69,8 @@ public class ActivityController extends AbstractController {
 	
 	private Route getActivityById(String tableId, String stageId, String activityId) {
 		
-		ActivityId id = ImmutableActivityId.builder()
-				.id(UUID.fromString(activityId))
+		ActivityId id = ActivityId.builder()
+				.activityId(UUID.fromString(activityId))
 				.stageId(UUID.fromString(stageId))
 				.tableId(UUID.fromString(tableId))
 				.build();
@@ -92,15 +89,15 @@ public class ActivityController extends AbstractController {
 		
 		Location locationHeader = locationFor(TableController.TABLES, tableId, StageController.PATH, stageId, PATH, id.toString());
 		
-		ActivityId activityId = ImmutableActivityId.builder()
-				.id(id)
+		ActivityId activityId = ActivityId.builder()
+				.activityId(id)
 				.stageId(UUID.fromString(stageId))
 				.tableId(UUID.fromString(tableId))
 				.build();
 		
-		Activity activity = ImmutableActivity.builder()
+		Activity activity = Activity.builder()
 				.id(activityId)
-				.name(newActivity.name())
+				.name(newActivity.getName())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)

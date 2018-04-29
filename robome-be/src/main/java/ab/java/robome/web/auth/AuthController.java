@@ -15,7 +15,6 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.user.UserService;
-import ab.java.robome.domain.user.model.ImmutableUser;
 import ab.java.robome.domain.user.model.User;
 import ab.java.robome.web.auth.model.LoginForm;
 import ab.java.robome.web.auth.model.RegisterForm;
@@ -79,10 +78,10 @@ public class AuthController extends AbstractController {
 		}
 		
 
-		CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.email());
+		CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.getEmail());
 		 
 		CompletionStage<HttpResponse> futureResponse = futureUser.thenApply(maybeUser -> maybeUser.map(user -> {
-			if(BCrypt.checkpw(login.password(), user.passwordHash())) {
+			if(BCrypt.checkpw(login.getPassword(), user.getPasswordHash())) {
 			
 				return HttpResponse.create()
 						.withStatus(StatusCodes.OK)
@@ -109,11 +108,11 @@ public class AuthController extends AbstractController {
 
 		
 		LocalDateTime utcNow = TimeUtils.utcNow();
-		String hashedPassword = BCrypt.hashpw(register.password(), BCrypt.gensalt());
+		String hashedPassword = BCrypt.hashpw(register.getPassword(), BCrypt.gensalt());
 
-		User user = ImmutableUser.builder()
+		User user = User.builder()
 				.id(UUID.randomUUID())
-				.email(register.email())
+				.email(register.getEmail())
 				.passwordHash(hashedPassword)
 				.createdAt(utcNow)
 				.modifiedAt(utcNow)

@@ -16,8 +16,6 @@ import com.datastax.driver.core.Statement;
 import com.google.inject.Inject;
 
 import ab.java.robome.common.time.TimeUtils;
-import ab.java.robome.domain.table.model.ImmutableTable;
-import ab.java.robome.domain.table.model.ImmutableTableId;
 import ab.java.robome.domain.table.model.Table;
 import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
@@ -51,14 +49,14 @@ public class TableRepository {
 		PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
 		
 		BiFunction<Table, PreparedStatement, BoundStatement> statementBinder = (tab, statement) -> {
-			Date created = TimeUtils.toDate(tab.createdAt());
-			Date modified = TimeUtils.toDate(tab.modifiedAt());
+			Date created = TimeUtils.toDate(tab.getCreatedAt());
+			Date modified = TimeUtils.toDate(tab.getModifiedAt());
 			return statement.bind(
-					tab.id().tableId(), 
-					tab.userId(), 
-					tab.title(), 
-					tab.description(), 
-					tab.state().name(), 
+					tab.getId().getTableId(), 
+					tab.getUserId(), 
+					tab.getTitle(), 
+					tab.getDescription(), 
+					tab.getState().name(), 
 					created, 
 					modified);
 		};
@@ -83,11 +81,11 @@ public class TableRepository {
 	
 	private Table fromRow(Row row) {
 		
-		TableId id = ImmutableTableId.builder()
+		TableId id = TableId.builder()
 				.tableId(row.get("table_id", UUID.class))
 				.build();
 		
-		Table table = ImmutableTable.builder()
+		Table table = Table.builder()
 				.id(id)
 				.title(row.getString("title"))
 				.description(row.getString("description"))

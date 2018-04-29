@@ -2,17 +2,14 @@ package ab.java.robome.domain.table.model;
 
 import java.util.UUID;
 
-import org.immutables.value.Value;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Builder;
+import lombok.Value;
 
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableTableId.class)
-@JsonDeserialize(as = ImmutableTableId.class)
-public interface TableId {
+@Builder
+@Value
+public class TableId {
 
-	UUID tableId();
+	private UUID tableId;
 
 }

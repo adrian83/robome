@@ -3,31 +3,26 @@ package ab.java.robome.web.auth.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.immutables.value.Value;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Strings;
 import com.typesafe.config.Config;
 
-import ab.java.robome.web.common.validation.ImmutableValidationError;
 import ab.java.robome.web.common.validation.Validable;
 import ab.java.robome.web.common.validation.ValidationError;
+import lombok.Builder;
+import lombok.Value;
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableLoginForm.class)
-@JsonDeserialize(as = ImmutableLoginForm.class)
-public interface LoginForm extends Validable {
+@Builder
+@Value
+public class LoginForm implements Validable {
 
-	String email();
+	private String email;
+	private String password;
 	
-	String password();
-	
-	default List<ValidationError> validate(Config config) {
+	public List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
 		
-		if (Strings.isNullOrEmpty(email())) {
-			ValidationError error = ImmutableValidationError.builder()
+		if (Strings.isNullOrEmpty(email)) {
+			ValidationError error = ValidationError.builder()
 					.field("email")
 					.messageCode("loginForm.email.empty")
 					.message("Email cannot be empty")
@@ -36,9 +31,9 @@ public interface LoginForm extends Validable {
 			errors.add(error);
 		}
 		
-		if (Strings.isNullOrEmpty(password())) {
+		if (Strings.isNullOrEmpty(password)) {
 			
-			ValidationError error = ImmutableValidationError.builder()
+			ValidationError error = ValidationError.builder()
 					.field("password")
 					.messageCode("loginForm.password.empty")
 					.message("Password cannot be empty")

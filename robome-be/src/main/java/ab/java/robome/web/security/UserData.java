@@ -2,15 +2,17 @@ package ab.java.robome.web.security;
 
 import java.util.UUID;
 
-import org.immutables.value.Value;
+import lombok.Builder;
+import lombok.Value;
 
-@Value.Immutable
-public interface UserData {
+@Builder
+@Value
+public class UserData {
 
-	String email();
+	private String email;
 	
-	UUID id();
+	private UUID id;
 	
-	String token();
+	private String token;
 	
 }

@@ -15,8 +15,6 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.table.TableService;
-import ab.java.robome.domain.table.model.ImmutableTable;
-import ab.java.robome.domain.table.model.ImmutableTableId;
 import ab.java.robome.domain.table.model.Table;
 import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
@@ -98,7 +96,7 @@ public class TableController extends AbstractController {
 	
 	private Route getTables(UserData userData){
 		
-		final CompletionStage<List<Table>> futureTables = tableService.getTables(userData.id());
+		final CompletionStage<List<Table>> futureTables = tableService.getTables(userData.getId());
 		
 		return onSuccess(() -> futureTables, tables -> {
 			HttpResponse response = HttpResponse.create()
@@ -114,7 +112,7 @@ public class TableController extends AbstractController {
 	private Route getTableById(String tableId, UserData userData) {
 		UUID tableUuid = UUID.fromString(tableId);
 		
-		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(userData.id(), tableUuid);
+		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(userData.getId(), tableUuid);
 		
 		return onSuccess(
 				() -> futureMaybeTable, 
@@ -133,7 +131,7 @@ public class TableController extends AbstractController {
 	private Route deleteTable(String tableId, UserData userData) {
 		UUID tableUuid = UUID.fromString(tableId);
 		
-		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(userData.id(), tableUuid);
+		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(userData.getId(), tableUuid);
 		
 		return onSuccess(
 				() -> futureMaybeTable, 
@@ -162,19 +160,19 @@ public class TableController extends AbstractController {
 		
 		Location locationHeader = this.locationFor(TableController.TABLES, id.toString());
 		
-		TableId tableId = ImmutableTableId.builder()
+		TableId tableId = TableId.builder()
 				.tableId(id)
 				.build();
 
-		CompletionStage<Optional<Done>> futureMaybeTable = tableService.getTable(userData.id(), id)
+		CompletionStage<Optional<Done>> futureMaybeTable = tableService.getTable(userData.getId(), id)
 				.thenApply(maybeTable -> maybeTable.map(table -> {
-					Table updatedTable = ImmutableTable.builder()
+					Table updatedTable = Table.builder()
 							.id(tableId)
 							.title(newTable.getTitle())
-							.userId(userData.id())
+							.userId(userData.getId())
 							.description(newTable.getDescription())
 							.state(TableState.ACTIVE)
-							.createdAt(table.createdAt())
+							.createdAt(table.getCreatedAt())
 							.modifiedAt(utcNow)
 							.build();
 					return updatedTable; 
@@ -208,14 +206,14 @@ public class TableController extends AbstractController {
 		
 		Location locationHeader = this.locationFor(TableController.TABLES, id.toString());
 		
-		TableId tableId = ImmutableTableId.builder()
+		TableId tableId = TableId.builder()
 				.tableId(id)
 				.build();
 
-		Table table = ImmutableTable.builder()
+		Table table = Table.builder()
 				.id(tableId)
 				.title(newTable.getTitle())
-				.userId(userData.id())
+				.userId(userData.getId())
 				.description(newTable.getDescription())
 				.state(TableState.ACTIVE)
 				.createdAt(utcNow)

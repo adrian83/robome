@@ -1,15 +1,12 @@
 package ab.java.robome.auth.model;
 
-import org.immutables.value.Value;
+import lombok.Builder;
+import lombok.Value;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-@Value.Immutable
-@JsonSerialize(as = ImmutableNewUser.class)
-@JsonDeserialize(as = ImmutableNewUser.class)
-public interface NewUser {
+@Builder
+@Value
+public class NewUser {
 	
-	String email();
+	private String email;
 	
 }

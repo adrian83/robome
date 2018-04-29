@@ -1,20 +1,14 @@
 package ab.java.robome.web.common.validation;
 
-import org.immutables.value.Value;
+import lombok.Builder;
+import lombok.Value;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+@Builder
+@Value
+public class ValidationError {
 
-
-@Value.Immutable
-@JsonSerialize(as = ImmutableValidationError.class)
-@JsonDeserialize(as = ImmutableValidationError.class)
-public interface ValidationError {
-
-	String field();
-	
-	String messageCode();
-	
-	String message();
+	private String field;
+	private String messageCode;
+	private String message;
 	
 }

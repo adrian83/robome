@@ -2,28 +2,19 @@ package ab.java.robome.domain.stage.model;
 
 import java.time.LocalDateTime;
 
-import org.immutables.value.Value;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import ab.java.robome.domain.table.model.TableState;
+import lombok.Builder;
+import lombok.Value;
 
 
-@Value.Immutable
-@JsonSerialize(as = ImmutableStage.class)
-@JsonDeserialize(as = ImmutableStage.class)
-public interface Stage {
+@Builder
+@Value
+public class Stage {
 
-	StageId stageId();
+	private StageId stageId;
+	private String name;
+	private TableState state;
+	private LocalDateTime createdAt;
+	private LocalDateTime modifiedAt;
 
-	String name();
-
-	TableState state();
-
-	LocalDateTime createdAt();
-
-	LocalDateTime modifiedAt();
-
-	
 }

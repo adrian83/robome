@@ -1,15 +1,12 @@
 package ab.java.robome.domain.activity.model;
 
-import org.immutables.value.Value;
+import lombok.Builder;
+import lombok.Value;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-@Value.Immutable
-@JsonSerialize(as = ImmutableNewActivity.class)
-@JsonDeserialize(as = ImmutableNewActivity.class)
-public interface NewActivity {
+@Builder
+@Value
+public class NewActivity {
 	
-	String name();
+	private String name;
 	
 }
