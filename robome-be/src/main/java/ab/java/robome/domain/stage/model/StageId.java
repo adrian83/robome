@@ -2,14 +2,22 @@ package ab.java.robome.domain.stage.model;
 
 import java.util.UUID;
 
-import lombok.Builder;
-import lombok.Value;
-
-
-@Builder
-@Value
 public class StageId {
+	private UUID tableId;
+	private UUID stageId;
 
-	UUID stageId;
-	UUID tableId;
+	public StageId(UUID tableId, UUID stageId) {
+		super();
+		this.tableId = tableId;
+		this.stageId = stageId;
+	}
+
+	public UUID getTableId() {
+		return tableId;
+	}
+
+	public UUID getStageId() {
+		return stageId;
+	}
+
 }

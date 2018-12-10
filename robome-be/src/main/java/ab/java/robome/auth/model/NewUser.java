@@ -1,12 +1,16 @@
 package ab.java.robome.auth.model;
 
-import lombok.Builder;
-import lombok.Value;
-
-@Builder
-@Value
 public class NewUser {
-	
+
 	private String email;
-	
+
+	public NewUser(String email) {
+		super();
+		this.email = email;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
 }

@@ -29,14 +29,15 @@ import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
 
 public class StageController extends AbstractController {
-	
+
 	public static final String PATH = "stages";
 
 	private StageService stageService;
 
 	@Inject
-	public StageController(StageService stageService, SecurityUtils securityUtils, 
-			Config config, ObjectMapper objectMapper) {
+	public StageController(StageService stageService, SecurityUtils securityUtils, Config config,
+			ObjectMapper objectMapper) {
+
 		super(securityUtils, objectMapper, config);
 		this.stageService = stageService;
 	}
@@ -44,60 +45,51 @@ public class StageController extends AbstractController {
 	public Route createRoute() {
 
 		return route(
-				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathPrefix(segment(), stageId -> pathEndOrSingleSlash(() -> getStageById(tableId, stageId))))))),
-				post(() ->  pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e))))))),
-				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId))))))
-				);
+				get(() -> pathPrefix(TableController.TABLES,
+						() -> pathPrefix(segment(),
+								tableId -> pathPrefix(PATH, () -> pathPrefix(segment(),
+										stageId -> pathEndOrSingleSlash(() -> getStageById(tableId, stageId))))))),
+				post(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(),
+						tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(
+								() -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e))))))),
+				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(),
+						tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId)))))));
 	}
 
 	private Route getTableStages(String tableId) {
 		UUID tableUuid = UUID.fromString(tableId);
-		
+
 		final CompletionStage<List<Stage>> futureStages = stageService.getTableStages(tableUuid);
 		return onSuccess(() -> futureStages, stages -> completeOK(stages, Jackson.marshaller(objectMapper)));
 	}
-	
+
 	private Route getStageById(String tableId, String stageId) {
-		
-		StageId id = StageId.builder()
-				.stageId(UUID.fromString(stageId))
-				.tableId(UUID.fromString(tableId))
-				.build();
-		
+
+		StageId id = new StageId(UUID.fromString(tableId), UUID.fromString(stageId));
+
 		final CompletionStage<Optional<Stage>> futureMaybeTable = stageService.getStage(id);
-		
-		return onSuccess(() -> futureMaybeTable, maybeItem -> maybeItem
-				.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
-				.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
+
+		return onSuccess(() -> futureMaybeTable,
+				maybeItem -> maybeItem.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
+						.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
 	}
-	
+
 	private Route persistStage(String tableId, NewStage newStage) {
-		
+
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
-		
-		Location locationHeader = locationFor(TableController.TABLES, tableId, PATH, id.toString());
-		
-		StageId stageId = StageId.builder()
-				.stageId(id)
-				.tableId(UUID.fromString(tableId))
-				.build();
-		
-		Stage stage = Stage.builder()
-				.stageId(stageId)
-				.name(newStage.getName())
-				.state(TableState.ACTIVE)
-				.createdAt(utcNow)
-				.modifiedAt(utcNow)
-				.build();
 
-		HttpResponse redirectResponse = HttpResponse.create()
-				.withStatus(StatusCodes.CREATED)
-				.addHeader(locationHeader);
-		
+		Location locationHeader = locationFor(TableController.TABLES, tableId, PATH, id.toString());
+
+		StageId stageId = new StageId(UUID.fromString(tableId), id);
+
+		Stage stage = new Stage(stageId, newStage.getName(), TableState.ACTIVE, utcNow, utcNow);
+
+		HttpResponse redirectResponse = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
+
 		CompletionStage<Done> futureSaved = stageService.saveStage(stage);
 		return onSuccess(() -> futureSaved, done -> complete(redirectResponse));
-	
+
 	}
-	
+
 }

@@ -44,41 +44,30 @@ public class ActivityRepository {
 
 	public Sink<Activity, CompletionStage<Done>> saveActivity() {
 		PreparedStatement preparedStatement = session.prepare(INSERT_ACTIVITY_STMT);
-		
+
 		BiFunction<Activity, PreparedStatement, BoundStatement> statementBinder = (activity, statement) -> {
 			Date created = TimeUtils.toDate(activity.getCreatedAt());
 			Date modified = TimeUtils.toDate(activity.getModifiedAt());
-			return statement.bind(
-					activity.getId().getActivityId(), 
-					activity.getId().getStageId(), 
-					activity.getId().getTableId(), 
-					activity.getName(),
-					activity.getState().name(), 
-					created, 
-					modified);
+			return statement.bind(activity.getId().getActivityId(), activity.getId().getStageId(),
+					activity.getId().getTableId(), activity.getName(), activity.getState().name(), created, modified);
 		};
 
-		Sink<Activity, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
-				actorSystem.dispatcher());
+		Sink<Activity, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder,
+				session, actorSystem.dispatcher());
+
 		return sink;
 	}
-	
+
 	public Source<Activity, NotUsed> getStageActivities(StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId());
-		
-		return Source.from(session.execute(bound)
-				.all()
-				.stream()
-				.map(this::fromRow)
-				.collect(Collectors.toList()));
+
+		return Source.from(session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
 	}
 
 	public Source<Optional<Activity>, NotUsed> getById(ActivityId activityId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_ACTIVITY_BY_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(
-				activityId.getTableId(), 
-				activityId.getStageId(), 
+		BoundStatement bound = preparedStatement.bind(activityId.getTableId(), activityId.getStageId(),
 				activityId.getActivityId());
 
 		ResultSet r = session.execute(bound);
@@ -89,27 +78,17 @@ public class ActivityRepository {
 		}
 
 		Activity activity = fromRow(row);
-		return Source.single( Optional.of(activity));
+		return Source.single(Optional.of(activity));
 	}
 
 	private Activity fromRow(Row row) {
-		ActivityId id = ActivityId.builder()
-				.activityId(row.get("activity_id", UUID.class))
-				.stageId(row.get("stage_id", UUID.class))
-				.tableId(row.get("table_id", UUID.class))
-				.build();
-		
-		Activity activity = Activity.builder()
-				.id(id)
-				.name(row.getString("name"))
-				.state(TableState.valueOf(row.getString("state")))
-				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
-				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
-				.build();
-		return activity;
-	}
-	
 
-	
-	
+		ActivityId id = new ActivityId(row.get("table_id", UUID.class), row.get("stage_id", UUID.class),
+				row.get("activity_id", UUID.class));
+
+		return new Activity(id, row.getString("name"), TableState.valueOf(row.getString("state")),
+				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
+				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
+	}
+
 }

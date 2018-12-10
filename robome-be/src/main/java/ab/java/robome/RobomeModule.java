@@ -55,8 +55,11 @@ public class RobomeModule extends AbstractModule {
 	private void initializeCassandraSession() {
 		Config config = ConfigFactory.load();
 
-		Session session = Cluster.builder().addContactPoint(config.getString("cassandra.host"))
-				.withPort(config.getInt("cassandra.port")).build().connect();
+		Session session = Cluster.builder()
+				.addContactPoint(config.getString("cassandra.host"))
+				.withPort(config.getInt("cassandra.port"))
+				.build()
+				.connect();
 		this.bind(Session.class).toInstance(session);
 	}
 	

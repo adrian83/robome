@@ -8,40 +8,40 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.web.common.validation.Validable;
 import ab.java.robome.web.common.validation.ValidationError;
-import lombok.Builder;
-import lombok.Value;
 
-@Builder
-@Value
 public class LoginForm implements Validable {
 
 	private String email;
 	private String password;
-	
+
+	public LoginForm(String email, String password) {
+		super();
+		this.email = email;
+		this.password = password;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
 	public List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
-		
+
 		if (Strings.isNullOrEmpty(email)) {
-			ValidationError error = ValidationError.builder()
-					.field("email")
-					.messageCode("loginForm.email.empty")
-					.message("Email cannot be empty")
-					.build();
-			
+			ValidationError error = new ValidationError("email", "loginForm.email.empty", "Email cannot be empty");
 			errors.add(error);
 		}
-		
+
 		if (Strings.isNullOrEmpty(password)) {
-			
-			ValidationError error = ValidationError.builder()
-					.field("password")
-					.messageCode("loginForm.password.empty")
-					.message("Password cannot be empty")
-					.build();
-			
+			ValidationError error = new ValidationError("password", "loginForm.password.empty",
+					"Password cannot be empty");
 			errors.add(error);
 		}
-		
+
 		return errors;
 	}
 }

@@ -1,13 +1,16 @@
 package ab.java.robome.domain.stage.model;
 
-
-import lombok.Builder;
-import lombok.Value;
-
-@Builder
-@Value
 public class NewStage {
-	
+
 	private String name;
-	
+
+	public NewStage(String name) {
+		super();
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+
 }

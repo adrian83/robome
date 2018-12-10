@@ -33,29 +33,20 @@ public class NewTable implements Validable {
 	@Override
 	public List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
-		
+
 		if (Strings.isNullOrEmpty(getTitle())) {
-			ValidationError error = ValidationError.builder()
-					.field("title")
-					.messageCode("table.create.title.empty")
-					.message("Table title cannot be empty")
-					.build();
-			
+			ValidationError error = new ValidationError("title", "table.create.title.empty",
+					"Table title cannot be empty");
 			errors.add(error);
 		}
-		
+
 		if (Strings.isNullOrEmpty(getDescription())) {
-			ValidationError error = ValidationError.builder()
-					.field("description")
-					.messageCode("table.create.description.empty")
-					.message("Table description cannot be empty")
-					.build();
-			
+			ValidationError error = new ValidationError("description", "table.create.description.empty",
+					"Table description cannot be empty");
 			errors.add(error);
 		}
-		
+
 		return errors;
 	}
 
-	
 }

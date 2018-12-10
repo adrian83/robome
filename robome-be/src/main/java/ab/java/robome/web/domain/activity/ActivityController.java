@@ -34,81 +34,77 @@ import akka.http.javadsl.server.Route;
 public class ActivityController extends AbstractController {
 
 	public static final String PATH = "activities";
-	
+
 	private ActivityService activityService;
-	
+
 	@Inject
-	public ActivityController(ObjectMapper objectMapper, SecurityUtils securityUtils, 
-			Config config, ActivityService activityService) {
+	public ActivityController(ObjectMapper objectMapper, SecurityUtils securityUtils, Config config,
+			ActivityService activityService) {
+
 		super(securityUtils, objectMapper, config);
 		this.activityService = activityService;
 	}
-	
 
 	public Route createRoute() {
 
 		return route(
-				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathPrefix(segment(), activityId -> pathEndOrSingleSlash(() -> getActivityById(tableId, stageId, activityId))))))))),
-				post(() ->  pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> entity(Jackson.unmarshaller(NewActivity.class), e -> persistActivity(tableId, stageId, e)))))))),
-				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getStageActivities(tableId, stageId))))))))
-				);
+				get(() -> pathPrefix(TableController.TABLES,
+						() -> pathPrefix(segment(),
+								tableId -> pathPrefix(StageController.PATH,
+										() -> pathPrefix(segment(), stageId -> pathPrefix(PATH,
+												() -> pathPrefix(segment(), activityId -> pathEndOrSingleSlash(
+														() -> getActivityById(tableId, stageId, activityId))))))))),
+				post(() -> pathPrefix(TableController.TABLES,
+						() -> pathPrefix(segment(),
+								tableId -> pathPrefix(StageController.PATH,
+										() -> pathPrefix(segment(),
+												stageId -> pathPrefix(PATH,
+														() -> entity(Jackson.unmarshaller(NewActivity.class),
+																e -> persistActivity(tableId, stageId, e)))))))),
+				get(() -> pathPrefix(TableController.TABLES,
+						() -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH,
+								() -> pathPrefix(segment(), stageId -> pathPrefix(PATH,
+										() -> pathEndOrSingleSlash(() -> getStageActivities(tableId, stageId)))))))));
 	}
 
 	private Route getStageActivities(String tableIdStr, String stageIdStr) {
 		UUID tableUuid = UUID.fromString(tableIdStr);
 		UUID stageUuid = UUID.fromString(stageIdStr);
-		
-		StageId stageId = StageId.builder()
-				.stageId(stageUuid)
-				.tableId(tableUuid)
-				.build();
-		
+
+		StageId stageId = new StageId(tableUuid, stageUuid);
+
 		final CompletionStage<List<Activity>> futureStages = activityService.getStageActivities(stageId);
 		return onSuccess(() -> futureStages, stages -> completeOK(stages, Jackson.marshaller(objectMapper)));
 	}
-	
+
 	private Route getActivityById(String tableId, String stageId, String activityId) {
-		
-		ActivityId id = ActivityId.builder()
-				.activityId(UUID.fromString(activityId))
-				.stageId(UUID.fromString(stageId))
-				.tableId(UUID.fromString(tableId))
-				.build();
-		
+
+		ActivityId id = new ActivityId(UUID.fromString(tableId), UUID.fromString(stageId), UUID.fromString(activityId));
+
 		final CompletionStage<Optional<Activity>> futureMaybeTable = activityService.getActivity(id);
-		
-		return onSuccess(() -> futureMaybeTable, maybeItem -> maybeItem
-				.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
-				.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
+
+		return onSuccess(() -> futureMaybeTable,
+				maybeItem -> maybeItem.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
+						.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
 	}
-	
+
 	private Route persistActivity(String tableId, String stageId, NewActivity newActivity) {
-		
+
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
-		
-		Location locationHeader = locationFor(TableController.TABLES, tableId, StageController.PATH, stageId, PATH, id.toString());
-		
-		ActivityId activityId = ActivityId.builder()
-				.activityId(id)
-				.stageId(UUID.fromString(stageId))
-				.tableId(UUID.fromString(tableId))
-				.build();
-		
-		Activity activity = Activity.builder()
-				.id(activityId)
-				.name(newActivity.getName())
-				.state(TableState.ACTIVE)
-				.createdAt(utcNow)
-				.modifiedAt(utcNow)
-				.build();
+
+		Location locationHeader = locationFor(TableController.TABLES, tableId, StageController.PATH, stageId, PATH,
+				id.toString());
+
+		ActivityId activityId = new ActivityId(UUID.fromString(tableId), UUID.fromString(stageId), id);
+
+		Activity activity = new Activity(activityId, newActivity.getName(), TableState.ACTIVE, utcNow, utcNow);
 
 		HttpResponse redirectResponse = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
-		
+
 		CompletionStage<Done> futureSaved = activityService.saveActivity(activity);
 		return onSuccess(() -> futureSaved, done -> complete(redirectResponse));
-	
+
 	}
-	
-	
+
 }

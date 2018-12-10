@@ -45,16 +45,9 @@ public class UserRepository {
 	}
 
 	private User fromRow(Row row) {
-		
-		User user = User.builder()
-				.id(row.get("id", UUID.class))
-				.email(row.getString("email"))
-				.passwordHash(row.getString("password_hash"))
-				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
-				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
-				.build();
-
-		return user;
+		return new User(row.get("id", UUID.class),row.getString("email"),row.getString("password_hash"),
+				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
+				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
 	}
 
 	public Sink<User, CompletionStage<Done>> saveUser() {
@@ -66,7 +59,11 @@ public class UserRepository {
 			return statement.bind(user.getId(), user.getEmail(), user.getPasswordHash(), created, modified);
 		};
 
-		Sink<User, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
+		Sink<User, CompletionStage<Done>> sink = CassandraSink.create(
+				1, 
+				preparedStatement, 
+				statementBinder, 
+				session,
 				actorSystem.dispatcher());
 		return sink;
 	}

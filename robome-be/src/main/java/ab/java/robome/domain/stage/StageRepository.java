@@ -43,30 +43,24 @@ public class StageRepository {
 
 	public Sink<Stage, CompletionStage<Done>> saveStage() {
 		PreparedStatement preparedStatement = session.prepare(INSERT_STAGE_STMT);
-		
+
 		BiFunction<Stage, PreparedStatement, BoundStatement> statementBinder = (stage, statement) -> {
 			Date created = TimeUtils.toDate(stage.getCreatedAt());
 			Date modified = TimeUtils.toDate(stage.getModifiedAt());
-			return statement.bind(
-					stage.getStageId().getStageId(), 
-					stage.getStageId().getTableId(), 
-					stage.getName(), stage.getState().name(), created, modified);
+			return statement.bind(stage.getStageId().getStageId(), stage.getStageId().getTableId(), stage.getName(),
+					stage.getState().name(), created, modified);
 		};
 
 		Sink<Stage, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
 				actorSystem.dispatcher());
 		return sink;
 	}
-	
-	public Source<Stage,NotUsed> getTableStages(UUID tableUuid) {
+
+	public Source<Stage, NotUsed> getTableStages(UUID tableUuid) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
 		BoundStatement bound = preparedStatement.bind(tableUuid);
-		
-		return Source.from(session.execute(bound)
-				.all()
-				.stream()
-				.map(this::fromRow)
-				.collect(Collectors.toList()));
+
+		return Source.from(session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
 	}
 
 	public Source<Optional<Stage>, NotUsed> getById(StageId stageId) {
@@ -81,26 +75,16 @@ public class StageRepository {
 		}
 
 		Stage stage = fromRow(row);
-		return Source.single( Optional.of(stage));
+		return Source.single(Optional.of(stage));
 	}
 
 	private Stage fromRow(Row row) {
-		StageId id = StageId.builder()
-				.stageId(row.get("stage_id", UUID.class))
-				.tableId(row.get("table_id", UUID.class))
-				.build();
-		
-		Stage stage = Stage.builder()
-				.stageId(id)
-				.name(row.getString("name"))
-				.state(TableState.valueOf(row.getString("state")))
-				.createdAt(TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")))
-				.modifiedAt(TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")))
-				.build();
-		return stage;
-	}
-	
+		StageId id = new StageId(row.get("table_id", UUID.class), row.get("stage_id", UUID.class));
 
-	
-	
+		return new Stage(id, row.getString("name"), TableState.valueOf(row.getString("state")),
+				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
+				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
+
+	}
+
 }

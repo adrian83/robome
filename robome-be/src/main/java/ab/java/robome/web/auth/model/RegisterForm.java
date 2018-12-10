@@ -8,53 +8,55 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.web.common.validation.Validable;
 import ab.java.robome.web.common.validation.ValidationError;
-import lombok.Builder;
-import lombok.Value;
 
-@Builder
-@Value
 public class RegisterForm implements Validable {
 
 	private String email;
-	
 	private String password;
-	
 	private String repeatedPassword;
-	
+
+	public RegisterForm(String email, String password, String repeatedPassword) {
+		super();
+		this.email = email;
+		this.password = password;
+		this.repeatedPassword = repeatedPassword;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public String getRepeatedPassword() {
+		return repeatedPassword;
+	}
 
 	public List<ValidationError> validate(Config config) {
 		List<ValidationError> errors = new ArrayList<>();
-		
+
 		if (Strings.isNullOrEmpty(email)) {
-			ValidationError error = ValidationError.builder()
-					.field("email")
-					.messageCode("register.email.empty")
-					.message("Email cannot be empty")
-					.build();
-			
+			ValidationError error = new ValidationError("email", "register.email.empty", "Email cannot be empty");
+
 			errors.add(error);
 		}
-		
+
 		if (Strings.isNullOrEmpty(password)) {
-			
-			ValidationError error = ValidationError.builder()
-					.field("password")
-					.messageCode("register.password.empty")
-					.message("Password cannot be empty")
-					.build();
-			
+
+			ValidationError error = new ValidationError("password", "register.password.empty",
+					"Password cannot be empty");
+
 			errors.add(error);
-			
-		} else if(!password.equals(repeatedPassword)) {
-			
-			ValidationError error = ValidationError.builder()
-					.field("repeatedPassword")
-					.messageCode("register.repeatedPassword.notEquals")
-					.message("Repeated password cannot be different than password")
-					.build();
+
+		} else if (!password.equals(repeatedPassword)) {
+
+			ValidationError error = new ValidationError("repeatedPassword", "register.repeatedPassword.notEquals",
+					"Repeated password cannot be different than password");
 			errors.add(error);
 		}
-		
+
 		return errors;
 	}
 }
