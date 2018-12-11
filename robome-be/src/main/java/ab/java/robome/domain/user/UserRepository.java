@@ -63,8 +63,7 @@ public class UserRepository {
 				1, 
 				preparedStatement, 
 				statementBinder, 
-				session,
-				actorSystem.dispatcher());
+				session);
 		return sink;
 	}
 

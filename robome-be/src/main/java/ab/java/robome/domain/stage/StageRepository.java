@@ -51,8 +51,7 @@ public class StageRepository {
 					stage.getState().name(), created, modified);
 		};
 
-		Sink<Stage, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
-				actorSystem.dispatcher());
+		Sink<Stage, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session);
 		return sink;
 	}
 

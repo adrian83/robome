@@ -54,8 +54,7 @@ public class TableRepository {
 					tab.getState().name(), created, modified);
 		};
 
-		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session,
-				actorSystem.dispatcher());
+		Sink<Table, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session);
 		return sink;
 	}
 

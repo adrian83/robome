@@ -53,7 +53,7 @@ public class ActivityRepository {
 		};
 
 		Sink<Activity, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder,
-				session, actorSystem.dispatcher());
+				session);
 
 		return sink;
 	}

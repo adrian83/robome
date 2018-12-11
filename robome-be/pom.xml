@@ -10,21 +10,21 @@
 
 	<properties>
 		<!-- Scala -->
-		<scala.version>2.11.7</scala.version>
-		<scala.binary.version>2.11</scala.binary.version>
+		<scala.version>2.12.7</scala.version>
+		<scala.binary.version>2.12</scala.binary.version>
 
 		<!-- Akka -->
-		<akka.http.version>10.1.1</akka.http.version>
-		<akka.version>2.4.16</akka.version>
+		<akka.http.version>10.1.5</akka.http.version>
+		<akka.version>2.5.19</akka.version>
 
 		<!-- ScalaTest -->
-		<scalatest.version>2.2.4</scalatest.version>
+
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
-			<artifactId>akka-actor_2.11</artifactId>
+			<artifactId>akka-actor_${scala.binary.version}</artifactId>
 			<version>${akka.version}</version>
 		</dependency>
 		<dependency>
@@ -49,8 +49,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.lightbend.akka</groupId>
-			<artifactId>akka-stream-alpakka-cassandra_2.11</artifactId>
-			<version>0.6</version>
+			<artifactId>akka-stream-alpakka-cassandra_${scala.binary.version}</artifactId>
+			<version>1.0-M1</version>
 		</dependency>
 
 
@@ -61,12 +61,7 @@
 			<version>${akka.http.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_${scala.binary.version}</artifactId>
-			<version>${scalatest.version}</version>
-			<scope>test</scope>
-		</dependency>
+
 
 		<dependency>
 			<groupId>com.google.inject</groupId>
