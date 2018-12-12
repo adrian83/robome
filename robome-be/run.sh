@@ -39,7 +39,7 @@ run-cass-init() {
 		echo $3
 	
 #		cqlsh 127.0.0.1 9043 -f src/main/resources/cassandra.cql
-#		docker cp src/main/resource/cassandra.cql $3:/file.cql
+		docker cp src/main/resources/cassandra.cql $3:/file.cql
 		docker exec $3 cqlsh -f /file.cql
    
 	set +e

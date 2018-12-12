@@ -14,11 +14,11 @@ import com.typesafe.config.Config;
 
 import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.stage.StageService;
-import ab.java.robome.domain.stage.model.NewStage;
 import ab.java.robome.domain.stage.model.Stage;
 import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
+import ab.java.robome.web.domain.stage.model.NewStage;
 import ab.java.robome.web.domain.table.TableController;
 import ab.java.robome.web.security.SecurityUtils;
 import akka.Done;

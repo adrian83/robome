@@ -20,25 +20,22 @@ import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 
 public class StageRepository {
 
-	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, name, state, "
+	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, title, state, "
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ?";
 	private static final String SELECT_STAGES_BY_TABLE_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ?";
 
 	private Session session;
-	private ActorSystem actorSystem;
 
 	@Inject
-	public StageRepository(Session session, ActorSystem actorSystem) {
+	public StageRepository(Session session) {
 		this.session = session;
-		this.actorSystem = actorSystem;
 	}
 
 	public Sink<Stage, CompletionStage<Done>> saveStage() {
@@ -47,7 +44,7 @@ public class StageRepository {
 		BiFunction<Stage, PreparedStatement, BoundStatement> statementBinder = (stage, statement) -> {
 			Date created = TimeUtils.toDate(stage.getCreatedAt());
 			Date modified = TimeUtils.toDate(stage.getModifiedAt());
-			return statement.bind(stage.getStageId().getStageId(), stage.getStageId().getTableId(), stage.getName(),
+			return statement.bind(stage.getStageId().getStageId(), stage.getStageId().getTableId(), stage.getTitle(),
 					stage.getState().name(), created, modified);
 		};
 
@@ -80,7 +77,7 @@ public class StageRepository {
 	private Stage fromRow(Row row) {
 		StageId id = new StageId(row.get("table_id", UUID.class), row.get("stage_id", UUID.class));
 
-		return new Stage(id, row.getString("name"), TableState.valueOf(row.getString("state")),
+		return new Stage(id, row.getString("title"), TableState.valueOf(row.getString("state")),
 				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
 				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
 

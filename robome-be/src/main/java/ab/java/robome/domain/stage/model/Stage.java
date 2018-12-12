@@ -7,15 +7,15 @@ import ab.java.robome.domain.table.model.TableState;
 public class Stage {
 
 	private StageId stageId;
-	private String name;
+	private String title;
 	private TableState state;
 	private LocalDateTime createdAt;
 	private LocalDateTime modifiedAt;
 
-	public Stage(StageId stageId, String name, TableState state, LocalDateTime createdAt, LocalDateTime modifiedAt) {
+	public Stage(StageId stageId, String title, TableState state, LocalDateTime createdAt, LocalDateTime modifiedAt) {
 		super();
 		this.stageId = stageId;
-		this.name = name;
+		this.title = title;
 		this.state = state;
 		this.createdAt = createdAt;
 		this.modifiedAt = modifiedAt;
@@ -25,8 +25,8 @@ public class Stage {
 		return stageId;
 	}
 
-	public String getName() {
-		return name;
+	public String getTitle() {
+		return title;
 	}
 
 	public TableState getState() {

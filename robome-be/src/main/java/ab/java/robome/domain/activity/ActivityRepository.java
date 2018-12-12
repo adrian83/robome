@@ -21,7 +21,6 @@ import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -34,12 +33,10 @@ public class ActivityRepository {
 	private static final String SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ?";
 
 	private Session session;
-	private ActorSystem actorSystem;
 
 	@Inject
-	public ActivityRepository(Session session, ActorSystem actorSystem) {
+	public ActivityRepository(Session session) {
 		this.session = session;
-		this.actorSystem = actorSystem;
 	}
 
 	public Sink<Activity, CompletionStage<Done>> saveActivity() {

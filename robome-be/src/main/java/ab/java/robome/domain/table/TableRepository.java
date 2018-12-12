@@ -21,7 +21,6 @@ import ab.java.robome.domain.table.model.TableId;
 import ab.java.robome.domain.table.model.TableState;
 import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSource;
 import akka.stream.javadsl.Sink;
@@ -36,12 +35,10 @@ public class TableRepository {
 	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE user_id = ? AND table_id = ?";
 
 	private Session session;
-	private ActorSystem actorSystem;
 
 	@Inject
-	public TableRepository(Session session, ActorSystem actorSystem) {
+	public TableRepository(Session session) {
 		this.session = session;
-		this.actorSystem = actorSystem;
 	}
 
 	public Sink<Table, CompletionStage<Done>> saveTable() {

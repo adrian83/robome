@@ -17,7 +17,6 @@ import ab.java.robome.common.time.TimeUtils;
 import ab.java.robome.domain.user.model.User;
 import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -29,12 +28,10 @@ public class UserRepository {
 			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?)";
 	
 	private Session session;
-	private ActorSystem actorSystem;
 
 	@Inject
-	public UserRepository(Session session, ActorSystem actorSystem) {
+	public UserRepository(Session session) {
 		this.session = session;
-		this.actorSystem = actorSystem;
 	}
 
 	public Source<Optional<User>, NotUsed> getByEmail(String email) {

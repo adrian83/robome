@@ -3,6 +3,8 @@ package ab.java.robome.web.auth.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.typesafe.config.Config;
 
@@ -15,7 +17,11 @@ public class RegisterForm implements Validable {
 	private String password;
 	private String repeatedPassword;
 
-	public RegisterForm(String email, String password, String repeatedPassword) {
+	@JsonCreator
+	public RegisterForm(
+			@JsonProperty("email") String email, 
+			@JsonProperty("password") String password, 
+			@JsonProperty("repeatedPassword") String repeatedPassword) {
 		super();
 		this.email = email;
 		this.password = password;
