@@ -1,0 +1,240 @@
+{
+	"info": {
+		"_postman_id": "484ef583-b48d-4a30-bf40-d21697b7fbb4",
+		"name": "robome",
+		"description": "postman collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "127.0.0.1:6060/auth/register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\":\"john.smith@somemail.com\",\n\t\"password\":\"secret\",\n\t\"repeatedPassword\":\"secret\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:6060/auth/register",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "6060",
+					"path": [
+						"auth",
+						"register"
+					]
+				},
+				"description": "auth - register"
+			},
+			"response": []
+		},
+		{
+			"name": "127.0.0.1:6060/auth/login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\":\"john.smith@somemail.com\",\n\t\"password\":\"secret\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:6060/auth/login",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "6060",
+					"path": [
+						"auth",
+						"login"
+					]
+				},
+				"description": "auth - login"
+			},
+			"response": []
+		},
+		{
+			"name": "127.0.0.1:6060/tables",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkICI6ImVmNWY4MmJlLTliZTQtNDRhNC1iZDQ0LTk1YThjMDdlZjljNyIsInVzZXJfZW1haWwgIjoiam9obi5zbWl0aEBzb21lbWFpbC5jb20ifQ.SnjnahsVhhncqoJQFnbs-yDZZyYpylX68PQ9xqmFO0aEEcYZagXhiDBPnE5iXfrvMGc52fHoz-AflBxwv0Fivw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\":\"bucket list\",\n\t\"description\": \"just a description\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:6060/tables",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "6060",
+					"path": [
+						"tables"
+					]
+				},
+				"description": "table - new"
+			},
+			"response": []
+		},
+		{
+			"name": "127.0.0.1:6060/tables",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkICI6ImVmNWY4MmJlLTliZTQtNDRhNC1iZDQ0LTk1YThjMDdlZjljNyIsInVzZXJfZW1haWwgIjoiam9obi5zbWl0aEBzb21lbWFpbC5jb20ifQ.SnjnahsVhhncqoJQFnbs-yDZZyYpylX68PQ9xqmFO0aEEcYZagXhiDBPnE5iXfrvMGc52fHoz-AflBxwv0Fivw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\":\"bucket list\",\n\t\"description\": \"just a description\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:6060/tables",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "6060",
+					"path": [
+						"tables"
+					]
+				},
+				"description": "tables - list"
+			},
+			"response": []
+		},
+		{
+			"name": "127.0.0.1:6060/tables/07933b34-c7d1-4ca9-8a8a-bce2c6c211f1/stages",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkICI6ImVmNWY4MmJlLTliZTQtNDRhNC1iZDQ0LTk1YThjMDdlZjljNyIsInVzZXJfZW1haWwgIjoiam9obi5zbWl0aEBzb21lbWFpbC5jb20ifQ.SnjnahsVhhncqoJQFnbs-yDZZyYpylX68PQ9xqmFO0aEEcYZagXhiDBPnE5iXfrvMGc52fHoz-AflBxwv0Fivw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"todo\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:6060/tables/07933b34-c7d1-4ca9-8a8a-bce2c6c211f1/stages",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "6060",
+					"path": [
+						"tables",
+						"07933b34-c7d1-4ca9-8a8a-bce2c6c211f1",
+						"stages"
+					]
+				},
+				"description": "stages - new"
+			},
+			"response": []
+		},
+		{
+			"name": "127.0.0.1:6060/tables/07933b34-c7d1-4ca9-8a8a-bce2c6c211f1/stages",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkICI6ImVmNWY4MmJlLTliZTQtNDRhNC1iZDQ0LTk1YThjMDdlZjljNyIsInVzZXJfZW1haWwgIjoiam9obi5zbWl0aEBzb21lbWFpbC5jb20ifQ.SnjnahsVhhncqoJQFnbs-yDZZyYpylX68PQ9xqmFO0aEEcYZagXhiDBPnE5iXfrvMGc52fHoz-AflBxwv0Fivw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"todo\"\n}"
+				},
+				"url": {
+					"raw": "127.0.0.1:6060/tables/07933b34-c7d1-4ca9-8a8a-bce2c6c211f1/stages",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "6060",
+					"path": [
+						"tables",
+						"07933b34-c7d1-4ca9-8a8a-bce2c6c211f1",
+						"stages"
+					]
+				},
+				"description": "stages - list"
+			},
+			"response": []
+		}
+	]
+}
