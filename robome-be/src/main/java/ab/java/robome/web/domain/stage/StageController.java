@@ -18,9 +18,11 @@ import ab.java.robome.domain.stage.model.Stage;
 import ab.java.robome.domain.stage.model.StageId;
 import ab.java.robome.domain.table.model.TableState;
 import ab.java.robome.web.common.AbstractController;
+import ab.java.robome.web.common.HttpHeader;
 import ab.java.robome.web.domain.stage.model.NewStage;
 import ab.java.robome.web.domain.table.TableController;
 import ab.java.robome.web.security.SecurityUtils;
+import ab.java.robome.web.security.UserData;
 import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
@@ -50,8 +52,14 @@ public class StageController extends AbstractController {
 								tableId -> pathPrefix(PATH, () -> pathPrefix(segment(),
 										stageId -> pathEndOrSingleSlash(() -> getStageById(tableId, stageId))))))),
 				post(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(),
-						tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(
-								() -> entity(Jackson.unmarshaller(NewStage.class), e -> persistStage(tableId, e))))))),
+
+						tableId -> pathPrefix(PATH,
+								() -> pathEndOrSingleSlash(
+										() -> optionalHeaderValueByName(HttpHeader.AUTHORIZATION.getText(),
+												jwtToken -> securityUtils.authorized(jwtToken,
+														userData -> entity(Jackson.unmarshaller(NewStage.class),
+																e -> persistStage(userData, tableId, e))))))))),
+
 				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(),
 						tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> getTableStages(tableId)))))));
 	}
@@ -74,7 +82,7 @@ public class StageController extends AbstractController {
 						.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
 	}
 
-	private Route persistStage(String tableId, NewStage newStage) {
+	private Route persistStage(UserData userData, String tableId, NewStage newStage) {
 
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
@@ -83,7 +91,7 @@ public class StageController extends AbstractController {
 
 		StageId stageId = new StageId(UUID.fromString(tableId), id);
 
-		Stage stage = new Stage(stageId, newStage.getName(), TableState.ACTIVE, utcNow, utcNow);
+		Stage stage = new Stage(stageId, userData.getId(), newStage.getName(), TableState.ACTIVE, utcNow, utcNow);
 
 		HttpResponse redirectResponse = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
 

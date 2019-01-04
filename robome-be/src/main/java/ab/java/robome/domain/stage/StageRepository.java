@@ -26,8 +26,8 @@ import akka.stream.javadsl.Source;
 
 public class StageRepository {
 
-	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, title, state, "
-			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
+	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, user_id, title, state, "
+			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ?";
 	private static final String SELECT_STAGES_BY_TABLE_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ?";
 
@@ -44,8 +44,8 @@ public class StageRepository {
 		BiFunction<Stage, PreparedStatement, BoundStatement> statementBinder = (stage, statement) -> {
 			Date created = TimeUtils.toDate(stage.getCreatedAt());
 			Date modified = TimeUtils.toDate(stage.getModifiedAt());
-			return statement.bind(stage.getStageId().getStageId(), stage.getStageId().getTableId(), stage.getTitle(),
-					stage.getState().name(), created, modified);
+			return statement.bind(stage.getStageId().getStageId(), stage.getStageId().getTableId(), stage.getUserId(),
+					stage.getTitle(), stage.getState().name(), created, modified);
 		};
 
 		Sink<Stage, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder, session);
@@ -77,8 +77,8 @@ public class StageRepository {
 	private Stage fromRow(Row row) {
 		StageId id = new StageId(row.get("table_id", UUID.class), row.get("stage_id", UUID.class));
 
-		return new Stage(id, row.getString("title"), TableState.valueOf(row.getString("state")),
-				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
+		return new Stage(id, row.get("user_id", UUID.class), row.getString("title"),
+				TableState.valueOf(row.getString("state")), TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
 				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
 
 	}

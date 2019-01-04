@@ -27,6 +27,7 @@ CREATE INDEX uemail ON robome.users (email);
  CREATE TABLE robome.stages (
   table_id uuid,
   stage_id uuid,
+  user_id uuid,
   title varchar,
   state varchar,
   created_at timestamp,
