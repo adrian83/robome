@@ -16,6 +16,8 @@ import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ValidationError;
 import com.github.adrian83.robome.domain.table.Table;
+import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.util.http.Cors;
 import com.github.adrian83.robome.util.http.HttpHeader;
 import com.github.adrian83.robome.util.http.HttpMethod;
@@ -35,12 +37,14 @@ public class TableController extends AbstractController {
 	public static final String TABLES = "tables";
 
 	private TableService tableService;
+	private UserService userService;
 
 	@Inject
-	public TableController(TableService tableService, JwtAuthorizer jwtAuthorizer, Config config,
+	public TableController(UserService userService, TableService tableService, JwtAuthorizer jwtAuthorizer, Config config,
 			ObjectMapper objectMapper) {
 		super(jwtAuthorizer, objectMapper, config);
 		this.tableService = tableService;
+		this.userService = userService;
 	}
 
 	public Route createRoute() {
@@ -65,9 +69,11 @@ public class TableController extends AbstractController {
 
 	
 	private Route getTables(AuthContext authContext) {
+		
+		final CompletionStage<Optional<User>> user = userService.findUserByEmail(authContext.getUserEmail());
 
-		final CompletionStage<List<Table>> futureTables = tableService.getTables(authContext.getUserId());
-
+		final CompletionStage<List<Table>> futureTables = tableService.getTables(user);
+ 
 		return onSuccess(() -> futureTables, tables -> {
 			HttpResponse response = HttpResponse.create().withStatus(StatusCodes.OK)
 					.withEntity(ContentTypes.APPLICATION_JSON, toBytes(tables))
@@ -79,6 +85,8 @@ public class TableController extends AbstractController {
 
 	private Route getTableById(AuthContext authContext, String tableId) {
 		UUID tableUuid = UUID.fromString(tableId);
+
+		
 
 		final CompletionStage<Optional<Table>> futureMaybeTable = tableService.getTable(authContext.getUserId(), tableUuid);
 

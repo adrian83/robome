@@ -39,8 +39,8 @@ run-cass-init() {
 		echo $3
 	
 #		cqlsh 127.0.0.1 9043 -f src/main/resources/cassandra.cql
-		docker cp src/main/resources/cassandra.cql $3:/file.cql
-		docker exec $3 cqlsh -f /file.cql
+#		docker cp src/main/resources/cassandra.cql $3:/file.cql
+#		docker exec $3 cqlsh -f /file.cql
    
 	set +e
 }
@@ -58,6 +58,7 @@ case "$CMD" in
 		run-infra
 	;;
 	run-cass-init)
+		echo $0 $1 $2
 		run-cass-init $0 $1 $2
 	;;
 	*)

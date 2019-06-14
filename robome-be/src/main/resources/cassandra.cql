@@ -6,6 +6,7 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
   id uuid, 
   email varchar,
   password_hash varchar,
+  roles list<text>,
   created_at timestamp,
   modified_at timestamp,
   PRIMARY KEY (id)

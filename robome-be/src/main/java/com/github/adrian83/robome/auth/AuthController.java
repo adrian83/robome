@@ -92,7 +92,7 @@ public class AuthController extends AbstractController {
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		String hashedPassword = BCrypt.hashpw(register.getPassword(), BCrypt.gensalt());
 
-		User user = new User(UUID.randomUUID(), register.getEmail(), hashedPassword, utcNow, utcNow);
+		User user = new User(UUID.randomUUID(), register.getEmail(), hashedPassword, Role.DEFAULT_USER_ROLES, utcNow, utcNow);
 
 		HttpResponse response = HttpResponse.create().withStatus(StatusCodes.CREATED)
 				.addHeader(Cors.origin(corsOrigin()));

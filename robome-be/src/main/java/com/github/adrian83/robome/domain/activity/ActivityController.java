@@ -43,13 +43,14 @@ public class ActivityController extends AbstractController {
 	public Route createRoute() {
 		return route(
 				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathPrefix(segment(), activityId -> jwtSecured(tableId, stageId, activityId, this::getActivityById)))))))),
-		
+
 				post(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> jwtSecured(tableId, stageId, NewActivity.class, this::persistActivity))))))),
 				
 				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> jwtSecured(tableId, stageId, this::getStageActivities))))))));
 	}
 
 	private Route getStageActivities(AuthContext authContext, String tableIdStr, String stageIdStr) {
+		
 		UUID tableUuid = UUID.fromString(tableIdStr);
 		UUID stageUuid = UUID.fromString(stageIdStr);
 
@@ -60,8 +61,12 @@ public class ActivityController extends AbstractController {
 	}
 
 	private Route getActivityById(AuthContext authContext, String tableId, String stageId, String activityId) {
-
-		ActivityId id = new ActivityId(UUID.fromString(tableId), UUID.fromString(stageId), UUID.fromString(activityId));
+		
+		UUID tableUuid = UUID.fromString(tableId);
+		UUID stageUuid = UUID.fromString(stageId);
+		UUID activityUuid = UUID.fromString(activityId);
+		
+		ActivityId id = new ActivityId(tableUuid, stageUuid, activityUuid);
 
 		final CompletionStage<Optional<Activity>> futureMaybeTable = activityService.getActivity(id);
 
@@ -72,13 +77,17 @@ public class ActivityController extends AbstractController {
 
 	private Route persistActivity(AuthContext authContext, String tableId, String stageId, NewActivity newActivity) {
 
+		UUID tableUuid = UUID.fromString(tableId);
+		UUID stageUuid = UUID.fromString(stageId);
+		UUID activityUuid = UUID.randomUUID();
+		
 		LocalDateTime utcNow = TimeUtils.utcNow();
-		UUID id = UUID.randomUUID();
+		
 
 		Location locationHeader = locationFor(TableController.TABLES, tableId, StageController.PATH, stageId, PATH,
-				id.toString());
+				activityUuid.toString());
 
-		ActivityId activityId = new ActivityId(UUID.fromString(tableId), UUID.fromString(stageId), id);
+		ActivityId activityId = new ActivityId(tableUuid, stageUuid, activityUuid);
 
 		Activity activity = new Activity(activityId, newActivity.getName(), TableState.ACTIVE, utcNow, utcNow);
 
@@ -86,7 +95,6 @@ public class ActivityController extends AbstractController {
 
 		CompletionStage<Done> futureSaved = activityService.saveActivity(activity);
 		return onSuccess(() -> futureSaved, done -> complete(redirectResponse));
-
 	}
 
 }

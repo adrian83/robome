@@ -1,7 +1,10 @@
 package com.github.adrian83.robome.domain.user;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+
+import com.github.adrian83.robome.auth.Role;
 
 public class User {
 
@@ -10,12 +13,14 @@ public class User {
 	private String passwordHash;
 	private LocalDateTime createdAt;
 	private LocalDateTime modifiedAt;
+	private List<Role> roles;
 
-	public User(UUID id, String email, String passwordHash, LocalDateTime createdAt, LocalDateTime modifiedAt) {
+	public User(UUID id, String email, String passwordHash, List<Role> roles, LocalDateTime createdAt, LocalDateTime modifiedAt) {
 		super();
 		this.id = id;
 		this.email = email;
 		this.passwordHash = passwordHash;
+		this.roles = roles;
 		this.createdAt = createdAt;
 		this.modifiedAt = modifiedAt;
 	}
@@ -38,6 +43,10 @@ public class User {
 
 	public LocalDateTime getModifiedAt() {
 		return modifiedAt;
+	}
+
+	public List<Role> getRoles() {
+		return roles;
 	}
 
 }
