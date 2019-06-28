@@ -7,20 +7,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.auth.AuthContext;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
-import com.github.adrian83.robome.util.http.Cors;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.HttpHeader;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.ContentType;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.model.headers.RawHeader;
@@ -33,14 +28,16 @@ public class AbstractController extends AllDirectives {
 	protected static final String CORS_ORIGIN_KEY = "cors.origin";
 	
 	protected JwtAuthorizer jwtAuthorizer;
+	protected ExceptionHandler exceptionHandler;
+	protected Response responseProducer;
 	
-	protected ObjectMapper objectMapper;
 	protected Config config;
 	
-	protected AbstractController(JwtAuthorizer jwtAuthorizer, ObjectMapper objectMapper, Config config) {
+	protected AbstractController(JwtAuthorizer jwtAuthorizer, ExceptionHandler exceptionHandler, Config config, Response responseProducer) {
 		this.jwtAuthorizer = jwtAuthorizer;
-		this.objectMapper = objectMapper;
+		this.exceptionHandler = exceptionHandler;
 		this.config = config;
+		this.responseProducer = responseProducer;
 	}
 
 	protected Location locationFor(String ... pathElems) {
@@ -63,30 +60,8 @@ public class AbstractController extends AllDirectives {
 		return Arrays.asList(headers);
 	}
 	
-	protected String toBytes(Object object) {
-		try {
-			return objectMapper.writeValueAsString(object);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	protected HttpResponse response400(List<ValidationError> validationErrors){
-		 return HttpResponse.create()
-				 .withStatus(StatusCodes.BAD_REQUEST)
-				 .withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors))
-				 .addHeaders(headers(
-						 Cors.allowHeaders("Content-Type"), 
-						 Cors.origin("*"), 
-						 Cors.methods("POST")
-						 ));
-	}
-	
-	protected HttpResponse response404() {
-		return HttpResponse.create()
-				.withStatus(StatusCodes.NOT_FOUND)
-				.addHeader(Cors.origin(corsOrigin()));
-	}
+
+
 	
 
 	

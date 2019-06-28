@@ -13,7 +13,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.table.TableState;
+import com.github.adrian83.robome.domain.table.model.TableState;
 import com.google.inject.Inject;
 
 import akka.Done;

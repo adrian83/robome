@@ -4,31 +4,21 @@ import java.util.Arrays;
 
 import com.github.adrian83.robome.domain.user.User;
 
-public class PermissionChecker {
-	
-	private User user;
-	private boolean disable;
+public final class PermissionChecker {
 
-	private PermissionChecker(User user) {
-		this.user = user;
+	private PermissionChecker() {
 	}
 
-	public static PermissionChecker check(User user) {
-		return new PermissionChecker(user);
+	public static boolean canReadTables(User user) {
+		return hasAnyRole(user, Role.READ_TABLES, Role.ADMIN);
 	}
-	
-	public PermissionChecker canListTables() {
-		disable = disable && hasAnyRole(Role.READ_TABLES, Role.ADMIN);
-		return this;
+
+	public static boolean canWriteTables(User user) {
+		return hasAnyRole(user, Role.WRITE_TABLES, Role.ADMIN);
 	}
-	
-	public boolean permitted() {
-		return !disable;
-	}
-	
-	private boolean hasAnyRole(Role ...roles) {
+
+	private static boolean hasAnyRole(User user, Role... roles) {
 		return Arrays.stream(roles).anyMatch((role) -> user.getRoles().contains(role));
 	}
-	
-	
+
 }

@@ -1,11 +1,10 @@
-package com.github.adrian83.robome.domain.table;
+package com.github.adrian83.robome.domain.table.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.table.TableId;
-import com.github.adrian83.robome.domain.table.TableState;
+
 
 public class Table {
 
@@ -17,8 +16,11 @@ public class Table {
 	private LocalDateTime createdAt;
 	private LocalDateTime modifiedAt;
 
-	public Table(TableId id, UUID userId, String title, String description, TableState state, LocalDateTime createdAt,
-			LocalDateTime modifiedAt) {
+	public Table(UUID userId, String title, String description) {
+		this(new TableId(UUID.randomUUID()), userId, title, description, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+	}
+	
+	public Table(TableId id, UUID userId, String title, String description, TableState state, LocalDateTime createdAt, LocalDateTime modifiedAt) {
 		super();
 		this.id = id;
 		this.userId = userId;
@@ -31,6 +33,10 @@ public class Table {
 
 	public static Table newTable(TableId id, UUID userId, String title, String description) {
 		return new Table(id, userId, title, description, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+	}
+	
+	public static Table updatedTable(TableId id, UUID userId, String title, String description, TableState state, LocalDateTime createdAt) {
+		return new Table(id, userId, title, description, state, createdAt, TimeUtils.utcNow());
 	}
 
 	public TableId getId() {

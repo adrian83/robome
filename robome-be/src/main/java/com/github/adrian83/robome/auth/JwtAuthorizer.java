@@ -46,11 +46,13 @@ public class JwtAuthorizer extends AllDirectives {
 		claims.put(USER_EMAIL, user.getEmail());
 		claims.put(USER_ID, user.getId().toString());
 
-		String compactJws = Jwts.builder().setSubject("UserData").setClaims(claims)
-				.signWith(ALGORITHM, getSecurityKey()).compact();
-		return compactJws;
+		return Jwts.builder()
+				.setSubject("UserData")
+				.setClaims(claims)
+				.signWith(ALGORITHM, getSecurityKey())
+				.compact();
 	}
-
+	
 	public String createAuthorizationToken(User user) {
 		return BEARER + createJWTToken(user);
 	}

@@ -1,17 +1,16 @@
 package com.github.adrian83.robome.auth;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
 
 import org.mindrot.jbcrypt.BCrypt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
-import com.github.adrian83.robome.common.web.ValidationError;
+import com.github.adrian83.robome.common.web.ExceptionHandler;
+import com.github.adrian83.robome.common.web.Response;
+import com.github.adrian83.robome.common.web.Validation;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.util.http.Cors;
@@ -21,7 +20,6 @@ import com.github.adrian83.robome.util.http.Options;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
-import akka.Done;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
@@ -37,8 +35,8 @@ public class AuthController extends AbstractController {
 
 	@Inject
 	public AuthController(UserService userService, JwtAuthorizer jwtAuthorizer, Config config,
-			ObjectMapper objectMapper) {
-		super(jwtAuthorizer, objectMapper, config);
+			ExceptionHandler exceptionHandler, Response responseProducer) {
+		super(jwtAuthorizer, exceptionHandler, config, responseProducer);
 		this.userService = userService;
 	}
 
@@ -46,6 +44,7 @@ public class AuthController extends AbstractController {
 		return route(
 				options(() -> pathPrefix(AUTH,
 						() -> pathPrefix(REGISTER, () -> pathEndOrSingleSlash(this::handleRegisterOptions)))),
+
 				options(() -> pathPrefix(AUTH,
 						() -> pathPrefix(LOGIN, () -> pathEndOrSingleSlash(this::handleLoginOptions)))),
 
@@ -53,30 +52,28 @@ public class AuthController extends AbstractController {
 						() -> pathPrefix(REGISTER,
 								() -> pathEndOrSingleSlash(
 										() -> entity(Jackson.unmarshaller(RegisterForm.class), this::registerUser))))),
+
 				post(() -> pathPrefix(AUTH, () -> pathPrefix(LOGIN, () -> pathEndOrSingleSlash(
 						() -> entity(Jackson.unmarshaller(LoginForm.class), this::loginUser))))));
 	}
 
 	private Route loginUser(LoginForm login) {
 
-		List<ValidationError> validationErrors = login.validate(config);
-		if (!validationErrors.isEmpty()) {
-			return complete(response400(validationErrors));
-		}
+		CompletableFuture<HttpResponse> futureResponse = CompletableFuture.completedFuture(login)
+				.thenApply(form -> Validation.validate(form, config))
+				.thenCompose(form -> userService.findUserByEmail(form.getEmail()))
+				.thenApply(maybeUser -> maybeUser.map(user -> {
+					if (Authentication.passwordEqual(login.getPassword(), user.getPasswordHash())) {
 
-		CompletionStage<Optional<User>> futureUser = userService.findUserByEmail(login.getEmail());
+						return HttpResponse.create().withStatus(StatusCodes.OK)
+								.addHeaders(headers(jwt(jwtAuthorizer.createAuthorizationToken(user)),
+										Cors.origin(corsOrigin()),
+										Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText())));
 
-		CompletionStage<HttpResponse> futureResponse = futureUser.thenApply(maybeUser -> maybeUser.map(user -> {
-			if (BCrypt.checkpw(login.getPassword(), user.getPasswordHash())) {
-
-				return HttpResponse.create().withStatus(StatusCodes.OK)
-						.addHeaders(headers(jwt(jwtAuthorizer.createAuthorizationToken(user)),
-								Cors.origin(corsOrigin()), Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText())));
-
-			} else {
-				return response404();
-			}
-		}).orElse(response404()));
+					} else {
+						return responseProducer.response404();
+					}
+				}).orElse(responseProducer.response404()));
 
 		return completeWithFuture(futureResponse);
 
@@ -84,21 +81,19 @@ public class AuthController extends AbstractController {
 
 	private Route registerUser(RegisterForm register) {
 
-		List<ValidationError> validationErrors = register.validate(config);
-		if (!validationErrors.isEmpty()) {
-			return complete(response400(validationErrors));
-		}
+		CompletableFuture<HttpResponse> result = CompletableFuture.completedFuture(register)
+				.thenApply(form -> Validation.validate(form, config)).thenCompose(form -> {
+					LocalDateTime utcNow = TimeUtils.utcNow();
+					String hashedPassword = BCrypt.hashpw(register.getPassword(), BCrypt.gensalt());
 
-		LocalDateTime utcNow = TimeUtils.utcNow();
-		String hashedPassword = BCrypt.hashpw(register.getPassword(), BCrypt.gensalt());
+					User user = new User(UUID.randomUUID(), register.getEmail(), hashedPassword,
+							Role.DEFAULT_USER_ROLES, utcNow, utcNow);
 
-		User user = new User(UUID.randomUUID(), register.getEmail(), hashedPassword, Role.DEFAULT_USER_ROLES, utcNow, utcNow);
+					return userService.saveUser(user);
+				}).thenApply(done -> HttpResponse.create().withStatus(StatusCodes.CREATED)
+						.addHeader(Cors.origin(corsOrigin())));
 
-		HttpResponse response = HttpResponse.create().withStatus(StatusCodes.CREATED)
-				.addHeader(Cors.origin(corsOrigin()));
-
-		CompletionStage<Done> futureSaved = userService.saveUser(user);
-		return onSuccess(() -> futureSaved, done -> complete(response));
+		return onSuccess(() -> result, response -> complete(response));
 
 	}
 

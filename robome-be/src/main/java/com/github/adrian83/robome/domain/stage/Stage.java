@@ -3,7 +3,7 @@ package com.github.adrian83.robome.domain.stage;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.github.adrian83.robome.domain.table.TableState;
+import com.github.adrian83.robome.domain.table.model.TableState;
 
 public class Stage {
 

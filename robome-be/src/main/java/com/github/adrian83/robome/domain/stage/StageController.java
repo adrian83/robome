@@ -8,18 +8,18 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.auth.AuthContext;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
+import com.github.adrian83.robome.common.web.ExceptionHandler;
+import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.table.TableController;
-import com.github.adrian83.robome.domain.table.TableState;
+import com.github.adrian83.robome.domain.table.model.TableState;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
 import akka.Done;
-import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
@@ -32,11 +32,11 @@ public class StageController extends AbstractController {
 	private StageService stageService;
 
 	@Inject
-	public StageController(StageService stageService, JwtAuthorizer jwtAuthorizer, Config config,
-			ObjectMapper objectMapper) {
+	public StageController(StageService stageService, JwtAuthorizer jwtAuthorizer, Config config, Response responseProducer, ExceptionHandler exceptionHandler) {
 
-		super(jwtAuthorizer, objectMapper, config);
+		super(jwtAuthorizer, exceptionHandler, config, responseProducer);
 		this.stageService = stageService;
+		
 	}
 
 	public Route createRoute() {
@@ -53,7 +53,7 @@ public class StageController extends AbstractController {
 		UUID tableUuid = UUID.fromString(tableId);
 
 		final CompletionStage<List<Stage>> futureStages = stageService.getTableStages(tableUuid);
-		return onSuccess(() -> futureStages, stages -> completeOK(stages, Jackson.marshaller(objectMapper)));
+		return onSuccess(() -> futureStages, stages -> complete(responseProducer.jsonFromObject(stages)));
 	}
 
 	private Route getStageById(AuthContext authContext, String tableId, String stageId) {
@@ -63,8 +63,7 @@ public class StageController extends AbstractController {
 		final CompletionStage<Optional<Stage>> futureMaybeTable = stageService.getStage(id);
 
 		return onSuccess(() -> futureMaybeTable,
-				maybeItem -> maybeItem.map(item -> completeOK(item, Jackson.marshaller(objectMapper)))
-						.orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found")));
+				maybeItem -> complete(responseProducer.jsonFromOptional(maybeItem)));
 	}
 
 	private Route persistStage(AuthContext authContext, String tableId, NewStage newStage) {
