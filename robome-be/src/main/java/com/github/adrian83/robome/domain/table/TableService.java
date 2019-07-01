@@ -17,57 +17,56 @@ import akka.stream.javadsl.Source;
 
 public class TableService {
 
-	private TableRepository tableRepository;
-	private ActorMaterializer actorMaterializer;
+  private TableRepository tableRepository;
+  private ActorMaterializer actorMaterializer;
 
-	@Inject
-	public TableService(TableRepository repository, ActorMaterializer actorMaterializer) {
-		this.tableRepository = repository;
-		this.actorMaterializer = actorMaterializer;
-	}
+  @Inject
+  public TableService(TableRepository repository, ActorMaterializer actorMaterializer) {
+    this.tableRepository = repository;
+    this.actorMaterializer = actorMaterializer;
+  }
 
-	public CompletionStage<Optional<Table>> getTable(User user, TableId tableId) {
-		
-		return tableRepository.getById(user.getId(), tableId.getTableId())
-				.runWith(Sink.head(), actorMaterializer);
-	}
+  public CompletionStage<Optional<Table>> getTable(User user, TableId tableId) {
 
-	public CompletionStage<Table> saveTable(User user, NewTable newTable) {
-		
-		Table table = new Table(user.getId(), newTable.getTitle(), newTable.getDescription());
-				
-		Sink<Table, CompletionStage<Table>> sink = tableRepository.saveTable()
-				.mapMaterializedValue(doneF -> doneF.thenApply(done -> table));
-		
-		return Source.lazily(() -> Source.single(table))
-				.runWith(sink, actorMaterializer);
-	}
+    return tableRepository
+        .getById(user.getId(), tableId.getTableId())
+        .runWith(Sink.head(), actorMaterializer);
+  }
 
-	public CompletionStage<Table> updateTable(User user, TableId tableID, UpdatedTable updatedTable) {
-		
-		Table table = Table.newTable(tableID, user.getId(), updatedTable.getTitle(), updatedTable.getDescription());
-		
-		Sink<Table, CompletionStage<Table>> sink = tableRepository.saveTable()
-				.mapMaterializedValue(doneF -> doneF.thenApply(done -> table));
-		
-		return Source.lazily(() -> Source.single(table))
-				.runWith(sink, actorMaterializer);
-	}
-	
-	public CompletionStage<List<Table>> getTables(User user) {
-		
-		return tableRepository.getUserTables(user.getId())
-				.runWith(Sink.seq(), actorMaterializer);
-	}
+  public CompletionStage<Table> saveTable(User user, NewTable newTable) {
 
-	
-	public CompletionStage<TableId> deleteTable(User user, TableId tableId) {
-		
-		Sink<TableId, CompletionStage<TableId>> sink = tableRepository.deleteTable(tableId, user.getId())
-				.mapMaterializedValue(doneF -> doneF.thenApply(done -> tableId));
-		
-		return Source.lazily(() -> Source.single(tableId))
-				.runWith(sink, actorMaterializer);
-	}
-	
+    Table table = new Table(user.getId(), newTable.getTitle(), newTable.getDescription());
+
+    Sink<Table, CompletionStage<Table>> sink =
+        tableRepository.saveTable().mapMaterializedValue(doneF -> doneF.thenApply(done -> table));
+
+    return Source.lazily(() -> Source.single(table)).runWith(sink, actorMaterializer);
+  }
+
+  public CompletionStage<Table> updateTable(User user, TableId tableID, UpdatedTable updatedTable) {
+
+    Table table =
+        Table.newTable(
+            tableID, user.getId(), updatedTable.getTitle(), updatedTable.getDescription());
+
+    Sink<Table, CompletionStage<Table>> sink =
+        tableRepository.saveTable().mapMaterializedValue(doneF -> doneF.thenApply(done -> table));
+
+    return Source.lazily(() -> Source.single(table)).runWith(sink, actorMaterializer);
+  }
+
+  public CompletionStage<List<Table>> getTables(User user) {
+
+    return tableRepository.getUserTables(user.getId()).runWith(Sink.seq(), actorMaterializer);
+  }
+
+  public CompletionStage<TableId> deleteTable(User user, TableId tableId) {
+
+    Sink<TableId, CompletionStage<TableId>> sink =
+        tableRepository
+            .deleteTable(tableId, user.getId())
+            .mapMaterializedValue(doneF -> doneF.thenApply(done -> tableId));
+
+    return Source.lazily(() -> Source.single(tableId)).runWith(sink, actorMaterializer);
+  }
 }

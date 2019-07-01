@@ -13,7 +13,9 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.stage.StageId;
+import com.github.adrian83.robome.domain.activity.model.Activity;
+import com.github.adrian83.robome.domain.activity.model.ActivityId;
+import com.github.adrian83.robome.domain.stage.model.StageId;
 import com.github.adrian83.robome.domain.table.model.TableState;
 import com.google.inject.Inject;
 

@@ -9,3 +9,8 @@ Simple CRUD app written in java.
 5. Create tables in Cassandra database `./run.sh run-cass-init <cassandra-container-name>`
 6. Build application `mvn clean install`
 
+
+
+### Misc
+
+#### Formatted with [Google Java Format](https://github.com/google/google-java-format)

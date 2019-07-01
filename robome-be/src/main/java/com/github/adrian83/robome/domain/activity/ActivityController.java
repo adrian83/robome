@@ -13,8 +13,11 @@ import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
+import com.github.adrian83.robome.domain.activity.model.Activity;
+import com.github.adrian83.robome.domain.activity.model.ActivityId;
+import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.stage.StageController;
-import com.github.adrian83.robome.domain.stage.StageId;
+import com.github.adrian83.robome.domain.stage.model.StageId;
 import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.table.model.TableState;
 import com.github.adrian83.robome.domain.user.User;
@@ -29,7 +32,7 @@ import akka.http.javadsl.server.Route;
 
 public class ActivityController extends AbstractController {
 
-	public static final String PATH = "activities";
+	public static final String ACTIVITIES = "activities";
 
 	private ActivityService activityService;
 
@@ -42,11 +45,11 @@ public class ActivityController extends AbstractController {
 
 	public Route createRoute() {
 		return route(
-				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> pathPrefix(segment(), activityId -> jwtSecured(tableId, stageId, activityId, this::getActivityById)))))))),
+				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.STAGES, () -> pathPrefix(segment(), stageId -> pathPrefix(ACTIVITIES, () -> pathPrefix(segment(), activityId -> jwtSecured(tableId, stageId, activityId, this::getActivityById)))))))),
 
-				post(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> jwtSecured(tableId, stageId, NewActivity.class, this::persistActivity))))))),
+				post(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.STAGES, () -> pathPrefix(segment(), stageId -> pathPrefix(ACTIVITIES, () -> jwtSecured(tableId, stageId, NewActivity.class, this::persistActivity))))))),
 				
-				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> jwtSecured(tableId, stageId, this::getStageActivities))))))));
+				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.STAGES, () -> pathPrefix(segment(), stageId -> pathPrefix(ACTIVITIES, () -> jwtSecured(tableId, stageId, this::getStageActivities))))))));
 	}
 
 	private Route getStageActivities(CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
@@ -83,7 +86,7 @@ public class ActivityController extends AbstractController {
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		
 
-		Location locationHeader = locationFor(TableController.TABLES, tableId, StageController.PATH, stageId, PATH,
+		Location locationHeader = locationFor(TableController.TABLES, tableId, StageController.STAGES, stageId, ACTIVITIES,
 				activityUuid.toString());
 
 		ActivityId activityId = new ActivityId(tableUuid, stageUuid, activityUuid);
@@ -96,4 +99,14 @@ public class ActivityController extends AbstractController {
 		return onSuccess(() -> futureSaved, done -> complete(redirectResponse));
 	}
 
+	  private Location location(ActivityId activityId) {
+		    return locationFor(
+		        TableController.TABLES,
+		        activityId.getTableId().toString(),
+		        StageController.STAGES,
+		        activityId.getStageId().toString(), 
+		        ActivityController.ACTIVITIES, 
+		        activityId.getActivityId().toString());
+		  }
+	
 }

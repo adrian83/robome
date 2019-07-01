@@ -12,40 +12,41 @@ import com.typesafe.config.Config;
 
 public class UpdatedTable implements Validable {
 
-	final String title;
-	final String description;
+  final String title;
+  final String description;
 
-	@JsonCreator
-	public UpdatedTable(@JsonProperty("title") String title, @JsonProperty("description") String description) {
-		this.title = title;
-		this.description = description;
-	}
+  @JsonCreator
+  public UpdatedTable(
+      @JsonProperty("title") String title, @JsonProperty("description") String description) {
+    this.title = title;
+    this.description = description;
+  }
 
-	public String getTitle() {
-		return title;
-	}
+  public String getTitle() {
+    return title;
+  }
 
-	public String getDescription() {
-		return description;
-	}
+  public String getDescription() {
+    return description;
+  }
 
-	@Override
-	public List<ValidationError> validate(Config config) {
-		List<ValidationError> errors = new ArrayList<>();
+  @Override
+  public List<ValidationError> validate(Config config) {
+    List<ValidationError> errors = new ArrayList<>();
 
-		if (Strings.isNullOrEmpty(getTitle())) {
-			ValidationError error = new ValidationError("title", "table.create.title.empty",
-					"Table title cannot be empty");
-			errors.add(error);
-		}
+    if (Strings.isNullOrEmpty(getTitle())) {
+      ValidationError error =
+          new ValidationError("title", "table.create.title.empty", "Table title cannot be empty");
+      errors.add(error);
+    }
 
-		if (Strings.isNullOrEmpty(getDescription())) {
-			ValidationError error = new ValidationError("description", "table.create.description.empty",
-					"Table description cannot be empty");
-			errors.add(error);
-		}
+    if (Strings.isNullOrEmpty(getDescription())) {
+      ValidationError error =
+          new ValidationError(
+              "description", "table.create.description.empty", "Table description cannot be empty");
+      errors.add(error);
+    }
 
-		return errors;
-	}
-
+    return errors;
+  }
 }

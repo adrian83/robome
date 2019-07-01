@@ -1,8 +1,9 @@
-package com.github.adrian83.robome.domain.stage;
+package com.github.adrian83.robome.domain.stage.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.domain.table.model.TableState;
 
 public class Stage {
@@ -22,6 +23,10 @@ public class Stage {
 		this.state = state;
 		this.createdAt = createdAt;
 		this.modifiedAt = modifiedAt;
+	}
+	
+	public Stage(UUID userId, String title) {
+		this(new StageId(),  userId,  title, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
 	}
 
 	public StageId getStageId() {

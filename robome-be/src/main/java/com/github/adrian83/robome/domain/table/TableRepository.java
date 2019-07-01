@@ -27,78 +27,80 @@ import akka.stream.javadsl.Source;
 
 public class TableRepository {
 
-	private static final String INSERT_TABLE_STMT = "INSERT INTO robome.tables (table_id, user_id, title, description, state, created_at, modified_at) " + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-	private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
-	private static final String SELECT_BY_EMAIL_STMT = "SELECT * FROM robome.tables WHERE user_id = ?";
-	private static final String SELECT_BY_ID_STMT = "SELECT * FROM robome.tables WHERE user_id = ? AND table_id = ?";
-	private static final String DELETE_BY_ID_STMT = "DELETE * FROM robome.tables WHERE table_id = ? AND user_id = ?";
+  private static final String INSERT_TABLE_STMT =
+      "INSERT INTO robome.tables (table_id, user_id, title, description, state, created_at, modified_at) "
+          + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+  private static final String SELECT_ALL_STMT = "SELECT * FROM robome.tables";
+  private static final String SELECT_BY_EMAIL_STMT =
+      "SELECT * FROM robome.tables WHERE user_id = ?";
+  private static final String SELECT_BY_ID_STMT =
+      "SELECT * FROM robome.tables WHERE user_id = ? AND table_id = ?";
+  private static final String DELETE_BY_ID_STMT =
+      "DELETE * FROM robome.tables WHERE table_id = ? AND user_id = ?";
 
-	private Session session;
+  private Session session;
 
-	@Inject
-	public TableRepository(Session session) {
-		this.session = session;
-	}
+  @Inject
+  public TableRepository(Session session) {
+    this.session = session;
+  }
 
-	public Sink<Table, CompletionStage<Done>> saveTable() {
-		
-		PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
-		return CassandraSink.create(1, preparedStatement, this::createInserBoundStatement, session);
-	}
+  public Sink<Table, CompletionStage<Done>> saveTable() {
 
-	public Sink<TableId, CompletionStage<Done>> deleteTable(TableId tableId, UUID userId) {
-		
-		PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
-		BiFunction<TableId , PreparedStatement,BoundStatement > boundStmt = (tabId, stmt) ->  stmt.bind(tabId.getTableId(), userId);
-		return CassandraSink.create(1, preparedStatement, boundStmt, session);
-	}
-	
-	public Source<Optional<Table>, NotUsed> getById(UUID userId, UUID tableId) {
-		PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(userId, tableId);
-		ResultSet result = session.execute(bound);
-		return Source.single(result)
-				.map(ResultSet::one)
-				.map(Optional::ofNullable)
-				.map(mayneRow -> mayneRow.map(this::fromRow));
-	}
+    PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
+    return CassandraSink.create(1, preparedStatement, this::createInserBoundStatement, session);
+  }
 
-	public Source<Table, NotUsed> getAllTables() {
-		Statement preparedStatement = new SimpleStatement(SELECT_ALL_STMT);
-		return CassandraSource.create(preparedStatement, session)
-				.map(this::fromRow);
-	}
+  public Sink<TableId, CompletionStage<Done>> deleteTable(TableId tableId, UUID userId) {
 
-	public Source<Table, NotUsed> getUserTables(UUID userId) {
-		PreparedStatement preparedStatement = session.prepare(SELECT_BY_EMAIL_STMT);
-		BoundStatement bound = preparedStatement.bind(userId);
-		return CassandraSource.create(bound, session)
-				.map(this::fromRow);
-	}
-	
-	private BoundStatement createInserBoundStatement(Table table, PreparedStatement preparedStmt) {
-		
-		return preparedStmt.bind(
-				table.getId().getTableId(), 
-				table.getUserId(), 
-				table.getTitle(), 
-				table.getDescription(),
-				table.getState().name(), 
-				TimeUtils.toDate(table.getCreatedAt()), 
-				TimeUtils.toDate(table.getModifiedAt()));
-	}
-	
-	private Table fromRow(Row row) {
+    PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
+    BiFunction<TableId, PreparedStatement, BoundStatement> boundStmt =
+        (tabId, stmt) -> stmt.bind(tabId.getTableId(), userId);
+    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+  }
 
-		return new Table(
-				new TableId(row.get("table_id", UUID.class)), 
-				row.getUUID("user_id"), 
-				row.getString("title"), 
-				row.getString("description"),
-				TableState.valueOf(row.getString("state")), 
-				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
-				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
-	}
-	
+  public Source<Optional<Table>, NotUsed> getById(UUID userId, UUID tableId) {
+    PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
+    BoundStatement bound = preparedStatement.bind(userId, tableId);
+    ResultSet result = session.execute(bound);
+    return Source.single(result)
+        .map(ResultSet::one)
+        .map(Optional::ofNullable)
+        .map(mayneRow -> mayneRow.map(this::fromRow));
+  }
 
+  public Source<Table, NotUsed> getAllTables() {
+    Statement preparedStatement = new SimpleStatement(SELECT_ALL_STMT);
+    return CassandraSource.create(preparedStatement, session).map(this::fromRow);
+  }
+
+  public Source<Table, NotUsed> getUserTables(UUID userId) {
+    PreparedStatement preparedStatement = session.prepare(SELECT_BY_EMAIL_STMT);
+    BoundStatement bound = preparedStatement.bind(userId);
+    return CassandraSource.create(bound, session).map(this::fromRow);
+  }
+
+  private BoundStatement createInserBoundStatement(Table table, PreparedStatement preparedStmt) {
+
+    return preparedStmt.bind(
+        table.getId().getTableId(),
+        table.getUserId(),
+        table.getTitle(),
+        table.getDescription(),
+        table.getState().name(),
+        TimeUtils.toDate(table.getCreatedAt()),
+        TimeUtils.toDate(table.getModifiedAt()));
+  }
+
+  private Table fromRow(Row row) {
+
+    return new Table(
+        new TableId(row.get("table_id", UUID.class)),
+        row.getUUID("user_id"),
+        row.getString("title"),
+        row.getString("description"),
+        TableState.valueOf(row.getString("state")),
+        TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
+        TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
+  }
 }

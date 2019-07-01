@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-import com.github.adrian83.robome.domain.stage.StageId;
+import com.github.adrian83.robome.domain.activity.model.Activity;
+import com.github.adrian83.robome.domain.activity.model.ActivityId;
+import com.github.adrian83.robome.domain.stage.model.StageId;
 import com.google.inject.Inject;
 
 import akka.Done;
