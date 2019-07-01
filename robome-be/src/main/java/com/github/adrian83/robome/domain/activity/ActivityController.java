@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
-import com.github.adrian83.robome.auth.AuthContext;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
@@ -18,6 +17,7 @@ import com.github.adrian83.robome.domain.stage.StageController;
 import com.github.adrian83.robome.domain.stage.StageId;
 import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.table.model.TableState;
+import com.github.adrian83.robome.domain.user.User;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -49,7 +49,7 @@ public class ActivityController extends AbstractController {
 				get(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(StageController.PATH, () -> pathPrefix(segment(), stageId -> pathPrefix(PATH, () -> jwtSecured(tableId, stageId, this::getStageActivities))))))));
 	}
 
-	private Route getStageActivities(AuthContext authContext, String tableIdStr, String stageIdStr) {
+	private Route getStageActivities(CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
 		
 		UUID tableUuid = UUID.fromString(tableIdStr);
 		UUID stageUuid = UUID.fromString(stageIdStr);
@@ -60,7 +60,7 @@ public class ActivityController extends AbstractController {
 		return onSuccess(() -> futureStages, stages -> complete(responseProducer.jsonFromObject(stages)));
 	}
 
-	private Route getActivityById(AuthContext authContext, String tableId, String stageId, String activityId) {
+	private Route getActivityById(CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId, String activityId) {
 		
 		UUID tableUuid = UUID.fromString(tableId);
 		UUID stageUuid = UUID.fromString(stageId);
@@ -74,7 +74,7 @@ public class ActivityController extends AbstractController {
 				maybeItem -> complete(responseProducer.jsonFromOptional(maybeItem)));
 	}
 
-	private Route persistActivity(AuthContext authContext, String tableId, String stageId, NewActivity newActivity) {
+	private Route persistActivity(CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId, NewActivity newActivity) {
 
 		UUID tableUuid = UUID.fromString(tableId);
 		UUID stageUuid = UUID.fromString(stageId);

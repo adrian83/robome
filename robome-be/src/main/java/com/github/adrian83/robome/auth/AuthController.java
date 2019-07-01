@@ -14,7 +14,7 @@ import com.github.adrian83.robome.common.web.Validation;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.http.HttpHeader;
+import com.github.adrian83.robome.util.http.Header;
 import com.github.adrian83.robome.util.http.HttpMethod;
 import com.github.adrian83.robome.util.http.Options;
 import com.google.inject.Inject;
@@ -68,7 +68,7 @@ public class AuthController extends AbstractController {
 						return HttpResponse.create().withStatus(StatusCodes.OK)
 								.addHeaders(headers(jwt(jwtAuthorizer.createAuthorizationToken(user)),
 										Cors.origin(corsOrigin()),
-										Cors.exposeHeaders(HttpHeader.AUTHORIZATION.getText())));
+										Cors.exposeHeaders(Header.AUTHORIZATION.getText())));
 
 					} else {
 						return responseProducer.response404();
@@ -99,7 +99,7 @@ public class AuthController extends AbstractController {
 
 	private Route handleLoginOptions() {
 		HttpResponse response = new Options()
-				.withHeaders(HttpHeader.AUTHORIZATION.getText(), HttpHeader.CONTENT_TYPE.getText())
+				.withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.POST.name()).withOrigin(corsOrigin()).response();
 
 		return complete(response);
@@ -107,7 +107,7 @@ public class AuthController extends AbstractController {
 
 	private Route handleRegisterOptions() {
 		HttpResponse response = new Options()
-				.withHeaders(HttpHeader.AUTHORIZATION.getText(), HttpHeader.CONTENT_TYPE.getText())
+				.withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.POST.name()).withOrigin(corsOrigin()).response();
 
 		return complete(response);

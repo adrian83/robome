@@ -2,9 +2,9 @@ package com.github.adrian83.robome.domain.table;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-import com.github.adrian83.robome.auth.AuthContext;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
@@ -18,7 +18,7 @@ import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.http.HttpHeader;
+import com.github.adrian83.robome.util.http.Header;
 import com.github.adrian83.robome.util.http.HttpMethod;
 import com.github.adrian83.robome.util.http.Options;
 import com.github.adrian83.robome.util.tuple.Tuple2;
@@ -34,14 +34,12 @@ public class TableController extends AbstractController {
 	public static final String TABLES = "tables";
 
 	private TableService tableService;
-	private UserService userService;
 
 	@Inject
 	public TableController(UserService userService, TableService tableService, JwtAuthorizer jwtAuthorizer,
 			Config config, ExceptionHandler exceptionHandler, Response response) {
 		super(jwtAuthorizer, exceptionHandler, config, response);
 		this.tableService = tableService;
-		this.userService = userService;
 	}
 
 	public Route createRoute() {
@@ -71,10 +69,9 @@ public class TableController extends AbstractController {
 			() -> path(TABLES, () -> pathEndOrSingleSlash(() -> jwtSecured(NewTable.class, this::persistTable))));
 
 	
-	private Route getTables(AuthContext authContext) {
+	private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
 
-		CompletionStage<HttpResponse> responseF = userService.findUserByEmail(authContext.getUserEmail())
-				.thenApply(Authentication::userExists)
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
 				.thenApply(Authorization::canReadTables)
 				.thenCompose(tableService::getTables)
 				.thenApply(responseProducer::jsonFromObject)
@@ -84,10 +81,9 @@ public class TableController extends AbstractController {
 	}
 
 	
-	private Route getTableById(AuthContext authContext, String tableIdStr) {
+	private Route getTableById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
-		CompletionStage<HttpResponse> responseF = userService.findUserByEmail(authContext.getUserEmail())
-				.thenApply(Authentication::userExists)
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
 				.thenApply(Authorization::canReadTables)
 				.thenCompose(user -> tableService.getTable(user, TableId.fromString(tableIdStr)))
 				.thenApply(responseProducer::jsonFromOptional)
@@ -96,25 +92,21 @@ public class TableController extends AbstractController {
 		return completeWithFuture(responseF);
 	}
 
+	private Route deleteTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
-	// TODO fix - delete instead of get
-	private Route deleteTable(AuthContext authContext, String tableIdStr) {
-
-		CompletionStage<HttpResponse> responseF = userService.findUserByEmail(authContext.getUserEmail())
-				.thenApply(Authentication::userExists)
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
 				.thenApply(Authorization::canWriteTables)
-				.thenCompose(user -> tableService.getTable(user, TableId.fromString(tableIdStr)))
-				.thenApply(responseProducer::jsonFromOptional)
+				.thenCompose(user -> tableService.deleteTable(user, TableId.fromString(tableIdStr)))
+				.thenApply(responseProducer::jsonFromObject)
 				.exceptionally(exceptionHandler::handleException);
 
 		return completeWithFuture(responseF);
 	}
 	
 	
-	private Route updateTable(AuthContext authContext, String tableIdStr, UpdatedTable updatedTable) {
+	private Route updateTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr, UpdatedTable updatedTable) {
 				
-		CompletionStage<HttpResponse> responseF = userService.findUserByEmail(authContext.getUserEmail())
-				.thenApply(Authentication::userExists)
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
 				.thenApply(Authorization::canWriteTables)
 				.thenApply(user -> new Tuple2<User, UpdatedTable>(user, updatedTable))
 				.thenApply(tuple -> new Tuple2<User, UpdatedTable>(tuple.getObj1(), Validation.validate(tuple.getObj2(), config)))
@@ -126,10 +118,9 @@ public class TableController extends AbstractController {
 	}
 
 	
-	private Route persistTable(AuthContext authContext, NewTable newTable) {
+	private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
 
-		CompletionStage<HttpResponse> responseF = userService.findUserByEmail(authContext.getUserEmail())
-				.thenApply(Authentication::userExists)
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
 				.thenApply(Authorization::canWriteTables)
 				.thenApply(user -> new Tuple2<User, NewTable>(user, newTable))
 				.thenApply(tuple2 -> new Tuple2<User, NewTable>(tuple2.getObj1(), Validation.validate(tuple2.getObj2(), config)))
@@ -143,7 +134,7 @@ public class TableController extends AbstractController {
 
 	private Route handleCreateTableOptions() {
 		HttpResponse response = new Options()
-				.withHeaders(HttpHeader.AUTHORIZATION.getText(), HttpHeader.CONTENT_TYPE.getText())
+				.withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.POST.name(), HttpMethod.GET.name()).withOrigin(corsOrigin()).response();
 
 		return complete(response);
@@ -151,7 +142,7 @@ public class TableController extends AbstractController {
 
 	private Route handleUpdateTableOptions() {
 		HttpResponse response = new Options()
-				.withHeaders(HttpHeader.AUTHORIZATION.getText(), HttpHeader.CONTENT_TYPE.getText())
+				.withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
 				.withMethods(HttpMethod.PUT.name(), HttpMethod.GET.name(), HttpMethod.DELETE.name())
 				.withOrigin(corsOrigin()).response();
 

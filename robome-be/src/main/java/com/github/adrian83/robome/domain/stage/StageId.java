@@ -6,6 +6,10 @@ public class StageId {
 	private UUID tableId;
 	private UUID stageId;
 
+	public static StageId fromStrings(String tableIdStr, String stageIdStr) {
+		return new StageId(UUID.fromString(tableIdStr), UUID.fromString(stageIdStr));
+	}
+	
 	public StageId(UUID tableId, UUID stageId) {
 		super();
 		this.tableId = tableId;

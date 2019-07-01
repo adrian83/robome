@@ -3,19 +3,21 @@ package com.github.adrian83.robome.domain.stage;
 import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
-import com.github.adrian83.robome.auth.AuthContext;
+import com.github.adrian83.robome.auth.Authentication;
+import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.table.TableController;
+import com.github.adrian83.robome.domain.table.model.TableId;
 import com.github.adrian83.robome.domain.table.model.TableState;
+import com.github.adrian83.robome.domain.user.User;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -33,7 +35,6 @@ public class StageController extends AbstractController {
 
 	@Inject
 	public StageController(StageService stageService, JwtAuthorizer jwtAuthorizer, Config config, Response responseProducer, ExceptionHandler exceptionHandler) {
-
 		super(jwtAuthorizer, exceptionHandler, config, responseProducer);
 		this.stageService = stageService;
 		
@@ -49,25 +50,38 @@ public class StageController extends AbstractController {
 	
 	private Route createStageRoute = post(() -> pathPrefix(TableController.TABLES, () -> pathPrefix(segment(), tableId -> pathPrefix(PATH, () -> pathEndOrSingleSlash(() -> jwtSecured(tableId, NewStage.class, this::persistStage))))));
 	
-	private Route getTableStages(AuthContext authContext, String tableId) {
-		UUID tableUuid = UUID.fromString(tableId);
+	private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+		
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
+				.thenApply(Authorization::canReadStages)
+				.thenCompose(user -> stageService.getTableStages(user, TableId.fromString(tableIdStr)))
+				.thenApply(responseProducer::jsonFromObject)
+				.exceptionally(exceptionHandler::handleException);
 
-		final CompletionStage<List<Stage>> futureStages = stageService.getTableStages(tableUuid);
-		return onSuccess(() -> futureStages, stages -> complete(responseProducer.jsonFromObject(stages)));
+		return completeWithFuture(responseF);
 	}
 
-	private Route getStageById(AuthContext authContext, String tableId, String stageId) {
+	private Route getStageById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
+		
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
+				.thenApply(Authorization::canReadStages)
+				.thenCompose(user -> stageService.getStage(user, StageId.fromStrings(tableIdStr, stageIdStr)))
+				.thenApply(responseProducer::jsonFromObject)
+				.exceptionally(exceptionHandler::handleException);
 
-		StageId id = new StageId(UUID.fromString(tableId), UUID.fromString(stageId));
-
-		final CompletionStage<Optional<Stage>> futureMaybeTable = stageService.getStage(id);
-
-		return onSuccess(() -> futureMaybeTable,
-				maybeItem -> complete(responseProducer.jsonFromOptional(maybeItem)));
+		return completeWithFuture(responseF);
 	}
 
-	private Route persistStage(AuthContext authContext, String tableId, NewStage newStage) {
+	private Route persistStage(CompletionStage<Optional<User>> maybeUserF, String tableId, NewStage newStage) {
+/*
+		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
+				.thenApply(Authorization::canWriteStages)
+				.thenCompose(user -> stageService.getStage(user, StageId.fromStrings(tableIdStr, stageIdStr)))
+				.thenApply(responseProducer::jsonFromObject)
+				.exceptionally(exceptionHandler::handleException);
 
+		return completeWithFuture(responseF);
+*/		
 		LocalDateTime utcNow = TimeUtils.utcNow();
 		UUID id = UUID.randomUUID();
 
@@ -75,7 +89,8 @@ public class StageController extends AbstractController {
 
 		StageId stageId = new StageId(UUID.fromString(tableId), id);
 
-		Stage stage = new Stage(stageId, authContext.getUserId(), newStage.getName(), TableState.ACTIVE, utcNow, utcNow);
+		// TODO fix it
+		Stage stage = new Stage(stageId, null, newStage.getName(), TableState.ACTIVE, utcNow, utcNow);
 
 		HttpResponse redirectResponse = HttpResponse.create().withStatus(StatusCodes.CREATED).addHeader(locationHeader);
 

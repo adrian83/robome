@@ -1,13 +1,13 @@
 package com.github.adrian83.robome.util.http;
 
-public enum HttpHeader {
+public enum Header {
 
 	CONTENT_TYPE("Content-Type"),
 	AUTHORIZATION("Authorization");
 	
 	private String text;
 	
-	HttpHeader(String text) {
+	Header(String text) {
 		this.text = text;
 	}
 	

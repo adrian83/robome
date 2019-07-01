@@ -10,10 +10,16 @@ public enum Role {
 
 	ADMIN,
 	READ_TABLES,
-	WRITE_TABLES;
+	WRITE_TABLES, 
+	READ_STAGES, 
+	WRITE_STAGES, 
+	READ_ACTIVITIES, 
+	WRITE_ACTIVITIES;
 	
+	private static final List<Role> DEF_USER_ROLES = Lists.newArrayList(READ_TABLES, WRITE_TABLES, READ_STAGES, 
+			WRITE_STAGES, READ_ACTIVITIES, WRITE_ACTIVITIES);
 	
-	public static final List<Role> DEFAULT_USER_ROLES = Collections.unmodifiableList(Lists.newArrayList(READ_TABLES, WRITE_TABLES)); //Lists<Role>.asList(READ_TABLES, WRITE_TABLES));
+	public static final List<Role> DEFAULT_USER_ROLES = Collections.unmodifiableList(Role.DEF_USER_ROLES); 
 	
 	public static List<String> toStringList(List<Role> roles) {
 		return roles.stream().map(Role::name).collect(Collectors.toList());

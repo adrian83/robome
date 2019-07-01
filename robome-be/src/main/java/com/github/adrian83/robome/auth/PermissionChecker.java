@@ -16,7 +16,15 @@ public final class PermissionChecker {
 	public static boolean canWriteTables(User user) {
 		return hasAnyRole(user, Role.WRITE_TABLES, Role.ADMIN);
 	}
+	
+	public static boolean canReadStages(User user) {
+		return hasAnyRole(user, Role.READ_STAGES, Role.ADMIN);
+	}
 
+	public static boolean canWriteStages(User user) {
+		return hasAnyRole(user, Role.WRITE_STAGES, Role.ADMIN);
+	}
+	
 	private static boolean hasAnyRole(User user, Role... roles) {
 		return Arrays.stream(roles).anyMatch((role) -> user.getRoles().contains(role));
 	}

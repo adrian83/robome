@@ -2,9 +2,10 @@ package com.github.adrian83.robome.domain.stage;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+import com.github.adrian83.robome.domain.table.model.TableId;
+import com.github.adrian83.robome.domain.user.User;
 import com.google.inject.Inject;
 
 import akka.Done;
@@ -24,13 +25,13 @@ public class StageService {
 		this.actorMaterializer = actorMaterializer;
 	}
 
-	public CompletionStage<Optional<Stage>> getStage(StageId stageId) {
-		return stageRepository.getById(stageId)
+	public CompletionStage<Optional<Stage>> getStage(User user, StageId stageId) {
+		return stageRepository.getById(user.getId(), stageId)
 				.runWith(Sink.head(), actorMaterializer);
 	}
 	
-	public CompletionStage<List<Stage>> getTableStages(UUID tableUuid) {
-		return stageRepository.getTableStages(tableUuid)
+	public CompletionStage<List<Stage>> getTableStages(User user, TableId tableId) {
+		return stageRepository.getTableStages(user.getId(), tableId.getTableId())
 				.runWith(Sink.seq(), actorMaterializer);
 	}
 	

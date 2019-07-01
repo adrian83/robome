@@ -3,14 +3,16 @@ package com.github.adrian83.robome.common.web;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.github.adrian83.robome.auth.AuthContext;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
+import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
+import com.github.adrian83.robome.util.http.Header;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.marshallers.jackson.Jackson;
@@ -49,7 +51,7 @@ public class AbstractController extends AllDirectives {
 	}
 	
 	protected RawHeader jwt(String token) {
-		return RawHeader.create(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(), token);
+		return RawHeader.create(Header.AUTHORIZATION.getText(), token);
 	}
 	
 	protected String corsOrigin() {
@@ -60,49 +62,44 @@ public class AbstractController extends AllDirectives {
 		return Arrays.asList(headers);
 	}
 	
-
-
-	
-
-	
-	protected Route jwtSecured(Function<AuthContext, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, logic));
+	protected Route jwtSecured(Function<CompletionStage<Optional<User>>, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, logic));
 	}
 	
-	protected <T> Route jwtSecured(T param, BiFunction<AuthContext, T, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param)));
+	protected <T> Route jwtSecured(T param, BiFunction<CompletionStage<Optional<User>>, T, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param)));
 	}
 	
-	protected <T, P> Route jwtSecured(T param1, P param2,  TriFunction<AuthContext, T, P, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2)));
+	protected <T, P> Route jwtSecured(T param1, P param2,  TriFunction<CompletionStage<Optional<User>>, T, P, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2)));
 	}
 	
-	protected <T, P, R> Route jwtSecured(T param1, P param2, R param3, TetraFunction<AuthContext, T, P, R, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2, param3)));
+	protected <T, P, R> Route jwtSecured(T param1, P param2, R param3, TetraFunction<CompletionStage<Optional<User>>, T, P, R, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2, param3)));
 	}
 	
-	protected <T> Route jwtSecured(Class<T> clazz, BiFunction<AuthContext, T, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(),
+	protected <T> Route jwtSecured(Class<T> clazz, BiFunction<CompletionStage<Optional<User>>, T, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(),
 				jwtToken -> jwtAuthorizer.authorized(jwtToken,
 						userData -> entity(Jackson.unmarshaller(clazz),
 								form -> logic.apply(userData, form))));
 	}
 	
-	protected <T, P> Route jwtSecured(P param, Class<T> clazz, TriFunction<AuthContext, P, T, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(),
+	protected <T, P> Route jwtSecured(P param, Class<T> clazz, TriFunction<CompletionStage<Optional<User>>, P, T, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(),
 				jwtToken -> jwtAuthorizer.authorized(jwtToken,
 						userData -> entity(Jackson.unmarshaller(clazz),
 								form -> logic.apply(userData, param, form))));
 	}
 	
-	protected <T, P, R> Route jwtSecured(P param1, R param2, Class<T> clazz, TetraFunction<AuthContext, P, R, T, Route> logic) {
-		return optionalHeaderValueByName(com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION.getText(),
+	protected <T, P, R> Route jwtSecured(P param1, R param2, Class<T> clazz, TetraFunction<CompletionStage<Optional<User>>, P, R, T, Route> logic) {
+		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(),
 				jwtToken -> jwtAuthorizer.authorized(jwtToken,
 						userData -> entity(Jackson.unmarshaller(clazz),
 								form -> logic.apply(userData, param1, param2, form))));
 	}
 	
-	protected Route secured(Optional<String> jwtToken, Function<AuthContext, Route> logic) {
+	protected Route secured(Optional<String> jwtToken, Function<CompletionStage<Optional<User>>, Route> logic) {
 		return jwtAuthorizer.authorized(jwtToken, logic);
 	}
 	

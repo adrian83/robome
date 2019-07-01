@@ -24,10 +24,9 @@ import akka.stream.javadsl.Source;
 
 public class StageRepository {
 
-	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, user_id, title, state, "
-			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
-	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ?";
-	private static final String SELECT_STAGES_BY_TABLE_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ?";
+	private static final String INSERT_STAGE_STMT = "INSERT INTO robome.stages (stage_id, table_id, user_id, title, state, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+	private static final String SELECT_STAGE_BY_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ? AND user_id = ?";
+	private static final String SELECT_STAGES_BY_TABLE_ID_STMT = "SELECT * FROM robome.stages WHERE table_id = ? AND user_id = ?";
 
 	private Session session;
 
@@ -50,16 +49,16 @@ public class StageRepository {
 		return sink;
 	}
 
-	public Source<Stage, NotUsed> getTableStages(UUID tableUuid) {
+	public Source<Stage, NotUsed> getTableStages(UUID userID, UUID tableUuid) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(tableUuid);
+		BoundStatement bound = preparedStatement.bind(tableUuid, userID);
 
 		return Source.from(session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
 	}
 
-	public Source<Optional<Stage>, NotUsed> getById(StageId stageId) {
+	public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId());
+		BoundStatement bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userID);
 
 		ResultSet r = session.execute(bound);
 
