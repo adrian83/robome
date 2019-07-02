@@ -15,8 +15,8 @@ import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityId;
+import com.github.adrian83.robome.domain.activity.model.ActivityState;
 import com.github.adrian83.robome.domain.stage.model.StageId;
-import com.github.adrian83.robome.domain.table.model.TableState;
 import com.google.inject.Inject;
 
 import akka.Done;
@@ -27,10 +27,10 @@ import akka.stream.javadsl.Source;
 
 public class ActivityRepository {
 
-	private static final String INSERT_ACTIVITY_STMT = "INSERT INTO robome.activities (activity_id, stage_id, table_id, name, state, "
-			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+	private static final String INSERT_ACTIVITY_STMT = "INSERT INTO robome.activities (activity_id, stage_id, table_id, user_id, name, state, "
+			+ "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_ACTIVITY_BY_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND activity_id = ?";
-	private static final String SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ?";
+	private static final String SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT = "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND user_id = ?";
 
 	private Session session;
 
@@ -46,7 +46,7 @@ public class ActivityRepository {
 			Date created = TimeUtils.toDate(activity.getCreatedAt());
 			Date modified = TimeUtils.toDate(activity.getModifiedAt());
 			return statement.bind(activity.getId().getActivityId(), activity.getId().getStageId(),
-					activity.getId().getTableId(), activity.getName(), activity.getState().name(), created, modified);
+					activity.getId().getTableId(), activity.getUserId().toString(), activity.getName(), activity.getState().name(), created, modified);
 		};
 
 		Sink<Activity, CompletionStage<Done>> sink = CassandraSink.create(1, preparedStatement, statementBinder,
@@ -55,9 +55,9 @@ public class ActivityRepository {
 		return sink;
 	}
 
-	public Source<Activity, NotUsed> getStageActivities(StageId stageId) {
+	public Source<Activity, NotUsed> getStageActivities(UUID userId, StageId stageId) {
 		PreparedStatement preparedStatement = session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
-		BoundStatement bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId());
+		BoundStatement bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userId.toString());
 
 		return Source.from(session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
 	}
@@ -83,7 +83,11 @@ public class ActivityRepository {
 		ActivityId id = new ActivityId(row.get("table_id", UUID.class), row.get("stage_id", UUID.class),
 				row.get("activity_id", UUID.class));
 
-		return new Activity(id, row.getString("name"), TableState.valueOf(row.getString("state")),
+		return new Activity(
+				id, 
+				row.get("user_id", UUID.class), 
+				row.getString("name"), 
+				ActivityState.valueOf(row.getString("state")),
 				TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
 				TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
 	}

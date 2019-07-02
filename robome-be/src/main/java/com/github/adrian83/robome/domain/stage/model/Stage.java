@@ -4,18 +4,17 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.table.model.TableState;
 
 public class Stage {
 
 	private StageId stageId;
 	private UUID userId;
 	private String title;
-	private TableState state;
+	private StageState state;
 	private LocalDateTime createdAt;
 	private LocalDateTime modifiedAt;
 
-	public Stage(StageId stageId, UUID userId, String title, TableState state, LocalDateTime createdAt, LocalDateTime modifiedAt) {
+	public Stage(StageId stageId, UUID userId, String title, StageState state, LocalDateTime createdAt, LocalDateTime modifiedAt) {
 		super();
 		this.stageId = stageId;
 		this.userId = userId;
@@ -26,7 +25,7 @@ public class Stage {
 	}
 	
 	public Stage(UUID userId, String title) {
-		this(new StageId(),  userId,  title, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+		this(new StageId(),  userId,  title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
 	}
 
 	public StageId getStageId() {
@@ -41,7 +40,7 @@ public class Stage {
 		return title;
 	}
 
-	public TableState getState() {
+	public StageState getState() {
 		return state;
 	}
 

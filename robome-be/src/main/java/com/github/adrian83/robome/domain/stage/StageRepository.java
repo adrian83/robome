@@ -15,7 +15,7 @@ import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.stage.model.StageId;
-import com.github.adrian83.robome.domain.table.model.TableState;
+import com.github.adrian83.robome.domain.stage.model.StageState;
 import com.google.inject.Inject;
 
 import akka.Done;
@@ -75,15 +75,11 @@ public class StageRepository {
     BoundStatement bound =
         preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userID);
 
-    ResultSet r = session.execute(bound);
-
-    Row row = r.one();
-    if (row == null) {
-      return Source.single(Optional.empty());
-    }
-
-    Stage stage = fromRow(row);
-    return Source.single(Optional.of(stage));
+    ResultSet result = session.execute(bound);
+    return Source.single(result)
+        .map(ResultSet::one)
+        .map(Optional::ofNullable)
+        .map(mayneRow -> mayneRow.map(this::fromRow));
   }
 
   private Stage fromRow(Row row) {
@@ -93,7 +89,7 @@ public class StageRepository {
         id,
         row.get("user_id", UUID.class),
         row.getString("title"),
-        TableState.valueOf(row.getString("state")),
+        StageState.valueOf(row.getString("state")),
         TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
         TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
   }

@@ -1,53 +1,55 @@
 package com.github.adrian83.robome.domain.activity.model;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.table.model.TableState;
 
 public class Activity {
 
-  private ActivityId id;
-  private String name;
-  private TableState state;
-  private LocalDateTime createdAt;
-  private LocalDateTime modifiedAt;
+	private ActivityId id;
+	private UUID userId;
+	private String name;
+	private ActivityState state;
+	private LocalDateTime createdAt;
+	private LocalDateTime modifiedAt;
 
-  public Activity(
-      ActivityId id,
-      String name,
-      TableState state,
-      LocalDateTime createdAt,
-      LocalDateTime modifiedAt) {
-    super();
-    this.id = id;
-    this.name = name;
-    this.state = state;
-    this.createdAt = createdAt;
-    this.modifiedAt = modifiedAt;
-  }
+	public Activity(ActivityId id, UUID userId, String name, ActivityState state, LocalDateTime createdAt,
+			LocalDateTime modifiedAt) {
+		super();
+		this.id = id;
+		this.userId = userId;
+		this.name = name;
+		this.state = state;
+		this.createdAt = createdAt;
+		this.modifiedAt = modifiedAt;
+	}
 
-  public Activity(String name) {
-    this(new ActivityId(), name, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
-  }
+	public Activity(UUID userId, String name) {
+		this(new ActivityId(), userId, name, ActivityState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+	}
 
-  public ActivityId getId() {
-    return id;
-  }
+	public ActivityId getId() {
+		return id;
+	}
 
-  public String getName() {
-    return name;
-  }
+	public UUID getUserId() {
+		return userId;
+	}
 
-  public TableState getState() {
-    return state;
-  }
+	public String getName() {
+		return name;
+	}
 
-  public LocalDateTime getCreatedAt() {
-    return createdAt;
-  }
+	public ActivityState getState() {
+		return state;
+	}
 
-  public LocalDateTime getModifiedAt() {
-    return modifiedAt;
-  }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public LocalDateTime getModifiedAt() {
+		return modifiedAt;
+	}
 }

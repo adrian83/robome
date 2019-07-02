@@ -40,6 +40,7 @@ CREATE INDEX uemail ON robome.users (email);
   table_id uuid,
   stage_id uuid,
   activity_id uuid,
+  user_id uuid,
   name varchar,
   state varchar,
   created_at timestamp,

@@ -12,28 +12,30 @@ import com.typesafe.config.Config;
 
 public class NewStage implements Validable {
 
-  private String name;
+	private static final String NAME_LABEL = "name";
+	private static final String EMPTY_NAME_KEY = "stage.create.name.empty";
+	private static final String EMPTY_NAME_MSG = "Stage name cannot be empty";
 
-  @JsonCreator
-  public NewStage(@JsonProperty("name") String name) {
-    super();
-    this.name = name;
-  }
+	private String name;
 
-  public String getName() {
-    return name;
-  }
+	@JsonCreator
+	public NewStage(@JsonProperty("name") String name) {
+		super();
+		this.name = name;
+	}
 
-  @Override
-  public List<ValidationError> validate(Config config) {
-    List<ValidationError> errors = new ArrayList<>();
+	public String getName() {
+		return name;
+	}
 
-    if (Strings.isNullOrEmpty(getName())) {
-      ValidationError error =
-          new ValidationError("name", "stage.create.name.empty", "Stage name cannot be empty");
-      errors.add(error);
-    }
+	@Override
+	public List<ValidationError> validate(Config config) {
+		List<ValidationError> errors = new ArrayList<>();
 
-    return errors;
-  }
+		if (Strings.isNullOrEmpty(getName())) {
+			errors.add(new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG));
+		}
+
+		return errors;
+	}
 }

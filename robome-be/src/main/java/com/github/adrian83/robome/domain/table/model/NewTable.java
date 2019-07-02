@@ -12,41 +12,43 @@ import com.typesafe.config.Config;
 
 public class NewTable implements Validable {
 
-  final String title;
-  final String description;
+	private static final String TITLE_LABEL = "title";
+	private static final String EMPTY_TITLE_KEY = "table.create.title.empty";
+	private static final String EMPTY_TITLE_MSG = "Table title cannot be empty";
 
-  @JsonCreator
-  public NewTable(
-      @JsonProperty("title") String title, @JsonProperty("description") String description) {
-    this.title = title;
-    this.description = description;
-  }
+	private static final String DESC_LABEL = "description";
+	private static final String EMPTY_DESC_KEY = "table.create.description.empty";
+	private static final String EMPTY_DESC_MSG = "Table description cannot be empty";
 
-  public String getTitle() {
-    return title;
-  }
+	final String title;
+	final String description;
 
-  public String getDescription() {
-    return description;
-  }
+	@JsonCreator
+	public NewTable(@JsonProperty("title") String title, @JsonProperty("description") String description) {
+		this.title = title;
+		this.description = description;
+	}
 
-  @Override
-  public List<ValidationError> validate(Config config) {
-    List<ValidationError> errors = new ArrayList<>();
+	public String getTitle() {
+		return title;
+	}
 
-    if (Strings.isNullOrEmpty(getTitle())) {
-      ValidationError error =
-          new ValidationError("title", "table.create.title.empty", "Table title cannot be empty");
-      errors.add(error);
-    }
+	public String getDescription() {
+		return description;
+	}
 
-    if (Strings.isNullOrEmpty(getDescription())) {
-      ValidationError error =
-          new ValidationError(
-              "description", "table.create.description.empty", "Table description cannot be empty");
-      errors.add(error);
-    }
+	@Override
+	public List<ValidationError> validate(Config config) {
+		List<ValidationError> errors = new ArrayList<>();
 
-    return errors;
-  }
+		if (Strings.isNullOrEmpty(getTitle())) {
+			errors.add(new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY, EMPTY_TITLE_MSG));
+		}
+
+		if (Strings.isNullOrEmpty(getDescription())) {
+			errors.add(new ValidationError(DESC_LABEL, EMPTY_DESC_KEY, EMPTY_DESC_MSG));
+		}
+
+		return errors;
+	}
 }
