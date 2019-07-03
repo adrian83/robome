@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.auth;
+package com.github.adrian83.robome.domain.user;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -6,13 +6,14 @@ import java.util.concurrent.CompletableFuture;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import com.github.adrian83.robome.auth.Authentication;
+import com.github.adrian83.robome.auth.JwtAuthorizer;
+import com.github.adrian83.robome.auth.Role;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.domain.user.User;
-import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.util.http.Cors;
 import com.github.adrian83.robome.util.http.Header;
 import com.github.adrian83.robome.util.http.HttpMethod;
@@ -25,7 +26,7 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.Route;
 
-public class AuthController extends AbstractController {
+public class UserController extends AbstractController {
 
 	public static final String AUTH = "auth";
 	public static final String LOGIN = "login";
@@ -34,7 +35,7 @@ public class AuthController extends AbstractController {
 	private UserService userService;
 
 	@Inject
-	public AuthController(UserService userService, JwtAuthorizer jwtAuthorizer, Config config,
+	public UserController(UserService userService, JwtAuthorizer jwtAuthorizer, Config config,
 			ExceptionHandler exceptionHandler, Response responseProducer) {
 		super(jwtAuthorizer, exceptionHandler, config, responseProducer);
 		this.userService = userService;
@@ -60,7 +61,7 @@ public class AuthController extends AbstractController {
 	private Route loginUser(LoginForm login) {
 
 		CompletableFuture<HttpResponse> futureResponse = CompletableFuture.completedFuture(login)
-				.thenApply(form -> Validation.validate(form, config))
+				.thenApply(form -> Validation.validate(form))
 				.thenCompose(form -> userService.findUserByEmail(form.getEmail()))
 				.thenApply(maybeUser -> maybeUser.map(user -> {
 					if (Authentication.passwordEqual(login.getPassword(), user.getPasswordHash())) {
@@ -82,7 +83,7 @@ public class AuthController extends AbstractController {
 	private Route registerUser(RegisterForm register) {
 
 		CompletableFuture<HttpResponse> result = CompletableFuture.completedFuture(register)
-				.thenApply(form -> Validation.validate(form, config)).thenCompose(form -> {
+				.thenApply(form -> Validation.validate(form)).thenCompose(form -> {
 					LocalDateTime utcNow = TimeUtils.utcNow();
 					String hashedPassword = BCrypt.hashpw(register.getPassword(), BCrypt.gensalt());
 

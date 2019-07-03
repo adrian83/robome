@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.adrian83.robome.common.web.Validable;
 import com.github.adrian83.robome.common.web.ValidationError;
 import com.google.common.base.Strings;
-import com.typesafe.config.Config;
 
 public class UpdatedTable implements Validable {
 
@@ -31,7 +30,7 @@ public class UpdatedTable implements Validable {
   }
 
   @Override
-  public List<ValidationError> validate(Config config) {
+  public List<ValidationError> validate() {
     List<ValidationError> errors = new ArrayList<>();
 
     if (Strings.isNullOrEmpty(getTitle())) {

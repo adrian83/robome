@@ -169,7 +169,7 @@ public class TableController extends AbstractController {
             .thenApply(
                 tuple ->
                     new Tuple2<User, UpdatedTable>(
-                        tuple.getObj1(), Validation.validate(tuple.getObj2(), config)))
+                        tuple.getObj1(), Validation.validate(tuple.getObj2())))
             .thenCompose(
                 tuple ->
                     tableService.updateTable(
@@ -198,7 +198,7 @@ public class TableController extends AbstractController {
             .thenApply(
                 tuple2 ->
                     new Tuple2<User, NewTable>(
-                        tuple2.getObj1(), Validation.validate(tuple2.getObj2(), config)))
+                        tuple2.getObj1(), Validation.validate(tuple2.getObj2())))
             .thenCompose(tuple -> tableService.saveTable(tuple.getObj1(), tuple.getObj2()))
             .thenApply(
                 table ->

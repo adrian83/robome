@@ -2,7 +2,6 @@ package com.github.adrian83.robome.auth;
 
 import java.security.Key;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,7 +32,6 @@ public class JwtAuthorizer extends AllDirectives {
 	private static final String SECURITY_KEY = "security.key";
 	
 	private static final String USER_EMAIL = "user_email";
-	private static final String USER_ID = "user_id ";
 
 	private static final SignatureAlgorithm SECURITY_ALGORITHM = SignatureAlgorithm.HS512;
 
@@ -49,7 +47,7 @@ public class JwtAuthorizer extends AllDirectives {
 	public String createJWTToken(User user) {
 		return Jwts.builder()
 				.setSubject("UserData")
-				.setClaims(ImmutableMap.of(USER_EMAIL, user.getEmail(),USER_ID, user.getId().toString()))
+				.setClaims(ImmutableMap.of(USER_EMAIL, user.getEmail()))
 				.signWith(SECURITY_ALGORITHM, getSecurityKey())
 				.compact();
 	}
@@ -78,8 +76,8 @@ public class JwtAuthorizer extends AllDirectives {
 					throw new MalformedJwtException("Invalid JWT token");
 				}
 
-				AuthContext authContext = fromJwsToken(jwtToken.replaceFirst(BEARER, ""));
-				CompletionStage<Optional<User>> maybeUserF = userService.findUserByEmail(authContext.getUserEmail());
+				var email = emailFromJwsToken(jwtToken.replaceFirst(BEARER, ""));
+				CompletionStage<Optional<User>> maybeUserF = userService.findUserByEmail(email);
 				return inner.apply(maybeUserF);
 
 			} catch (SignatureException | MalformedJwtException e) {
@@ -92,17 +90,15 @@ public class JwtAuthorizer extends AllDirectives {
 		}).orElse(complete(HttpResponse.create().withStatus(StatusCodes.UNAUTHORIZED)));
 	}
 
-	private AuthContext fromJwsToken(String jwtToken) {
+	private String emailFromJwsToken(String jwtToken) {
 		Key key = getSecurityKey();
 
 		Jws<Claims> jwt = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
 
 		Claims body = jwt.getBody();
 
-		String email = body.get(USER_EMAIL).toString();
-		UUID userId = UUID.fromString(body.get(USER_ID).toString());
+		return body.get(USER_EMAIL).toString();
 
-		return new AuthContext(userId, email, jwtToken);
 	}
 
 }

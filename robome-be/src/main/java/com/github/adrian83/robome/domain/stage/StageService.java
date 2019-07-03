@@ -30,19 +30,16 @@ public class StageService {
     return stageRepository.getById(user.getId(), stageId).runWith(Sink.head(), actorMaterializer);
   }
 
-  public CompletionStage<List<Stage>> getTableStages(User user, TableId tableId) {
+  public CompletionStage<List<Stage>> getTableStages(User user, TableId id) {
     return stageRepository
-        .getTableStages(user.getId(), tableId.getTableId())
+        .getTableStages(user.getId(), id.getTableId())
         .runWith(Sink.seq(), actorMaterializer);
   }
 
   public CompletionStage<Stage> saveStage(User user, NewStage newStage) {
-
-    Stage stage = new Stage(user.getId(), newStage.getName());
-
-    Sink<Stage, CompletionStage<Stage>> sink =
+    var stage = new Stage(user.getId(), newStage.getName());
+    var sink =
         stageRepository.saveStage().mapMaterializedValue(doneF -> doneF.thenApply(done -> stage));
-
     return Source.lazily(() -> Source.single(stage)).runWith(sink, actorMaterializer);
   }
 }

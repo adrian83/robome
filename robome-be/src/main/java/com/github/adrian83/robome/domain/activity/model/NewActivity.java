@@ -1,12 +1,16 @@
 package com.github.adrian83.robome.domain.activity.model;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.adrian83.robome.common.web.Validable;
+import com.github.adrian83.robome.common.web.Validation;
 import com.github.adrian83.robome.common.web.ValidationError;
 import com.google.common.base.Strings;
-import com.typesafe.config.Config;
 
 public class NewActivity implements Validable {
 
@@ -14,9 +18,13 @@ public class NewActivity implements Validable {
   private static final String EMPTY_NAME_KEY = "activity.create.name.empty";
   private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
 
+  private static final ValidationError EMPTY_NAME =
+      new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
+
   private String name;
 
-  public NewActivity(String name) {
+  @JsonCreator
+  public NewActivity(@JsonProperty(NAME_LABEL) String name) {
     super();
     this.name = name;
   }
@@ -26,13 +34,10 @@ public class NewActivity implements Validable {
   }
 
   @Override
-  public List<ValidationError> validate(Config config) {
-    List<ValidationError> errors = new ArrayList<>();
-
-    if (Strings.isNullOrEmpty(getName())) {
-      errors.add(new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG));
-    }
-
-    return errors;
+  public List<ValidationError> validate() {
+    return Stream.of(Validation.check(getName(), EMPTY_NAME, Strings::isNullOrEmpty))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
   }
 }

@@ -57,7 +57,8 @@ public class StageController extends AbstractController {
                       pathPrefix(
                           segment(),
                           tableId ->
-                              pathPrefix(STAGES, () -> jwtSecured(tableId, this::getTableStages)))));
+                              pathPrefix(
+                                  STAGES, () -> jwtSecured(tableId, this::getTableStages)))));
 
   private Route getStageRoute =
       get(
@@ -137,7 +138,7 @@ public class StageController extends AbstractController {
             .thenApply(
                 tuple2 ->
                     new Tuple2<User, NewStage>(
-                        tuple2.getObj1(), Validation.validate(tuple2.getObj2(), config)))
+                        tuple2.getObj1(), Validation.validate(tuple2.getObj2())))
             .thenCompose(tuple2 -> stageService.saveStage(tuple2.getObj1(), tuple2.getObj2()))
             .thenApply(
                 stage ->

@@ -1,11 +1,12 @@
 package com.github.adrian83.robome.domain.stage;
 
+import static java.util.stream.Collectors.toList;
+
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -25,6 +26,9 @@ import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 
 public class StageRepository {
+
+  private static final String TABLE_ID_FIELD = "table_id";
+  private static final String STAGE_ID_FIELD = "stage_id";
 
   private static final String INSERT_STAGE_STMT =
       "INSERT INTO robome.stages (stage_id, table_id, user_id, title, state, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -57,25 +61,21 @@ public class StageRepository {
               modified);
         };
 
-    Sink<Stage, CompletionStage<Done>> sink =
-        CassandraSink.create(1, preparedStatement, statementBinder, session);
-    return sink;
+    return CassandraSink.create(1, preparedStatement, statementBinder, session);
   }
 
   public Source<Stage, NotUsed> getTableStages(UUID userID, UUID tableUuid) {
-    PreparedStatement preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
-    BoundStatement bound = preparedStatement.bind(tableUuid, userID);
-
-    return Source.from(
-        session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
+    var preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
+    var bound = preparedStatement.bind(tableUuid, userID);
+    var stages = session.execute(bound).all().stream().map(this::fromRow).collect(toList());
+    return Source.from(stages);
   }
 
   public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageId stageId) {
-    PreparedStatement preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
-    BoundStatement bound =
-        preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userID);
 
-    ResultSet result = session.execute(bound);
+    var preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
+    var bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userID);
+    var result = session.execute(bound);
     return Source.single(result)
         .map(ResultSet::one)
         .map(Optional::ofNullable)
@@ -83,8 +83,8 @@ public class StageRepository {
   }
 
   private Stage fromRow(Row row) {
-    StageId id = new StageId(row.get("table_id", UUID.class), row.get("stage_id", UUID.class));
 
+    var id = new StageId(row.get(TABLE_ID_FIELD, UUID.class), row.get(STAGE_ID_FIELD, UUID.class));
     return new Stage(
         id,
         row.get("user_id", UUID.class),
