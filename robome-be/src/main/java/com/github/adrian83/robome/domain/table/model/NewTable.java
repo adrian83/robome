@@ -54,4 +54,9 @@ public class NewTable implements Validable {
         .map(Optional::get)
         .collect(Collectors.toList());
   }
+
+  @Override
+  public String toString() {
+    return "NewTable [title=" + title + ", description=" + description + "]";
+  }
 }

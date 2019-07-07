@@ -12,8 +12,9 @@ import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.common.web.Validation;
+import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.model.NewTable;
-import com.github.adrian83.robome.domain.table.model.TableId;
+import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.domain.user.UserService;
@@ -121,6 +122,8 @@ public class TableController extends AbstractController {
 
   private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
 
+	  System.out.println("erwerw");
+	  
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
@@ -138,7 +141,7 @@ public class TableController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadTables)
-            .thenCompose(user -> tableService.getTable(user, TableId.fromString(tableIdStr)))
+            .thenCompose(user -> tableService.getTable(user, TableKey.fromString(tableIdStr)))
             .thenApply(responseProducer::jsonFromOptional)
             .exceptionally(exceptionHandler::handleException);
 
@@ -151,7 +154,7 @@ public class TableController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteTables)
-            .thenCompose(user -> tableService.deleteTable(user, TableId.fromString(tableIdStr)))
+            .thenCompose(user -> tableService.deleteTable(user, TableKey.fromString(tableIdStr)))
             .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
@@ -173,7 +176,7 @@ public class TableController extends AbstractController {
             .thenCompose(
                 tuple ->
                     tableService.updateTable(
-                        tuple.getObj1(), TableId.fromString(tableIdStr), tuple.getObj2()))
+                        tuple.getObj1(), TableKey.fromString(tableIdStr), tuple.getObj2()))
             .thenApply(
                 table ->
                     HttpResponse.create()
@@ -181,7 +184,7 @@ public class TableController extends AbstractController {
                         .addHeaders(
                             headers(
                                 locationFor(
-                                    TableController.TABLES, table.getId().getTableId().toString()),
+                                    TableController.TABLES, table.getKey().getTableId().toString()),
                                 Cors.origin(corsOrigin()))))
             .exceptionally(exceptionHandler::handleException);
 
@@ -194,12 +197,9 @@ public class TableController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteTables)
-            .thenApply(user -> new Tuple2<User, NewTable>(user, newTable))
-            .thenApply(
-                tuple2 ->
-                    new Tuple2<User, NewTable>(
-                        tuple2.getObj1(), Validation.validate(tuple2.getObj2())))
-            .thenCompose(tuple -> tableService.saveTable(tuple.getObj1(), tuple.getObj2()))
+            .thenApply(user -> new UserAndForm<NewTable>(user, newTable))
+            .thenApply(UserAndForm::validate)
+            .thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
             .thenApply(
                 table ->
                     HttpResponse.create()
@@ -207,7 +207,7 @@ public class TableController extends AbstractController {
                         .addHeaders(
                             headers(
                                 locationFor(
-                                    TableController.TABLES, table.getId().getTableId().toString()),
+                                    TableController.TABLES, table.getKey().getTableId().toString()),
                                 Cors.origin(corsOrigin()))))
             .exceptionally(exceptionHandler::handleException);
 

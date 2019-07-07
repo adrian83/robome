@@ -6,7 +6,7 @@ import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.Table;
-import com.github.adrian83.robome.domain.table.model.TableId;
+import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.User;
 import com.google.inject.Inject;
@@ -26,7 +26,7 @@ public class TableService {
     this.actorMaterializer = actorMaterializer;
   }
 
-  public CompletionStage<Optional<Table>> getTable(User user, TableId tableId) {
+  public CompletionStage<Optional<Table>> getTable(User user, TableKey tableId) {
 
     return tableRepository
         .getById(user.getId(), tableId.getTableId())
@@ -43,14 +43,14 @@ public class TableService {
     return Source.lazily(() -> Source.single(table)).runWith(sink, actorMaterializer);
   }
 
-  public CompletionStage<Table> updateTable(User user, TableId tableID, UpdatedTable updatedTable) {
+  public CompletionStage<Table> updateTable(User user, TableKey tableID, UpdatedTable updatedTable) {
 
     Table table =
         Table.newTable(
             tableID, user.getId(), updatedTable.getTitle(), updatedTable.getDescription());
 
     Sink<Table, CompletionStage<Table>> sink =
-        tableRepository.saveTable().mapMaterializedValue(doneF -> doneF.thenApply(done -> table));
+        tableRepository.updateTable(table).mapMaterializedValue(doneF -> doneF.thenApply(done -> table));
 
     return Source.lazily(() -> Source.single(table)).runWith(sink, actorMaterializer);
   }
@@ -60,9 +60,9 @@ public class TableService {
     return tableRepository.getUserTables(user.getId()).runWith(Sink.seq(), actorMaterializer);
   }
 
-  public CompletionStage<TableId> deleteTable(User user, TableId tableId) {
+  public CompletionStage<TableKey> deleteTable(User user, TableKey tableId) {
 
-    Sink<TableId, CompletionStage<TableId>> sink =
+    Sink<TableKey, CompletionStage<TableKey>> sink =
         tableRepository
             .deleteTable(tableId, user.getId())
             .mapMaterializedValue(doneF -> doneF.thenApply(done -> tableId));

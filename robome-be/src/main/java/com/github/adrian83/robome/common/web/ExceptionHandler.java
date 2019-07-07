@@ -2,6 +2,7 @@ package com.github.adrian83.robome.common.web;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,8 +24,11 @@ public class ExceptionHandler {
 	}
 
 	public HttpResponse handleException(Throwable ex) {
-
-		if (ex instanceof ValidationException) {
+		
+		System.out.println("EXCEPTION: " + ex.getMessage());
+		if(ex instanceof CompletionException) {
+			return handleException(ex.getCause());
+		} else if (ex instanceof ValidationException) {
 			return response400(((ValidationException) ex).getErrors());
 		}
 		return HttpResponse.create().withStatus(StatusCodes.INTERNAL_SERVER_ERROR);

@@ -11,14 +11,13 @@ import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
-import com.github.adrian83.robome.common.web.Validation;
+import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
-import com.github.adrian83.robome.domain.stage.model.StageId;
+import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.table.TableController;
-import com.github.adrian83.robome.domain.table.model.TableId;
+import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.tuple.Tuple2;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -105,7 +104,7 @@ public class StageController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadStages)
-            .thenCompose(user -> stageService.getTableStages(user, TableId.fromString(tableIdStr)))
+            .thenCompose(user -> stageService.getTableStages(user, TableKey.fromString(tableIdStr)))
             .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
@@ -120,7 +119,7 @@ public class StageController extends AbstractController {
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadStages)
             .thenCompose(
-                user -> stageService.getStage(user, StageId.fromStrings(tableIdStr, stageIdStr)))
+                user -> stageService.getStage(user, StageKey.fromStrings(tableIdStr, stageIdStr)))
             .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
@@ -134,24 +133,21 @@ public class StageController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new Tuple2<User, NewStage>(user, newStage))
-            .thenApply(
-                tuple2 ->
-                    new Tuple2<User, NewStage>(
-                        tuple2.getObj1(), Validation.validate(tuple2.getObj2())))
-            .thenCompose(tuple2 -> stageService.saveStage(tuple2.getObj1(), tuple2.getObj2()))
+            .thenApply(user -> new UserAndForm<NewStage>(user, newStage))
+            .thenApply(UserAndForm::validate)
+            .thenCompose(uaf -> stageService.saveStage(uaf.getUser(), uaf.getForm()))
             .thenApply(
                 stage ->
                     HttpResponse.create()
                         .withStatus(StatusCodes.CREATED)
                         .addHeaders(
-                            headers(location(stage.getStageId()), Cors.origin(corsOrigin()))))
+                            headers(location(stage.getKey()), Cors.origin(corsOrigin()))))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
-  private Location location(StageId stageId) {
+  private Location location(StageKey stageId) {
     return locationFor(
         TableController.TABLES,
         stageId.getTableId().toString(),

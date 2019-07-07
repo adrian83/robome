@@ -6,11 +6,13 @@ CREATE KEYSPACE robome WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replica
   id uuid, 
   email varchar,
   password_hash varchar,
-  roles list<text>,
+  roles list<varchar>,
   created_at timestamp,
   modified_at timestamp,
   PRIMARY KEY (id)
 );
+
+ALTER TABLE robome.users ADD roles list<varchar>;
 
 CREATE INDEX uemail ON robome.users (email);
   

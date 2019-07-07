@@ -12,8 +12,9 @@
 	<properties>
 		<scala.version>2.12.7</scala.version>
 		<scala.binary.version>2.12</scala.binary.version>
-		<akka.http.version>10.1.5</akka.http.version>
+		<akka.http.version>10.1.8</akka.http.version>
 		<akka.version>2.5.19</akka.version>
+		<akka.stream>2.5.19</akka.stream>
 	</properties>
 
 	<dependencies>
@@ -22,6 +23,12 @@
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-actor_${scala.binary.version}</artifactId>
 			<version>${akka.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-stream_${scala.binary.version}</artifactId>
+			<version>${akka.stream}</version>
 		</dependency>
 
 		<dependency>

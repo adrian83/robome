@@ -17,7 +17,7 @@ public final class Validation {
   }
 
   public static <T> Optional<ValidationError> check(
-      T arg, ValidationError error, Function<T, Boolean> isValid) {
-    return isValid.apply(arg) ? Optional.empty() : Optional.ofNullable(error);
+      T arg, ValidationError error, Function<T, Boolean> isInvalid) {
+    return isInvalid.apply(arg) ? Optional.ofNullable(error) : Optional.empty();
   }
 }

@@ -4,10 +4,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
+import com.github.adrian83.robome.domain.common.Ownerable;
 
-public class Table {
+public class Table implements Ownerable {
 
-  private TableId id;
+  private TableKey key;
   private UUID userId;
   private String title;
   private String description;
@@ -17,7 +18,7 @@ public class Table {
 
   public Table(UUID userId, String title, String description) {
     this(
-        new TableId(),
+        new TableKey(),
         userId,
         title,
         description,
@@ -27,7 +28,7 @@ public class Table {
   }
 
   public Table(
-      TableId id,
+      TableKey key,
       UUID userId,
       String title,
       String description,
@@ -35,7 +36,7 @@ public class Table {
       LocalDateTime createdAt,
       LocalDateTime modifiedAt) {
     super();
-    this.id = id;
+    this.key = key;
     this.userId = userId;
     this.title = title;
     this.description = description;
@@ -44,13 +45,13 @@ public class Table {
     this.modifiedAt = modifiedAt;
   }
 
-  public static Table newTable(TableId id, UUID userId, String title, String description) {
+  public static Table newTable(TableKey id, UUID userId, String title, String description) {
     return new Table(
         id, userId, title, description, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
   }
 
   public static Table updatedTable(
-      TableId id,
+      TableKey id,
       UUID userId,
       String title,
       String description,
@@ -59,8 +60,8 @@ public class Table {
     return new Table(id, userId, title, description, state, createdAt, TimeUtils.utcNow());
   }
 
-  public TableId getId() {
-    return id;
+  public TableKey getKey() {
+    return key;
   }
 
   public UUID getUserId() {
@@ -85,5 +86,10 @@ public class Table {
 
   public LocalDateTime getModifiedAt() {
     return modifiedAt;
+  }
+
+  @Override
+  public UUID getOwner() {
+    return getUserId();
   }
 }

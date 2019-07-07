@@ -1,6 +1,7 @@
 package com.github.adrian83.robome.auth;
 
-import com.github.adrian83.robome.domain.table.model.Table;
+import com.github.adrian83.robome.domain.common.Ownerable;
+import com.github.adrian83.robome.domain.common.Idable;
 import com.github.adrian83.robome.domain.user.User;
 
 public final class Authorization {
@@ -21,11 +22,11 @@ public final class Authorization {
 		return user;
 	}
 	
-	public static Table canWriteTable(User user, Table table) {
-		if(table.getUserId().equals(user.getId())) {
-			throw new UserNotAuthorizedException(String.format("user: {0} cannot modify table: {1}", user.getId(), table.getId()));
+	public static <T extends Ownerable & Idable> T canUse(User user, T thing) {
+		if(thing.getOwner().equals(user.getId())) {
+			throw new UserNotAuthorizedException(String.format("user: {0} cannot modify table: {1}", user.getId(), thing.getIdRepresentation()));
 		}
-		return table;
+		return thing;
 	}
 	
 	public static User canReadStages(User user) {

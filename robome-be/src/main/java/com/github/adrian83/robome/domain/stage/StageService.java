@@ -6,8 +6,8 @@ import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.Stage;
-import com.github.adrian83.robome.domain.stage.model.StageId;
-import com.github.adrian83.robome.domain.table.model.TableId;
+import com.github.adrian83.robome.domain.stage.model.StageKey;
+import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.User;
 import com.google.inject.Inject;
 
@@ -26,11 +26,11 @@ public class StageService {
     this.actorMaterializer = actorMaterializer;
   }
 
-  public CompletionStage<Optional<Stage>> getStage(User user, StageId stageId) {
+  public CompletionStage<Optional<Stage>> getStage(User user, StageKey stageId) {
     return stageRepository.getById(user.getId(), stageId).runWith(Sink.head(), actorMaterializer);
   }
 
-  public CompletionStage<List<Stage>> getTableStages(User user, TableId id) {
+  public CompletionStage<List<Stage>> getTableStages(User user, TableKey id) {
     return stageRepository
         .getTableStages(user.getId(), id.getTableId())
         .runWith(Sink.seq(), actorMaterializer);

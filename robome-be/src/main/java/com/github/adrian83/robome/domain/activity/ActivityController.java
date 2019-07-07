@@ -11,15 +11,14 @@ import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
-import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.domain.activity.model.ActivityId;
+import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
+import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageController;
-import com.github.adrian83.robome.domain.stage.model.StageId;
+import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.tuple.Tuple2;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -127,7 +126,7 @@ public class ActivityController extends AbstractController {
             .thenCompose(
                 user ->
                     activityService.getStageActivities(
-                        user, StageId.fromStrings(tableIdStr, stageIdStr)))
+                        user, StageKey.fromStrings(tableIdStr, stageIdStr)))
             .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
@@ -147,7 +146,7 @@ public class ActivityController extends AbstractController {
             .thenCompose(
                 user ->
                     activityService.getActivity(
-                        user, ActivityId.fromStrings(tableIdStr, stageIdStr, activityIdStr)))
+                        user, ActivityKey.fromStrings(tableIdStr, stageIdStr, activityIdStr)))
             .thenApply(responseProducer::jsonFromOptional)
             .exceptionally(exceptionHandler::handleException);
 
@@ -164,23 +163,20 @@ public class ActivityController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new Tuple2<User, NewActivity>(user, newActivity))
-            .thenApply(
-                tuple2 ->
-                    new Tuple2<User, NewActivity>(
-                        tuple2.getObj1(), Validation.validate(tuple2.getObj2())))
-            .thenCompose(tuple2 -> activityService.saveActivity(tuple2.getObj1(), tuple2.getObj2()))
+            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
+            .thenApply(UserAndForm::validate)
+            .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), uaf.getForm()))
             .thenApply(
                 activity ->
                     HttpResponse.create()
                         .withStatus(StatusCodes.CREATED)
-                        .addHeaders(headers(location(activity.getId()), Cors.origin(corsOrigin()))))
+                        .addHeaders(headers(location(activity.getKey()), Cors.origin(corsOrigin()))))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
-  private Location location(ActivityId activityId) {
+  private Location location(ActivityKey activityId) {
     return locationFor(
         TableController.TABLES,
         activityId.getTableId().toString(),

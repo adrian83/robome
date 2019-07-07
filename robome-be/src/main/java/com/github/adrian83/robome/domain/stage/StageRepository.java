@@ -15,7 +15,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.domain.stage.model.Stage;
-import com.github.adrian83.robome.domain.stage.model.StageId;
+import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.stage.model.StageState;
 import com.google.inject.Inject;
 
@@ -52,8 +52,8 @@ public class StageRepository {
           Date created = TimeUtils.toDate(stage.getCreatedAt());
           Date modified = TimeUtils.toDate(stage.getModifiedAt());
           return statement.bind(
-              stage.getStageId().getStageId(),
-              stage.getStageId().getTableId(),
+              stage.getKey().getStageId(),
+              stage.getKey().getTableId(),
               stage.getUserId(),
               stage.getTitle(),
               stage.getState().name(),
@@ -71,7 +71,7 @@ public class StageRepository {
     return Source.from(stages);
   }
 
-  public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageId stageId) {
+  public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageKey stageId) {
 
     var preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
     var bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userID);
@@ -84,7 +84,7 @@ public class StageRepository {
 
   private Stage fromRow(Row row) {
 
-    var id = new StageId(row.get(TABLE_ID_FIELD, UUID.class), row.get(STAGE_ID_FIELD, UUID.class));
+    var id = new StageKey(row.get(TABLE_ID_FIELD, UUID.class), row.get(STAGE_ID_FIELD, UUID.class));
     return new Stage(
         id,
         row.get("user_id", UUID.class),
