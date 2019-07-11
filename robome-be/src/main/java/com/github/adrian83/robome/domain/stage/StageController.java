@@ -17,12 +17,10 @@ import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.User;
-import com.github.adrian83.robome.util.http.Cors;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
 
@@ -136,12 +134,7 @@ public class StageController extends AbstractController {
             .thenApply(user -> new UserAndForm<NewStage>(user, newStage))
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> stageService.saveStage(uaf.getUser(), uaf.getForm()))
-            .thenApply(
-                stage ->
-                    HttpResponse.create()
-                        .withStatus(StatusCodes.CREATED)
-                        .addHeaders(
-                            headers(location(stage.getKey()), Cors.origin(corsOrigin()))))
+            .thenApply(stage -> responseProducer.response201(location(stage.getKey())))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);

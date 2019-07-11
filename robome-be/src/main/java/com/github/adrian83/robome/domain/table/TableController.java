@@ -11,23 +11,16 @@ import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
-import com.github.adrian83.robome.common.web.Validation;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.User;
-import com.github.adrian83.robome.domain.user.UserService;
-import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.http.Header;
-import com.github.adrian83.robome.util.http.HttpMethod;
-import com.github.adrian83.robome.util.http.Options;
-import com.github.adrian83.robome.util.tuple.Tuple2;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
+import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
 
 public class TableController extends AbstractController {
@@ -38,7 +31,6 @@ public class TableController extends AbstractController {
 
   @Inject
   public TableController(
-      UserService userService,
       TableService tableService,
       JwtAuthorizer jwtAuthorizer,
       Config config,
@@ -122,8 +114,6 @@ public class TableController extends AbstractController {
 
   private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
 
-	  System.out.println("erwerw");
-	  
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
@@ -168,24 +158,16 @@ public class TableController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteTables)
-            .thenApply(user -> new Tuple2<User, UpdatedTable>(user, updatedTable))
-            .thenApply(
-                tuple ->
-                    new Tuple2<User, UpdatedTable>(
-                        tuple.getObj1(), Validation.validate(tuple.getObj2())))
+            .thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable))
+            .thenApply(UserAndForm::validate)
             .thenCompose(
-                tuple ->
+                uaf ->
                     tableService.updateTable(
-                        tuple.getObj1(), TableKey.fromString(tableIdStr), tuple.getObj2()))
+                        uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
             .thenApply(
                 table ->
-                    HttpResponse.create()
-                        .withStatus(StatusCodes.OK)
-                        .addHeaders(
-                            headers(
-                                locationFor(
-                                    TableController.TABLES, table.getKey().getTableId().toString()),
-                                Cors.origin(corsOrigin()))))
+                    responseProducer.response200(
+                        location(table.getKey())))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -200,39 +182,21 @@ public class TableController extends AbstractController {
             .thenApply(user -> new UserAndForm<NewTable>(user, newTable))
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
-            .thenApply(
-                table ->
-                    HttpResponse.create()
-                        .withStatus(StatusCodes.CREATED)
-                        .addHeaders(
-                            headers(
-                                locationFor(
-                                    TableController.TABLES, table.getKey().getTableId().toString()),
-                                Cors.origin(corsOrigin()))))
+            .thenApply(table -> responseProducer.response201(location(table.getKey())))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
   private Route handleCreateTableOptions() {
-    HttpResponse response =
-        new Options()
-            .withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
-            .withMethods(HttpMethod.POST.name(), HttpMethod.GET.name())
-            .withOrigin(corsOrigin())
-            .response();
-
-    return complete(response);
+	  return complete(responseProducer.response200());
   }
 
   private Route handleUpdateTableOptions() {
-    HttpResponse response =
-        new Options()
-            .withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
-            .withMethods(HttpMethod.PUT.name(), HttpMethod.GET.name(), HttpMethod.DELETE.name())
-            .withOrigin(corsOrigin())
-            .response();
+    return complete(responseProducer.response200());
+  }
 
-    return complete(response);
+  private Location location(TableKey tableKey) {
+    return locationFor(TableController.TABLES, tableKey.getTableId().toString());
   }
 }

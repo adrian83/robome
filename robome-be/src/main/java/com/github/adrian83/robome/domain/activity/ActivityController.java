@@ -4,6 +4,8 @@ import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
@@ -18,12 +20,11 @@ import com.github.adrian83.robome.domain.stage.StageController;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.user.User;
-import com.github.adrian83.robome.util.http.Cors;
+import com.github.adrian83.robome.util.function.TriFunction;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
 
@@ -44,6 +45,20 @@ public class ActivityController extends AbstractController {
     this.activityService = activityService;
   }
 
+  private Supplier<Route> create3PathParamsSupplier(String val1, String val2, String prefix, TriFunction<String, String, String, Route> threeFunct) {
+	  
+	  Function<String, Route> oneFunc = (String val3) -> threeFunct.apply(val1, val2, val3);
+	  
+	   Route route = pathPrefix(
+  	  prefix,
+          () ->
+              pathPrefix(
+                  segment(), oneFunc));
+	   
+	   return () -> route;
+  }
+
+  
   public Route createRoute() {
     return route(
         get(
@@ -166,11 +181,7 @@ public class ActivityController extends AbstractController {
             .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), uaf.getForm()))
-            .thenApply(
-                activity ->
-                    HttpResponse.create()
-                        .withStatus(StatusCodes.CREATED)
-                        .addHeaders(headers(location(activity.getKey()), Cors.origin(corsOrigin()))))
+            .thenApply(activity -> responseProducer.response201(location(activity.getKey())))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);

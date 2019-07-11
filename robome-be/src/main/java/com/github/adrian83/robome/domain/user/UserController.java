@@ -14,6 +14,8 @@ import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.common.web.Validation;
+import com.github.adrian83.robome.domain.user.model.Login;
+import com.github.adrian83.robome.domain.user.model.Register;
 import com.github.adrian83.robome.util.http.Cors;
 import com.github.adrian83.robome.util.http.Header;
 import com.github.adrian83.robome.util.http.HttpMethod;
@@ -52,13 +54,13 @@ public class UserController extends AbstractController {
 				post(() -> pathPrefix(AUTH,
 						() -> pathPrefix(REGISTER,
 								() -> pathEndOrSingleSlash(
-										() -> entity(Jackson.unmarshaller(RegisterForm.class), this::registerUser))))),
+										() -> entity(Jackson.unmarshaller(Register.class), this::registerUser))))),
 
 				post(() -> pathPrefix(AUTH, () -> pathPrefix(LOGIN, () -> pathEndOrSingleSlash(
-						() -> entity(Jackson.unmarshaller(LoginForm.class), this::loginUser))))));
+						() -> entity(Jackson.unmarshaller(Login.class), this::loginUser))))));
 	}
 
-	private Route loginUser(LoginForm login) {
+	private Route loginUser(Login login) {
 
 		CompletableFuture<HttpResponse> futureResponse = CompletableFuture.completedFuture(login)
 				.thenApply(form -> Validation.validate(form))
@@ -80,7 +82,7 @@ public class UserController extends AbstractController {
 
 	}
 
-	private Route registerUser(RegisterForm register) {
+	private Route registerUser(Register register) {
 
 		CompletableFuture<HttpResponse> result = CompletableFuture.completedFuture(register)
 				.thenApply(form -> Validation.validate(form)).thenCompose(form -> {
