@@ -1,11 +1,11 @@
 package com.github.adrian83.robome.domain.activity;
 
-import static akka.http.javadsl.server.PathMatchers.segment;
+import static com.github.adrian83.robome.domain.stage.StageController.STAGES;
+import static com.github.adrian83.robome.domain.table.TableController.TABLES;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
@@ -16,9 +16,7 @@ import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.common.UserAndForm;
-import com.github.adrian83.robome.domain.stage.StageController;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.google.inject.Inject;
@@ -45,90 +43,24 @@ public class ActivityController extends AbstractController {
     this.activityService = activityService;
   }
 
-  private Supplier<Route> create3PathParamsSupplier(String val1, String val2, String prefix, TriFunction<String, String, String, Route> threeFunct) {
-	  
-	  Function<String, Route> oneFunc = (String val3) -> threeFunct.apply(val1, val2, val3);
-	  
-	   Route route = pathPrefix(
-  	  prefix,
-          () ->
-              pathPrefix(
-                  segment(), oneFunc));
-	   
-	   return () -> route;
-  }
+  private TriFunction<String, String, String, Route> getActivityByIdAction =
+      (String tableId, String stageId, String activityId) ->
+          jwtSecured(tableId, stageId, activityId, this::getActivityById);
 
-  
+  private TriFunction<String, String, Class<NewActivity>, Route> persistActivityAction =
+      (String tableId, String stageId, Class<NewActivity> clazz) ->
+          jwtSecured(tableId, stageId, clazz, this::persistActivity);
+
+  private BiFunction<String, String, Route> getStageActivitiesAction =
+      (String tableId, String stageId) -> jwtSecured(tableId, stageId, this::getStageActivities);
+
+
+
   public Route createRoute() {
     return route(
-        get(
-            () ->
-                pathPrefix(
-                    TableController.TABLES,
-                    () ->
-                        pathPrefix(
-                            segment(),
-                            tableId ->
-                                pathPrefix(
-                                    StageController.STAGES,
-                                    () ->
-                                        pathPrefix(
-                                            segment(),
-                                            stageId ->
-                                                pathPrefix(
-                                                    ACTIVITIES,
-                                                    () ->
-                                                        pathPrefix(
-                                                            segment(),
-                                                            activityId ->
-                                                                jwtSecured(
-                                                                    tableId,
-                                                                    stageId,
-                                                                    activityId,
-                                                                    this::getActivityById)))))))),
-        post(
-            () ->
-                pathPrefix(
-                    TableController.TABLES,
-                    () ->
-                        pathPrefix(
-                            segment(),
-                            tableId ->
-                                pathPrefix(
-                                    StageController.STAGES,
-                                    () ->
-                                        pathPrefix(
-                                            segment(),
-                                            stageId ->
-                                                pathPrefix(
-                                                    ACTIVITIES,
-                                                    () ->
-                                                        jwtSecured(
-                                                            tableId,
-                                                            stageId,
-                                                            NewActivity.class,
-                                                            this::persistActivity))))))),
-        get(
-            () ->
-                pathPrefix(
-                    TableController.TABLES,
-                    () ->
-                        pathPrefix(
-                            segment(),
-                            tableId ->
-                                pathPrefix(
-                                    StageController.STAGES,
-                                    () ->
-                                        pathPrefix(
-                                            segment(),
-                                            stageId ->
-                                                pathPrefix(
-                                                    ACTIVITIES,
-                                                    () ->
-                                                        jwtSecured(
-                                                            tableId,
-                                                            stageId,
-                                                            this::getStageActivities))))))));
+        get(prefixVarPrefixVarPrefixVar(TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
+        post(prefixVarPrefixVarPrefixForm(TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
+        get(prefixVarPrefixVarPrefix(TABLES, STAGES, ACTIVITIES, getStageActivitiesAction)));
   }
 
   private Route getStageActivities(
@@ -189,9 +121,9 @@ public class ActivityController extends AbstractController {
 
   private Location location(ActivityKey activityId) {
     return locationFor(
-        TableController.TABLES,
+        TABLES,
         activityId.getTableId().toString(),
-        StageController.STAGES,
+        STAGES,
         activityId.getStageId().toString(),
         ActivityController.ACTIVITIES,
         activityId.getActivityId().toString());

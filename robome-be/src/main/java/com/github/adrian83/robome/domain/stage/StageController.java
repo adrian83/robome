@@ -1,9 +1,12 @@
 package com.github.adrian83.robome.domain.stage;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
+import static com.github.adrian83.robome.domain.table.TableController.TABLES;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
@@ -14,7 +17,6 @@ import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.table.TableController;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.User;
 import com.google.inject.Inject;
@@ -42,48 +44,23 @@ public class StageController extends AbstractController {
   }
 
   public Route createRoute() {
-    return route(getTableStagesRoute, getStageRoute, createStageRoute);
+    return route(
+        get(prefixVarPrefix(TABLES, STAGES, getTableStagesAction)),
+        get(prefixVarPrefixVar(TABLES, STAGES, getStageByIdAction)),
+        createStageRoute);
   }
 
-  private Route getTableStagesRoute =
-      get(
-          () ->
-              pathPrefix(
-                  TableController.TABLES,
-                  () ->
-                      pathPrefix(
-                          segment(),
-                          tableId ->
-                              pathPrefix(
-                                  STAGES, () -> jwtSecured(tableId, this::getTableStages)))));
+  private Function<String, Route> getTableStagesAction =
+      (String tableId) -> jwtSecured(tableId, this::getTableStages);
 
-  private Route getStageRoute =
-      get(
-          () ->
-              pathPrefix(
-                  TableController.TABLES,
-                  () ->
-                      pathPrefix(
-                          segment(),
-                          tableId ->
-                              pathPrefix(
-                                  STAGES,
-                                  () ->
-                                      pathPrefix(
-                                          segment(),
-                                          stageId ->
-                                              pathEndOrSingleSlash(
-                                                  () ->
-                                                      jwtSecured(
-                                                          tableId,
-                                                          stageId,
-                                                          this::getStageById)))))));
+  private BiFunction<String, String, Route> getStageByIdAction =
+      (String tableId, String stageId) -> jwtSecured(tableId, stageId, this::getStageById);
 
   private Route createStageRoute =
       post(
           () ->
               pathPrefix(
-                  TableController.TABLES,
+                  TABLES,
                   () ->
                       pathPrefix(
                           segment(),
@@ -142,7 +119,7 @@ public class StageController extends AbstractController {
 
   private Location location(StageKey stageId) {
     return locationFor(
-        TableController.TABLES,
+        TABLES,
         stageId.getTableId().toString(),
         StageController.STAGES,
         stageId.getStageId().toString());
