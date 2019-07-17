@@ -3,6 +3,7 @@ package com.github.adrian83.robome.domain.user;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -18,12 +19,9 @@ import com.github.adrian83.robome.domain.user.model.Login;
 import com.github.adrian83.robome.domain.user.model.Register;
 import com.github.adrian83.robome.util.http.Cors;
 import com.github.adrian83.robome.util.http.Header;
-import com.github.adrian83.robome.util.http.HttpMethod;
-import com.github.adrian83.robome.util.http.Options;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
-import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.Route;
@@ -43,21 +41,20 @@ public class UserController extends AbstractController {
 		this.userService = userService;
 	}
 
+	
+	Function<Class<Register>, Route> registerAction = (Class<Register> clazz) -> unsecured(clazz, this::registerUser);
+	
+	Function<Class<Login>, Route> loginAction = (Class<Login> clazz) -> unsecured(clazz, this::loginUser);
+	
+
+
+	
 	public Route createRoute() {
 		return route(
-				options(() -> pathPrefix(AUTH,
-						() -> pathPrefix(REGISTER, () -> pathEndOrSingleSlash(this::handleRegisterOptions)))),
-
-				options(() -> pathPrefix(AUTH,
-						() -> pathPrefix(LOGIN, () -> pathEndOrSingleSlash(this::handleLoginOptions)))),
-
-				post(() -> pathPrefix(AUTH,
-						() -> pathPrefix(REGISTER,
-								() -> pathEndOrSingleSlash(
-										() -> entity(Jackson.unmarshaller(Register.class), this::registerUser))))),
-
-				post(() -> pathPrefix(AUTH, () -> pathPrefix(LOGIN, () -> pathEndOrSingleSlash(
-						() -> entity(Jackson.unmarshaller(Login.class), this::loginUser))))));
+				post(prefixPrefixForm(AUTH, REGISTER, Register.class, registerAction)),
+				post(prefixPrefixForm(AUTH, LOGIN, Login.class, loginAction)),
+				options(prefixPrefix(AUTH, REGISTER, handleRegisterOptions())),
+				options(prefixPrefix(AUTH, LOGIN, handleLoginOptions())));
 	}
 
 	private Route loginUser(Login login) {
@@ -100,20 +97,13 @@ public class UserController extends AbstractController {
 
 	}
 
-	private Route handleLoginOptions() {
-		HttpResponse response = new Options()
-				.withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
-				.withMethods(HttpMethod.POST.name()).withOrigin(corsOrigin()).response();
-
-		return complete(response);
-	}
-
 	private Route handleRegisterOptions() {
-		HttpResponse response = new Options()
-				.withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
-				.withMethods(HttpMethod.POST.name()).withOrigin(corsOrigin()).response();
-
-		return complete(response);
+		return complete(responseProducer.response200());
 	}
+	
+	private Route handleLoginOptions() {
+		return complete(responseProducer.response200());
+	}
+
 
 }
