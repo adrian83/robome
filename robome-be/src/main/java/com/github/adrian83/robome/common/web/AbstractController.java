@@ -118,7 +118,7 @@ public class AbstractController extends AllDirectives {
 	}
 
 	protected Supplier<Route> prefixPrefix(String prefix1, String prefix2, Route route) {
-		return prefix(prefix1, prefix(prefix2, route).get());
+		return () -> pathPrefix(prefix1, () -> pathPrefix(prefix2, () -> pathEndOrSingleSlash(() -> route)));
 	}
 	
 	protected Supplier<Route> prefixVar(String prefix, Function<String, Route> action) {
@@ -132,13 +132,12 @@ public class AbstractController extends AllDirectives {
 	}
 	
 	protected <T> Supplier<Route> prefixForm(String prefix, Class<T> clazz, Function<Class<T>, Route> action) {
-		Route route = pathPrefix(prefix, () -> action.apply(clazz));
+		Route route = pathPrefix(prefix, () -> pathEndOrSingleSlash(() -> action.apply(clazz)));
 		return () -> route;
 	}
 	
 	protected <T> Supplier<Route> prefixPrefixForm(String prefix1, String prefix2, Class<T> clazz, Function<Class<T>, Route> action) {
-		Supplier<Route> sup1 = prefixForm(prefix2, clazz, action);
-		return prefix(prefix1, sup1.get());
+		return () -> pathPrefix(prefix1, () -> pathPrefix(prefix2, () -> pathEndOrSingleSlash(() -> action.apply(clazz))));
 	}
 
 	protected Supplier<Route> varPrefix(String prefix, Function<String, Route> action) {

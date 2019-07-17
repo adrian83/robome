@@ -68,7 +68,7 @@ public class Register implements Validable {
             Validation.check(
                 getRepeatedPassword(),
                 DIFFERENT_PASSWORDS,
-                (String pass2) -> pass2.equals(password)))
+                (String pass2) -> !pass2.equals(password)))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());
