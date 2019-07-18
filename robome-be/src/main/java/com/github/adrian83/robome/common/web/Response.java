@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.util.http.Cors;
 import com.github.adrian83.robome.util.http.Header;
 import com.github.adrian83.robome.util.http.HttpMethod;
-import com.github.adrian83.robome.util.http.Options;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -33,14 +32,7 @@ public class Response {
   }
 
   public <T> HttpResponse jsonFromOptional(Optional<T> maybe) {
-    return maybe
-        .map(
-            o ->
-                HttpResponse.create()
-                    .withStatus(StatusCodes.OK)
-                    .withEntity(ContentTypes.APPLICATION_JSON, toBytes(o))
-                    .addHeaders(corsHeaders()))
-        .orElse(response404());
+    return maybe.map(this::jsonFromObject).orElse(response404());
   }
 
   public HttpResponse jsonFromObject(Object obj) {
@@ -58,29 +50,35 @@ public class Response {
   }
 
   public HttpResponse response404() {
-    return HttpResponse.create()
-        .withStatus(StatusCodes.NOT_FOUND)
-        .addHeaders(corsHeaders());
+    return HttpResponse.create().withStatus(StatusCodes.NOT_FOUND).addHeaders(corsHeaders());
   }
 
   public HttpResponse response200(HttpHeader... hdrs) {
-    return HttpResponse.create().withStatus(StatusCodes.OK).addHeaders(headers(hdrs)).addHeaders(corsHeaders());
+    return HttpResponse.create()
+        .withStatus(StatusCodes.OK)
+        .addHeaders(headers(hdrs))
+        .addHeaders(corsHeaders());
+  }
+
+  public HttpResponse response200(HttpMethod... methods) {
+    return HttpResponse.create()
+        .withStatus(StatusCodes.OK)
+        .addHeader(Cors.methods(methods))
+        .addHeaders(corsHeaders());
   }
 
   public HttpResponse response201(HttpHeader... hdrs) {
-    return HttpResponse.create().withStatus(StatusCodes.CREATED).addHeaders(headers(hdrs)).addHeaders(corsHeaders());
+    return HttpResponse.create()
+        .withStatus(StatusCodes.CREATED)
+        .addHeaders(headers(hdrs))
+        .addHeaders(corsHeaders());
   }
-  public HttpResponse options(HttpMethod ... methods) {
-  return new Options()
-	            .withHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText())
-	            .withMethods(HttpMethod.PUT.name(), HttpMethod.GET.name(), HttpMethod.DELETE.name())
-	            .withOrigin(corsOrigin())
-	            .response();
-  }
-  
+
   protected List<HttpHeader> corsHeaders() {
     return headers(
-        Cors.allowHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText()), Cors.origin(corsOrigin()), Cors.methods("*"));
+        Cors.allowHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText()),
+        Cors.origin(corsOrigin()),
+        Cors.methods("*"));
   }
 
   protected String corsOrigin() {

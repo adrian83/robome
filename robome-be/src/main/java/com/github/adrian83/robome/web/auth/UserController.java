@@ -1,12 +1,13 @@
 package com.github.adrian83.robome.web.auth;
 
+import static com.github.adrian83.robome.util.http.HttpMethod.POST;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.auth.Role;
-import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.common.web.Validation;
@@ -16,6 +17,7 @@ import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.auth.validation.LoginValidator;
 import com.github.adrian83.robome.web.auth.validation.RegisterValidator;
+import com.github.adrian83.robome.web.common.AbstractController;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -27,6 +29,9 @@ public class UserController extends AbstractController {
   public static final String AUTH = "auth";
   public static final String LOGIN = "login";
   public static final String REGISTER = "register";
+
+  private static final LoginValidator LOGIN_VALIDATOR = new LoginValidator();
+  private static final RegisterValidator REGISTER_VALIDATOR = new RegisterValidator();
 
   private UserService userService;
 
@@ -41,25 +46,25 @@ public class UserController extends AbstractController {
     this.userService = userService;
   }
 
+  public Route createRoute() {
+    return route(
+        options(prefixPrefix(AUTH, REGISTER, handleRegisterOptionsRequest())),
+        post(prefixPrefixForm(AUTH, REGISTER, Register.class, registerAction)),
+        options(prefixPrefix(AUTH, LOGIN, handleLoginOptionsRequest())),
+        post(prefixPrefixForm(AUTH, LOGIN, Login.class, loginAction)));
+  }
+
   Function<Class<Register>, Route> registerAction =
       (Class<Register> clazz) -> unsecured(clazz, this::registerUser);
 
   Function<Class<Login>, Route> loginAction =
       (Class<Login> clazz) -> unsecured(clazz, this::loginUser);
 
-  public Route createRoute() {
-    return route(
-        post(prefixPrefixForm(AUTH, REGISTER, Register.class, registerAction)),
-        post(prefixPrefixForm(AUTH, LOGIN, Login.class, loginAction)),
-        options(prefixPrefix(AUTH, REGISTER, handleRegisterOptions())),
-        options(prefixPrefix(AUTH, LOGIN, handleLoginOptions())));
-  }
-
   private Route loginUser(Login login) {
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(login)
-            .thenApply(form -> Validation.validate(form, new LoginValidator()))
+            .thenApply(form -> Validation.validate(form, LOGIN_VALIDATOR))
             .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
             .thenApply(
                 maybeUser -> Authentication.userWithPasswordExists(maybeUser, login.getPassword()))
@@ -75,7 +80,7 @@ public class UserController extends AbstractController {
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(register)
-            .thenApply(form -> Validation.validate(form, new RegisterValidator()))
+            .thenApply(form -> Validation.validate(form, REGISTER_VALIDATOR))
             .thenApply(
                 form ->
                     new User(
@@ -89,11 +94,11 @@ public class UserController extends AbstractController {
     return completeWithFuture(responseF);
   }
 
-  private Route handleRegisterOptions() {
-    return complete(responseProducer.response200());
+  private Route handleRegisterOptionsRequest() {
+    return complete(responseProducer.response200(POST));
   }
 
-  private Route handleLoginOptions() {
-    return complete(responseProducer.response200());
+  private Route handleLoginOptionsRequest() {
+    return complete(responseProducer.response200(POST));
   }
 }

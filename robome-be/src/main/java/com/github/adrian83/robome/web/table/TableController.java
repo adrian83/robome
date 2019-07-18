@@ -1,5 +1,9 @@
 package com.github.adrian83.robome.web.table;
 
+import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.util.http.HttpMethod.GET;
+import static com.github.adrian83.robome.util.http.HttpMethod.POST;
+import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -9,7 +13,6 @@ import java.util.function.Function;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
@@ -18,6 +21,7 @@ import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.table.validation.NewTableValidator;
 import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
 import com.google.inject.Inject;
@@ -29,100 +33,128 @@ import akka.http.javadsl.server.Route;
 
 public class TableController extends AbstractController {
 
-	public static final String TABLES = "tables";
+  public static final String TABLES = "tables";
 
-	private TableService tableService;
+  private static final UpdatedTableValidator UPDATE_VALIDATOR = new UpdatedTableValidator();
+  private static final NewTableValidator CREATE_VALIDATOR = new NewTableValidator();
 
-	@Inject
-	public TableController(TableService tableService, JwtAuthorizer jwtAuthorizer, Config config,
-			ExceptionHandler exceptionHandler, Response response) {
-		super(jwtAuthorizer, exceptionHandler, config, response);
-		this.tableService = tableService;
-	}
+  private TableService tableService;
 
-	public Route createRoute() {
-		return route(options(prefix(TABLES, handleCreateTableOptions())),
-				options(prefixVar(TABLES, this::handleUpdateTableOptions)),
-				get(prefix(TABLES, jwtSecured(this::getTables))), get(prefixVar(TABLES, getTableAction)),
-				delete(prefixVar(TABLES, deleteTableAction)),
-				put(prefixVarForm(TABLES, UpdatedTable.class, updateTableAction)),
-				post(prefixForm(TABLES, NewTable.class, createTableAction)));
-	}
+  @Inject
+  public TableController(
+      TableService tableService,
+      JwtAuthorizer jwtAuthorizer,
+      Config config,
+      ExceptionHandler exceptionHandler,
+      Response response) {
+    super(jwtAuthorizer, exceptionHandler, config, response);
+    this.tableService = tableService;
+  }
 
-	Function<String, Route> getTableAction = (String tableId) -> jwtSecured(tableId, this::getTableById);
+  public Route createRoute() {
+    return route(
+        options(prefix(TABLES, handleOptionsRequest())),
+        post(prefixForm(TABLES, NewTable.class, createTableAction)),
+        get(prefix(TABLES, jwtSecured(this::getTables))),
+        options(prefixVar(TABLES, this::handleOptionsRequest)),
+        get(prefixVar(TABLES, getTableAction)),
+        delete(prefixVar(TABLES, deleteTableAction)),
+        put(prefixVarForm(TABLES, UpdatedTable.class, updateTableAction)));
+  }
 
-	Function<String, Route> deleteTableAction = (String tableId) -> jwtSecured(tableId, this::deleteTable);
+  Function<String, Route> getTableAction = (var tableId) -> jwtSecured(tableId, this::getTableById);
 
-	BiFunction<String, Class<UpdatedTable>, Route> updateTableAction = (String tableId,
-			Class<UpdatedTable> clazz) -> jwtSecured(tableId, clazz, this::updateTable);
+  Function<String, Route> deleteTableAction =
+      (var tableId) -> jwtSecured(tableId, this::deleteTable);
 
-	Function<Class<NewTable>, Route> createTableAction = (Class<NewTable> clazz) -> jwtSecured(clazz,
-			this::persistTable);
+  BiFunction<String, Class<UpdatedTable>, Route> updateTableAction =
+      (var tableId, var clazz) -> jwtSecured(tableId, clazz, this::updateTable);
 
-	private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
+  Function<Class<NewTable>, Route> createTableAction =
+      (var clazz) -> jwtSecured(clazz, this::persistTable);
 
-		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canReadTables).thenCompose(tableService::getTables)
-				.thenApply(responseProducer::jsonFromObject).exceptionally(exceptionHandler::handleException);
+  private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
 
-		return completeWithFuture(responseF);
-	}
+    CompletionStage<HttpResponse> responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canReadTables)
+            .thenCompose(tableService::getTables)
+            .thenApply(responseProducer::jsonFromObject)
+            .exceptionally(exceptionHandler::handleException);
 
-	private Route getTableById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+    return completeWithFuture(responseF);
+  }
 
-		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canReadTables)
-				.thenCompose(user -> tableService.getTable(user, TableKey.fromString(tableIdStr)))
-				.thenApply(responseProducer::jsonFromOptional).exceptionally(exceptionHandler::handleException);
+  private Route getTableById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
-		return completeWithFuture(responseF);
-	}
+    CompletionStage<HttpResponse> responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canReadTables)
+            .thenCompose(user -> tableService.getTable(user, TableKey.fromString(tableIdStr)))
+            .thenApply(responseProducer::jsonFromOptional)
+            .exceptionally(exceptionHandler::handleException);
 
-	private Route deleteTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+    return completeWithFuture(responseF);
+  }
 
-		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canWriteTables)
-				.thenCompose(user -> tableService.deleteTable(user, TableKey.fromString(tableIdStr)))
-				.thenApply(responseProducer::jsonFromObject).exceptionally(exceptionHandler::handleException);
+  private Route deleteTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
-		return completeWithFuture(responseF);
-	}
+    CompletionStage<HttpResponse> responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canWriteTables)
+            .thenCompose(user -> tableService.deleteTable(user, TableKey.fromString(tableIdStr)))
+            .thenApply(responseProducer::jsonFromObject)
+            .exceptionally(exceptionHandler::handleException);
 
-	private Route updateTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr,
-			UpdatedTable updatedTable) {
+    return completeWithFuture(responseF);
+  }
 
-		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canWriteTables)
-				.thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable, new UpdatedTableValidator())).thenApply(UserAndForm::validate)
-				.thenCompose(
-						uaf -> tableService.updateTable(uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
-				.thenApply(table -> responseProducer.response200(location(table.getKey())))
-				.exceptionally(exceptionHandler::handleException);
+  private Route updateTable(
+      CompletionStage<Optional<User>> maybeUserF, String tableIdStr, UpdatedTable updatedTable) {
 
-		return completeWithFuture(responseF);
-	}
+    CompletionStage<HttpResponse> responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canWriteTables)
+            .thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable, UPDATE_VALIDATOR))
+            .thenApply(UserAndForm::validate)
+            .thenCompose(
+                uaf ->
+                    tableService.updateTable(
+                        uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
+            .thenApply(table -> responseProducer.response200(location(table.getKey())))
+            .exceptionally(exceptionHandler::handleException);
 
-	private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
+    return completeWithFuture(responseF);
+  }
 
-		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canWriteTables).thenApply(user -> new UserAndForm<NewTable>(user, newTable, new NewTableValidator()))
-				.thenApply(UserAndForm::validate)
-				.thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
-				.thenApply(table -> responseProducer.response201(location(table.getKey())))
-				.exceptionally(exceptionHandler::handleException);
+  private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
 
-		return completeWithFuture(responseF);
-	}
+    CompletionStage<HttpResponse> responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canWriteTables)
+            .thenApply(user -> new UserAndForm<NewTable>(user, newTable, CREATE_VALIDATOR))
+            .thenApply(UserAndForm::validate)
+            .thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
+            .thenApply(table -> responseProducer.response201(location(table.getKey())))
+            .exceptionally(exceptionHandler::handleException);
 
-	private Route handleCreateTableOptions() {
-		return complete(responseProducer.response200());
-	}
+    return completeWithFuture(responseF);
+  }
 
-	private Route handleUpdateTableOptions(String tableId) {
-		return complete(responseProducer.response200());
-	}
+  private Route handleOptionsRequest() {
+    return complete(responseProducer.response200(GET, POST));
+  }
 
-	private Location location(TableKey tableKey) {
-		return locationFor(TableController.TABLES, tableKey.getTableId().toString());
-	}
+  private Route handleOptionsRequest(String tableId) {
+    return complete(responseProducer.response200(GET, PUT, DELETE));
+  }
+
+  private Location location(TableKey tableKey) {
+    return locationFor(TableController.TABLES, tableKey.getTableId().toString());
+  }
 }

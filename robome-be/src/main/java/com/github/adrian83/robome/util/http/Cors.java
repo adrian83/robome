@@ -17,6 +17,10 @@ public class Cors {
 		return RawHeader.create("Access-Control-Allow-Methods", join(methods));
 	}
 	
+	public static RawHeader methods(HttpMethod ... methods) {
+		return RawHeader.create("Access-Control-Allow-Methods", join(methods));
+	}
+	
 	public static RawHeader allowHeaders(String ... headers) {
 		return RawHeader.create("Access-Control-Allow-Headers", join(headers));
 	}
@@ -29,5 +33,7 @@ public class Cors {
 		return Arrays.stream(values).collect(Collectors.joining(SEPARATOR));
 	}
 	
-	
+	private static String join(HttpMethod ... methods) {
+		return Arrays.stream(methods).map(HttpMethod::name).collect(Collectors.joining(SEPARATOR));
+	}
 }

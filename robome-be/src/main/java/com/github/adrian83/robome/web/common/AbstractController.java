@@ -1,9 +1,8 @@
-package com.github.adrian83.robome.common.web;
+package com.github.adrian83.robome.web.common;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
@@ -12,6 +11,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.github.adrian83.robome.auth.JwtAuthorizer;
+import com.github.adrian83.robome.common.web.ExceptionHandler;
+import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
@@ -19,9 +20,6 @@ import com.github.adrian83.robome.util.http.Header;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.model.ContentTypes;
-import akka.http.javadsl.model.HttpHeader;
-import akka.http.javadsl.model.headers.ContentType;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.AllDirectives;
@@ -49,21 +47,10 @@ public class AbstractController extends AllDirectives {
 		return Location.create(Arrays.stream(pathElems).collect(Collectors.joining("/")));
 	}
 
-	protected ContentType json() {
-		return ContentType.create(ContentTypes.APPLICATION_JSON);
-	}
-
 	protected RawHeader jwt(String token) {
 		return RawHeader.create(Header.AUTHORIZATION.getText(), token);
 	}
 
-	protected String corsOrigin() {
-		return config.getString(CORS_ORIGIN_KEY);
-	}
-
-	protected List<HttpHeader> headers(HttpHeader... headers) {
-		return Arrays.asList(headers);
-	}
 
 	protected Route jwtSecured(Function<CompletionStage<Optional<User>>, Route> logic) {
 		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, logic));

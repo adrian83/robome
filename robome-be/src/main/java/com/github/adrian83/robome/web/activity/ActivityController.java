@@ -10,7 +10,6 @@ import java.util.function.BiFunction;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.activity.ActivityService;
@@ -21,6 +20,7 @@ import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
+import com.github.adrian83.robome.web.common.AbstractController;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
