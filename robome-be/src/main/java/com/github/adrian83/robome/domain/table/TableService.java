@@ -8,7 +8,7 @@ import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.stream.ActorMaterializer;

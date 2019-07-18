@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.domain.user;
+package com.github.adrian83.robome.domain.user.model;
 
 import java.time.LocalDateTime;
 import java.util.List;

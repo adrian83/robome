@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.domain.user;
+package com.github.adrian83.robome.web.auth;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -10,8 +10,12 @@ import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.domain.user.model.Login;
-import com.github.adrian83.robome.domain.user.model.Register;
+import com.github.adrian83.robome.domain.user.UserService;
+import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.web.auth.model.Login;
+import com.github.adrian83.robome.web.auth.model.Register;
+import com.github.adrian83.robome.web.auth.validation.LoginValidator;
+import com.github.adrian83.robome.web.auth.validation.RegisterValidator;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -55,7 +59,7 @@ public class UserController extends AbstractController {
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(login)
-            .thenApply(form -> Validation.validate(form))
+            .thenApply(form -> Validation.validate(form, new LoginValidator()))
             .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
             .thenApply(
                 maybeUser -> Authentication.userWithPasswordExists(maybeUser, login.getPassword()))
@@ -71,7 +75,7 @@ public class UserController extends AbstractController {
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(register)
-            .thenApply(form -> Validation.validate(form))
+            .thenApply(form -> Validation.validate(form, new RegisterValidator()))
             .thenApply(
                 form ->
                     new User(

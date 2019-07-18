@@ -15,10 +15,10 @@ import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
-import com.github.adrian83.robome.domain.activity.ActivityController;
-import com.github.adrian83.robome.domain.stage.StageController;
-import com.github.adrian83.robome.domain.table.TableController;
-import com.github.adrian83.robome.domain.user.UserController;
+import com.github.adrian83.robome.web.activity.ActivityController;
+import com.github.adrian83.robome.web.auth.UserController;
+import com.github.adrian83.robome.web.stage.StageController;
+import com.github.adrian83.robome.web.table.TableController;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 

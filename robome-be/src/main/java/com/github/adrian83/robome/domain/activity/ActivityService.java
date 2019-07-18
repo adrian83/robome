@@ -8,7 +8,7 @@ import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.stream.ActorMaterializer;

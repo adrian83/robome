@@ -1,6 +1,6 @@
-package com.github.adrian83.robome.domain.stage;
+package com.github.adrian83.robome.web.stage;
 
-import static com.github.adrian83.robome.domain.table.TableController.TABLES;
+import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -14,10 +14,12 @@ import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
+import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.table.model.TableKey;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -76,7 +78,7 @@ public class StageController extends AbstractController {
 	private Route persistStage(CompletionStage<Optional<User>> maybeUserF, String tableId, NewStage newStage) {
 
 		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canWriteStages).thenApply(user -> new UserAndForm<NewStage>(user, newStage))
+				.thenApply(Authorization::canWriteStages).thenApply(user -> new UserAndForm<NewStage>(user, newStage, new NewStageValidator()))
 				.thenApply(UserAndForm::validate)
 				.thenCompose(uaf -> stageService.saveStage(uaf.getUser(), uaf.getForm()))
 				.thenApply(stage -> responseProducer.response201(location(stage.getKey())))

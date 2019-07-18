@@ -1,7 +1,7 @@
-package com.github.adrian83.robome.domain.activity;
+package com.github.adrian83.robome.web.activity;
 
-import static com.github.adrian83.robome.domain.stage.StageController.STAGES;
-import static com.github.adrian83.robome.domain.table.TableController.TABLES;
+import static com.github.adrian83.robome.web.stage.StageController.STAGES;
+import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -13,12 +13,14 @@ import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
+import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TriFunction;
+import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -110,7 +112,7 @@ public class ActivityController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
+            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, new NewActivityValidator()))
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), uaf.getForm()))
             .thenApply(activity -> responseProducer.response201(location(activity.getKey())))

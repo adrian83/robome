@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.util.http.Header;

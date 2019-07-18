@@ -8,7 +8,7 @@ import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.github.adrian83.robome.common.NotFoundException;
 import com.github.adrian83.robome.domain.table.model.Table;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
 
 public final class Authentication {
 

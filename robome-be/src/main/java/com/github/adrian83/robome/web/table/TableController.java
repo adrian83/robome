@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.domain.table;
+package com.github.adrian83.robome.web.table;
 
 
 import java.util.Optional;
@@ -13,10 +13,13 @@ import com.github.adrian83.robome.common.web.AbstractController;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
+import com.github.adrian83.robome.domain.table.TableService;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.web.table.validation.NewTableValidator;
+import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -90,7 +93,7 @@ public class TableController extends AbstractController {
 
 		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
 				.thenApply(Authorization::canWriteTables)
-				.thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable)).thenApply(UserAndForm::validate)
+				.thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable, new UpdatedTableValidator())).thenApply(UserAndForm::validate)
 				.thenCompose(
 						uaf -> tableService.updateTable(uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
 				.thenApply(table -> responseProducer.response200(location(table.getKey())))
@@ -102,7 +105,7 @@ public class TableController extends AbstractController {
 	private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
 
 		CompletionStage<HttpResponse> responseF = maybeUserF.thenApply(Authentication::userExists)
-				.thenApply(Authorization::canWriteTables).thenApply(user -> new UserAndForm<NewTable>(user, newTable))
+				.thenApply(Authorization::canWriteTables).thenApply(user -> new UserAndForm<NewTable>(user, newTable, new NewTableValidator()))
 				.thenApply(UserAndForm::validate)
 				.thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
 				.thenApply(table -> responseProducer.response201(location(table.getKey())))

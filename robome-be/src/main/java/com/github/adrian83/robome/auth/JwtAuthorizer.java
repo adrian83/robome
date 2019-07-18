@@ -8,8 +8,8 @@ import java.util.function.Supplier;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import com.github.adrian83.robome.domain.user.User;
 import com.github.adrian83.robome.domain.user.UserService;
+import com.github.adrian83.robome.domain.user.model.User;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;

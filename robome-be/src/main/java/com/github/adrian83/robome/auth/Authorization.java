@@ -1,9 +1,9 @@
 package com.github.adrian83.robome.auth;
 
 import com.github.adrian83.robome.domain.common.Ownerable;
+import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.auth.exception.UserNotAuthorizedException;
 import com.github.adrian83.robome.domain.common.Idable;
-import com.github.adrian83.robome.domain.user.User;
 
 public final class Authorization {
 

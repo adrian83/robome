@@ -3,6 +3,7 @@ package com.github.adrian83.robome.domain.user;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
+import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.Done;

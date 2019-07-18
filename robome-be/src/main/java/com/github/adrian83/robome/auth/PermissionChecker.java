@@ -2,7 +2,7 @@ package com.github.adrian83.robome.auth;
 
 import java.util.Arrays;
 
-import com.github.adrian83.robome.domain.user.User;
+import com.github.adrian83.robome.domain.user.model.User;
 
 public final class PermissionChecker {
 
