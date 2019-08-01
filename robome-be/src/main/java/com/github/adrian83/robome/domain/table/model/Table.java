@@ -4,9 +4,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.common.Ownerable;
 
-public class Table implements Ownerable {
+public class Table {
 
   private TableKey key;
   private UUID userId;
@@ -88,8 +87,4 @@ public class Table implements Ownerable {
     return modifiedAt;
   }
 
-  @Override
-  public UUID getOwner() {
-    return getUserId();
-  }
 }

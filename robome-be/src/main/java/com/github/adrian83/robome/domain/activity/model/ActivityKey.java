@@ -19,10 +19,10 @@ public class ActivityKey extends StageKey {
     this.activityId = activityId;
   }
 
-  public ActivityKey() {
-    this(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
-  }
-
+  public ActivityKey(StageKey stageKey) {
+	    this(stageKey.getTableId(), stageKey.getStageId(), UUID.randomUUID());
+	  }
+  
   public UUID getActivityId() {
     return activityId;
   }

@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.auth;
+package com.github.adrian83.robome.domain.user.model;
 
 import java.util.Collections;
 import java.util.List;

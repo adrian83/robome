@@ -4,18 +4,16 @@ import java.security.Key;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 import io.jsonwebtoken.Claims;
@@ -27,21 +25,22 @@ import io.jsonwebtoken.SignatureException;
 
 public class JwtAuthorizer extends AllDirectives {
 
-	private static final String BEARER = "Bearer ";
-
-	private static final String SECURITY_KEY = "security.key";
-	
-	private static final String USER_EMAIL = "user_email";
-
 	private static final SignatureAlgorithm SECURITY_ALGORITHM = SignatureAlgorithm.HS512;
+	
+	private static final String BEARER = "Bearer ";
+	private static final String SECURITY_KEY = "security.key";
+	private static final String USER_EMAIL = "user_email";
+	
 
 	private Config config;
 	private UserService userService;
+	private Response responseProducer;
 
 	@Inject
-	public JwtAuthorizer(Config config, UserService userService) {
+	public JwtAuthorizer(Config config, UserService userService, Response responseProducer) {
 		this.config = config;
 		this.userService = userService;
+		this.responseProducer = responseProducer;
 	}
 
 	public String createJWTToken(User user) {
@@ -60,10 +59,6 @@ public class JwtAuthorizer extends AllDirectives {
 		return new SecretKeySpec(config.getString(SECURITY_KEY).getBytes(), SECURITY_ALGORITHM.getValue());
 	}
 
-	public Route authorized(Optional<String> maybeJwtToken, Supplier<Route> inner) {
-		return procedeIfValidToken(maybeJwtToken, userData -> inner.get());
-	}
-
 	public Route authorized(Optional<String> maybeJwtToken, Function<CompletionStage<Optional<User>>, Route> inner) {
 		return procedeIfValidToken(maybeJwtToken, inner::apply);
 	}
@@ -77,28 +72,23 @@ public class JwtAuthorizer extends AllDirectives {
 				}
 
 				var email = emailFromJwsToken(jwtToken.replaceFirst(BEARER, ""));
-				CompletionStage<Optional<User>> maybeUserF = userService.findUserByEmail(email);
+				var maybeUserF = userService.findUserByEmail(email);
 				return inner.apply(maybeUserF);
 
 			} catch (SignatureException | MalformedJwtException e) {
-				return complete(HttpResponse.create().withStatus(StatusCodes.UNAUTHORIZED));
+				return complete(responseProducer.response401());
 
 			} catch (Exception e) {
-				return complete(
-						HttpResponse.create().withStatus(StatusCodes.INTERNAL_SERVER_ERROR).withEntity(e.getMessage()));
+				return complete(responseProducer.response500(e.getMessage()));
 			}
-		}).orElse(complete(HttpResponse.create().withStatus(StatusCodes.UNAUTHORIZED)));
+		}).orElse(complete(responseProducer.response401()));
 	}
 
 	private String emailFromJwsToken(String jwtToken) {
 		Key key = getSecurityKey();
-
 		Jws<Claims> jwt = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
-
 		Claims body = jwt.getBody();
-
 		return body.get(USER_EMAIL).toString();
-
 	}
 
 }

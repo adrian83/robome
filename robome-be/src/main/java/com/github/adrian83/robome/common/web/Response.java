@@ -74,6 +74,19 @@ public class Response {
         .addHeaders(corsHeaders());
   }
 
+  public HttpResponse response401(HttpHeader... hdrs) {
+	return HttpResponse.create()
+	    .withStatus(StatusCodes.UNAUTHORIZED)
+	    .addHeaders(corsHeaders());
+  }
+  
+  public HttpResponse response500(String msg) {
+	return HttpResponse.create()
+	    .withStatus(StatusCodes.INTERNAL_SERVER_ERROR)
+	    .withEntity(ContentTypes.TEXT_PLAIN_UTF8, toBytes(msg))
+	    .addHeaders(corsHeaders());
+  }
+  
   protected List<HttpHeader> corsHeaders() {
     return headers(
         Cors.allowHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText()),

@@ -10,8 +10,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.github.adrian83.robome.auth.Role;
 import com.github.adrian83.robome.common.time.TimeUtils;
+import com.github.adrian83.robome.domain.user.model.Role;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 

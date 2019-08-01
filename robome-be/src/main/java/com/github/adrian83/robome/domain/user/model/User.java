@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.github.adrian83.robome.auth.Role;
 import com.github.adrian83.robome.common.time.TimeUtils;
 
 public class User {

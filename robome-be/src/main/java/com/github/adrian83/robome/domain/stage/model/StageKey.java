@@ -12,8 +12,8 @@ public class StageKey extends TableKey {
     return new StageKey(UUID.fromString(tableIdStr), UUID.fromString(stageIdStr));
   }
 
-  public StageKey() {
-    this(UUID.randomUUID(), UUID.randomUUID());
+  public StageKey(TableKey tableKey) {
+    this(tableKey.getTableId(), UUID.randomUUID());
   }
 
   public StageKey(UUID tableId, UUID stageId) {

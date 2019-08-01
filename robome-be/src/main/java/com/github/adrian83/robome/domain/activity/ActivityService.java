@@ -37,9 +37,9 @@ public class ActivityService {
         .runWith(Sink.seq(), actorMaterializer);
   }
 
-  public CompletionStage<Activity> saveActivity(User user, NewActivity newActivity) {
+  public CompletionStage<Activity> saveActivity(User user, StageKey stageKey, NewActivity newActivity) {
 
-    Activity activity = new Activity(user.getId(), newActivity.getName());
+    Activity activity = new Activity(stageKey, user.getId(), newActivity.getName());
 
     Sink<Activity, CompletionStage<Activity>> sink =
         activityRepository

@@ -98,7 +98,7 @@ public class StageController extends AbstractController {
             .thenApply(Authorization::canWriteStages)
             .thenApply(user -> new UserAndForm<NewStage>(user, newStage, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> stageService.saveStage(uaf.getUser(), uaf.getForm()))
+            .thenCompose(uaf -> stageService.saveStage(uaf.getUser(), fromString(tableId), uaf.getForm()))
             .thenApply(stage -> responseProducer.response201(location(stage.getKey())))
             .exceptionally(exceptionHandler::handleException);
 

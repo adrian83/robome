@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.common;
+package com.github.adrian83.robome.domain.common.exception;
 
 public class NotFoundException extends RuntimeException {
 

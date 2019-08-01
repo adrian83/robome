@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.common.Ownerable;
+import com.github.adrian83.robome.domain.table.model.TableKey;
 
-public class Stage implements Ownerable {
+public class Stage {
 
   private StageKey key;
   private UUID userId;
@@ -31,8 +31,8 @@ public class Stage implements Ownerable {
     this.modifiedAt = modifiedAt;
   }
 
-  public Stage(UUID userId, String title) {
-    this(new StageKey(), userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+  public Stage(TableKey tableKey, UUID userId, String title) {
+    this(new StageKey(tableKey), userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
   }
 
   public StageKey getKey() {
@@ -59,8 +59,4 @@ public class Stage implements Ownerable {
     return modifiedAt;
   }
 
-  @Override
-  public UUID getOwner() {
-    return getUserId();
-  }
 }

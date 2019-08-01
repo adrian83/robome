@@ -36,8 +36,8 @@ public class StageService {
         .runWith(Sink.seq(), actorMaterializer);
   }
 
-  public CompletionStage<Stage> saveStage(User user, NewStage newStage) {
-    var stage = new Stage(user.getId(), newStage.getName());
+  public CompletionStage<Stage> saveStage(User user, TableKey tableKey, NewStage newStage) {
+    var stage = new Stage(tableKey, user.getId(), newStage.getName());
     var sink =
         stageRepository.saveStage().mapMaterializedValue(doneF -> doneF.thenApply(done -> stage));
     return Source.lazily(() -> Source.single(stage)).runWith(sink, actorMaterializer);

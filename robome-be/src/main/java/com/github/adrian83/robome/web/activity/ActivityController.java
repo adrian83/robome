@@ -114,7 +114,7 @@ public class ActivityController extends AbstractController {
             .thenApply(Authorization::canWriteStages)
             .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, new NewActivityValidator()))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), uaf.getForm()))
+            .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
             .thenApply(activity -> responseProducer.response201(location(activity.getKey())))
             .exceptionally(exceptionHandler::handleException);
 

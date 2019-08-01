@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.common.Ownerable;
+import com.github.adrian83.robome.domain.stage.model.StageKey;
 
-public class Activity implements Ownerable {
+public class Activity {
 
   private ActivityKey key;
   private UUID userId;
@@ -31,9 +31,9 @@ public class Activity implements Ownerable {
     this.modifiedAt = modifiedAt;
   }
 
-  public Activity(UUID userId, String name) {
+  public Activity(StageKey stageKey, UUID userId, String name) {
     this(
-        new ActivityKey(),
+        new ActivityKey(stageKey),
         userId,
         name,
         ActivityState.ACTIVE,
@@ -65,8 +65,4 @@ public class Activity implements Ownerable {
     return modifiedAt;
   }
 
-  @Override
-  public UUID getOwner() {
-    return getUserId();
-  }
 }

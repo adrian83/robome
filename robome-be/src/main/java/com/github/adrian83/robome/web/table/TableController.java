@@ -56,7 +56,7 @@ public class TableController extends AbstractController {
         options(prefix(TABLES, handleOptionsRequest())),
         post(prefixForm(TABLES, NewTable.class, createTableAction)),
         get(prefix(TABLES, jwtSecured(this::getTables))),
-        options(prefixVar(TABLES, this::handleOptionsRequest)),
+        options(prefixVar(TABLES, tableId -> handleOptionsRequestWithId())),
         get(prefixVar(TABLES, getTableAction)),
         delete(prefixVar(TABLES, deleteTableAction)),
         put(prefixVarForm(TABLES, UpdatedTable.class, updateTableAction)));
@@ -146,11 +146,11 @@ public class TableController extends AbstractController {
     return completeWithFuture(responseF);
   }
 
-  private Route handleOptionsRequest() {
+  private Route handleOptionsRequestWithId() {
     return complete(responseProducer.response200(GET, POST));
   }
 
-  private Route handleOptionsRequest(String tableId) {
+  private Route handleOptionsRequest() {
     return complete(responseProducer.response200(GET, PUT, DELETE));
   }
 
