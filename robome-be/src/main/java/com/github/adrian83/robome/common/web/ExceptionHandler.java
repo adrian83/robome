@@ -4,43 +4,42 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
-import com.github.adrian83.robome.util.http.Cors;
 import com.google.inject.Inject;
 
-import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
 
 public class ExceptionHandler {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHandler.class);
 
 	private ObjectMapper objectMapper;
+	private Response responseFactory;
 
 	@Inject
-	public ExceptionHandler(ObjectMapper objectMapper) {
+	public ExceptionHandler(ObjectMapper objectMapper, Response responseFactory) {
 		this.objectMapper = objectMapper;
+		this.responseFactory = responseFactory;
 	}
 
 	public HttpResponse handleException(Throwable ex) {
 		
-		System.out.println("EXCEPTION: " + ex.getMessage());
+		LOGGER.error("Handling exception: {}", ex);
+		
 		if(ex instanceof CompletionException) {
 			return handleException(ex.getCause());
 		} else if (ex instanceof ValidationException) {
-			return response400(((ValidationException) ex).getErrors());
+			return responseFactory.response400(((ValidationException) ex).getErrors());
 		} else if (ex instanceof InvalidSignInDataException) {
-			return response400(List.of(new ValidationError("email", "login.invalid", "Invalida email or password")));
+			return responseFactory.response400(List.of(new ValidationError("email", "login.invalid", "Invalida email or password")));
 		}
-		return HttpResponse.create().withStatus(StatusCodes.INTERNAL_SERVER_ERROR);
-	}
-
-	protected HttpResponse response400(List<ValidationError> validationErrors) {
-		return HttpResponse.create().withStatus(StatusCodes.BAD_REQUEST)
-				.withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors))
-				.addHeaders(headers(Cors.allowHeaders("Content-Type"), Cors.origin("*"), Cors.methods("POST")));
+		return responseFactory.response500(ex.getMessage());
 	}
 
 	protected String toBytes(Object object) {

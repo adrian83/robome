@@ -15,14 +15,20 @@ import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.web.activity.ActivityController;
-import com.github.adrian83.robome.web.auth.UserController;
+import com.github.adrian83.robome.web.auth.AuthController;
+import com.github.adrian83.robome.web.health.HealthController;
 import com.github.adrian83.robome.web.stage.StageController;
 import com.github.adrian83.robome.web.table.TableController;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class Server {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
 	@SafeVarargs
 	private static Route createRoutes(Supplier<Route>... controllers) {
@@ -30,19 +36,23 @@ public class Server {
 	}
 
 	public static void main(String[] args) throws Exception {
+		
+		LOGGER.info("starting server");
 
 		Injector injector = Guice.createInjector(new RobomeModule());
 
 		TableController tableController = injector.getInstance(TableController.class);
 		StageController stageController = injector.getInstance(StageController.class);
 		ActivityController activityController = injector.getInstance(ActivityController.class);
-		UserController authController = injector.getInstance(UserController.class);
+		AuthController authController = injector.getInstance(AuthController.class);
+		HealthController healthController = injector.getInstance(HealthController.class);
 
 		Route route = createRoutes(
 				() -> tableController.createRoute(), 
 				() -> stageController.createRoute(),
 				() -> activityController.createRoute(),
-				() -> authController.createRoute()
+				() -> authController.createRoute(),
+				() -> healthController.createRoute()
 				);
 
 		ActorSystem system = injector.getInstance(ActorSystem.class);

@@ -1,10 +1,11 @@
 package com.github.adrian83.robome.domain.user.model;
 
+import static com.github.adrian83.robome.common.time.TimeUtils.utcNow;
+import static java.util.UUID.randomUUID;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import com.github.adrian83.robome.common.time.TimeUtils;
 
 public class User {
 
@@ -16,7 +17,7 @@ public class User {
   private List<Role> roles;
 
   public User(String email, String passwordHash, List<Role> roles) {
-    this(UUID.randomUUID(), email, passwordHash, roles, TimeUtils.utcNow(), TimeUtils.utcNow());
+    this(randomUUID(), email, passwordHash, roles, utcNow(), utcNow());
   }
 
   public User(
@@ -58,4 +59,11 @@ public class User {
   public List<Role> getRoles() {
     return roles;
   }
+
+  @Override
+  public String toString() {
+	return "User [id=" + id + ", email=" + email + ", passwordHash=" + passwordHash + ", createdAt=" + createdAt
+			+ ", modifiedAt=" + modifiedAt + ", roles=" + roles + "]";
+  }
+  
 }

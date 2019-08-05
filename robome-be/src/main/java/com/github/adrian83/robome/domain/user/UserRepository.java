@@ -1,5 +1,10 @@
 package com.github.adrian83.robome.domain.user;
 
+import static com.github.adrian83.robome.common.time.TimeUtils.toDate;
+import static com.github.adrian83.robome.common.time.TimeUtils.toUtcLocalDate;
+import static com.github.adrian83.robome.domain.user.model.Role.fromStringList;
+import static com.github.adrian83.robome.domain.user.model.Role.toStringList;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -10,8 +15,6 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.user.model.Role;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
@@ -47,9 +50,9 @@ public class UserRepository {
         row.get("id", UUID.class),
         row.getString("email"),
         row.getString("password_hash"),
-        Role.fromStringList(row.getList("roles", String.class)),
-        TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
-        TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
+        fromStringList(row.getList("roles", String.class)),
+        toUtcLocalDate(row.getTimestamp("created_at")),
+        toUtcLocalDate(row.getTimestamp("modified_at")));
   }
 
   public Sink<User, CompletionStage<Done>> saveUser() {
@@ -61,9 +64,9 @@ public class UserRepository {
                 user.getId(),
                 user.getEmail(),
                 user.getPasswordHash(),
-                Role.toStringList(user.getRoles()),
-                TimeUtils.toDate(user.getCreatedAt()),
-                TimeUtils.toDate(user.getModifiedAt()));
+                toStringList(user.getRoles()),
+                toDate(user.getCreatedAt()),
+                toDate(user.getModifiedAt()));
 
     return CassandraSink.create(1, preparedStatement, statementBinder, session);
   }
