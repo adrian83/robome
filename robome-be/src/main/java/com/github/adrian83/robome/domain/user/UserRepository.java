@@ -2,8 +2,7 @@ package com.github.adrian83.robome.domain.user;
 
 import static com.github.adrian83.robome.common.time.TimeUtils.toDate;
 import static com.github.adrian83.robome.common.time.TimeUtils.toUtcLocalDate;
-import static com.github.adrian83.robome.domain.user.model.Role.fromStringList;
-import static com.github.adrian83.robome.domain.user.model.Role.toStringList;
+import static com.github.adrian83.robome.domain.user.model.Role.fromString;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +14,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.github.adrian83.robome.domain.user.model.Role;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
@@ -50,7 +50,8 @@ public class UserRepository {
         row.get("id", UUID.class),
         row.getString("email"),
         row.getString("password_hash"),
-        fromStringList(row.getList("roles", String.class)),
+        //fromStringList(row.getList("roles", String.class)),
+        fromString(row.getString("roles")),
         toUtcLocalDate(row.getTimestamp("created_at")),
         toUtcLocalDate(row.getTimestamp("modified_at")));
   }
@@ -64,7 +65,8 @@ public class UserRepository {
                 user.getId(),
                 user.getEmail(),
                 user.getPasswordHash(),
-                toStringList(user.getRoles()),
+                //toStringList(user.getRoles()),
+                Role.toString(user.getRoles()),
                 toDate(user.getCreatedAt()),
                 toDate(user.getModifiedAt()));
 

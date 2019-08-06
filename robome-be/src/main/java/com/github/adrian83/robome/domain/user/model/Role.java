@@ -1,5 +1,6 @@
 package com.github.adrian83.robome.domain.user.model;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,8 +26,16 @@ public enum Role {
 		return roles.stream().map(Role::name).collect(Collectors.toList());
 	}
 	
+	public static String toString(List<Role> roles) {
+		return roles.stream().map(Role::name).collect(Collectors.joining(","));
+	}
+	
 	public static List<Role> fromStringList(List<String> strings) {
 		return strings.stream().map(Role::valueOf).collect(Collectors.toList());
+	}
+	
+	public static List<Role> fromString(String rolesStr) {
+		return fromStringList(Arrays.asList(rolesStr.split(",")));
 	}
 	
 }

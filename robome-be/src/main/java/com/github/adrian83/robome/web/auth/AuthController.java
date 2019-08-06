@@ -54,10 +54,10 @@ public class AuthController extends AbstractController {
 
   public Route createRoute() {
     return route(
-        options(prefixPrefix(AUTH, REGISTER, handleRegisterOptionsRequest())),
-        post(prefixPrefixForm(AUTH, REGISTER, Register.class, registerAction)),
         options(prefixPrefix(AUTH, LOGIN, handleLoginOptionsRequest())),
-        post(prefixPrefixForm(AUTH, LOGIN, Login.class, loginAction)));
+        post(prefixPrefixForm(AUTH, LOGIN, Login.class, loginAction)),
+        options(prefixPrefix(AUTH, REGISTER, handleRegisterOptionsRequest())),
+        post(prefixPrefixForm(AUTH, REGISTER, Register.class, registerAction)));
   }
 
   Function<Class<Register>, Route> registerAction =

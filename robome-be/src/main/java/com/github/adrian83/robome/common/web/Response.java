@@ -1,5 +1,10 @@
 package com.github.adrian83.robome.common.web;
 
+import static com.github.adrian83.robome.util.http.Header.AUTHORIZATION;
+import static com.github.adrian83.robome.util.http.Header.CONTENT_TYPE;
+import static com.github.adrian83.robome.util.http.Header.LOCATION;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -7,8 +12,8 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.http.Header;
 import com.github.adrian83.robome.util.http.HttpMethod;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -56,22 +61,19 @@ public class Response {
   public HttpResponse response200(HttpHeader... hdrs) {
     return HttpResponse.create()
         .withStatus(StatusCodes.OK)
-        .addHeaders(headers(hdrs))
-        .addHeaders(corsHeaders());
+        .addHeaders(concantenateHeaders(headers(hdrs), corsHeaders()));
   }
 
   public HttpResponse response200(HttpMethod... methods) {
     return HttpResponse.create()
         .withStatus(StatusCodes.OK)
-        .addHeader(Cors.methods(methods))
-        .addHeaders(corsHeaders());
+        .addHeaders(concantenateHeaders(Lists.newArrayList(Cors.methods(methods)), corsHeaders()));
   }
 
   public HttpResponse response201(HttpHeader... hdrs) {
     return HttpResponse.create()
         .withStatus(StatusCodes.CREATED)
-        .addHeaders(headers(hdrs))
-        .addHeaders(corsHeaders());
+        .addHeaders(concantenateHeaders(headers(hdrs), corsHeaders()));
   }
 
   public HttpResponse response401(HttpHeader... hdrs) {
@@ -87,11 +89,18 @@ public class Response {
 	    .addHeaders(corsHeaders());
   }
   
+  private List<HttpHeader> concantenateHeaders(List<HttpHeader> list1, List<HttpHeader> list2) {
+	  var result = new ArrayList<HttpHeader>(list1);
+	  result.addAll(list2);
+	  return result;
+  }
+  
   protected List<HttpHeader> corsHeaders() {
     return headers(
-        Cors.allowHeaders(Header.AUTHORIZATION.getText(), Header.CONTENT_TYPE.getText()),
+        Cors.allowHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()),
         Cors.origin(corsOrigin()),
-        Cors.methods("*"));
+        Cors.methods("*"),
+    	Cors.exposeHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()));
   }
 
   protected String corsOrigin() {
