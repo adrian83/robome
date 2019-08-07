@@ -1,6 +1,6 @@
 
 import React, { Component } from 'react';
-import { connect, Provider } from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import { Redirect } from 'react-router-dom';
@@ -33,7 +33,6 @@ class Login extends Component {
 
     handleSubmit(event) {
 
-        const { jwtToken, onLogin } = this.props;
 
         var form = {
             email: this.state.email,
@@ -57,7 +56,7 @@ class Login extends Component {
             var authToken = response.headers.get('Authorization');
             console.log("authToken", authToken)
 
-            onLogin(authToken);
+            self.props.onLogin(authToken);
 
             self.setState({toHome: true});
         });
@@ -71,12 +70,8 @@ class Login extends Component {
             return <Redirect to='/' />
         }
 
-        const { jwtToken, onLogin } = this.props;
-
         return (
             <form onSubmit={this.handleSubmit}>
-
-                <div>{jwtToken}</div>
 
                 <div className="form-group">
 
