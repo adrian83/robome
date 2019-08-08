@@ -33,7 +33,6 @@ class Login extends Component {
 
     handleSubmit(event) {
 
-
         var form = {
             email: this.state.email,
             password: this.state.password
