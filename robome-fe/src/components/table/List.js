@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import { Redirect } from 'react-router-dom';
+import { Redirect, Link } from 'react-router-dom';
 
 class ListTables extends Component {
 
@@ -48,26 +48,33 @@ class ListTables extends Component {
 
         var no = 1
         var rows = this.state.tables.map((table) => {
-            return (<tr>
+            var tableUrl = "/tables/show/" + table.key.tableId;
+            return (<tr key={table.key.tableId}>
                         <th scope="row">{no++}</th>
-                        <td>{table.title}</td>
+                        <td><Link to={tableUrl}>{table.title}</Link></td>
                         <td>{table.description}</td>
                     </tr>);
         });
 
         return (
-            <table className="table table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Title</th>
-                        <th scope="col">Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>);
+            <div>
+                <div>
+                    <Link to="/tables/create/">Create table</Link>
+                </div>
+                <table className="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>
+            </div>
+        );
     }
 }
 
