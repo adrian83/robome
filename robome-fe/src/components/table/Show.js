@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 
 class ShowTable extends Component {
@@ -14,7 +15,7 @@ class ShowTable extends Component {
 
         console.log(JSON.stringify(props))
 
-        this.state = {table: {}};
+        this.state = {table: {}, stages: []};
     }
 
     componentDidMount() {
@@ -35,22 +36,47 @@ class ShowTable extends Component {
         .then(response => response.json())
         .then(data => self.setState({table: data}));
 
+        fetch("http://localhost:6060/tables/" + tableId + "/stages", {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "Authorization": jwtToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => self.setState({stages: data}))
+        .catch(error => console.log("getting stages error", error));
     }
 
 
     render() {
 
-        var info = (<div>waiting for data</div>);
-        if(this.state.table) {
-            info = (<div>
+        var tableData = (<div>waiting for table data</div>);
+        if(this.state.table && this.state.table.key && this.state.table.key.tableId) {
+            var editUrl = "/tables/edit/" + this.state.table.key.tableId;
+            var newStageUrl = "/tables/show/" + this.state.table.key.tableId + "/stages/create";
+            tableData = (<div>
                     <div>Title: {this.state.table.title}</div>
                     <div>Description: {this.state.table.description}</div>
+                    <Link to={editUrl}>edit</Link>
+                    <br/>
+                    <Link to={newStageUrl}>new stage</Link>
                 </div>);
+        }
+
+        var stages = [];
+        if(this.state.stages) {
+            stages = this.state.stages.map((stage) => {
+                return (<div>{stage.title}</div>);
+            });
         }
 
         return (
             <div>
-                {info}
+                {tableData}
+                <br/>
+                {stages}
             </div>
         );
     }

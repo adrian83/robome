@@ -1,19 +1,13 @@
 import React, { Component } from 'react';
-import { BrowserRouter, Route, Redirect, Link, Switch } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import storage from 'redux-persist/lib/storage'
 import { persistStore, persistReducer } from 'redux-persist'
 import { PersistGate } from 'redux-persist/integration/react'
 
 
-import Home from './Home';
-import Health from './Health';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-
-import CreateTable from './components/table/Create';
-import ListTables from './components/table/List';
-import ShowTable from './components/table/Show';
+import Switch from './components/navigation/Switch';
+import UpperMenu from './components/navigation/UpperMenu';
 
 import { createStore } from 'redux';
 
@@ -28,45 +22,43 @@ const persistConfig = {
 
 const persistedReducer = persistReducer(persistConfig, Reducer)
 
-
-
-
 const store = createStore(persistedReducer, { jwtToken: "" });
 const persistor = persistStore(store)
 
 class App extends Component {
 
   render() {
-
     return (
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <BrowserRouter>
-            <div className="App">
 
-              <header>
-                <ul>
-                  <li><Link to="/login/">Login</Link></li>
-                  <li><Link to="/register/">Register</Link></li>
-                  <li><Link to="/health/">Health</Link></li>
-                  <li><Link to="/tables/list/">List tables</Link></li>
-                </ul>
-              </header>
+            <UpperMenu></UpperMenu>
 
-              <main role="main" className="inner cover">
-                <Switch>
-                  <Route exact path="/" component={Home} />
-                  <Route path="/login" component={() => <Login/>} />
-                  <Route path="/register" component={() => <Register/>} />
-                  <Route path="/health" component={() => <Health/>} />
-                  <Route path="/tables/list" component={() => <ListTables/>} />
-                  <Route path="/tables/create" component={() => <CreateTable/>} />
-                  <Route path="/tables/show/:tableId" render={(props) =>  <ShowTable {...props}/>} />
-                  <Redirect to="/" />
-                </Switch>
-              </main>
+            <div className="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+              <h1 className="display-4">qwerty</h1>
+              <p className="lead">lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum </p>
+            </div>
+
+            <div className="container">
+
+              <div className="App">
+                <main role="main" className="inner cover">
+                  <Switch></Switch>
+                </main>
+              </div>
+
+              <footer className="pt-4 my-md-5 pt-md-5 border-top">
+                <div className="row">
+                  <div className="col-12 col-md">
+                    <img className="mb-2" src="/docs/4.3/assets/brand/bootstrap-solid.svg" alt="" width="24" height="24"></img>
+                    <small className="d-block mb-3 text-muted">&copy; 2017-2019</small>
+                  </div>
+                </div>
+              </footer>
 
             </div>
+
           </BrowserRouter>
         </PersistGate>
       </Provider>

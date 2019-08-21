@@ -50,14 +50,10 @@ class Login extends Component {
         })
         .then(function(response){
 
-
-            console.log("headers", response.headers)
             var authToken = response.headers.get('Authorization');
             console.log("authToken", authToken)
 
             self.props.onLogin(authToken);
-
-            self.setState({toHome: true});
         });
 
         event.preventDefault();
@@ -65,7 +61,7 @@ class Login extends Component {
 
     render() {
 
-        if (this.state.toHome === true) {
+        if (this.props.jwtToken !== null && this.props.jwtToken !== "") {
             return <Redirect to='/' />
         }
 

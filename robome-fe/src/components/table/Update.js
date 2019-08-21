@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Redirect } from 'react-router-dom';
 
-class CreateTable extends Component {
+
+class UpdateTable extends Component {
 
     static propTypes = {
         jwtToken: PropTypes.string
@@ -12,7 +12,9 @@ class CreateTable extends Component {
     constructor(props) { 
         super(props);
 
-        this.state = {title: '', description: ''};
+        console.log(JSON.stringify(props))
+
+        this.state = {table: {}};
 
         this.handleSubmit = this.handleSubmit.bind(this);
 
@@ -20,49 +22,65 @@ class CreateTable extends Component {
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     }
 
+
     handleTitleChange(event) {
-        this.setState({title: event.target.value});
+        var table = this.state.table;
+        table.title = event.target.value;
+        this.setState({table: table});
     }
 
     handleDescriptionChange(event) {
-        this.setState({description: event.target.value});
+        var table = this.state.table;
+        table.description = event.target.value;
+        this.setState({table: table});
     }
 
     handleSubmit(event) {
 
         const jwtToken = this.props.jwtToken;
-
-        var form = {
-            title: this.state.title,
-            description: this.state.description
-        }
-
-        var self = this;
-
-        fetch('http://localhost:6060/tables', {
-            method: 'POST',
+        const self = this;
+        const updateUrl = 'http://localhost:6060/tables/' + this.props.match.params.tableId;
+        
+        fetch(updateUrl, {
+            method: 'PUT',
             mode: 'cors',
-            body: JSON.stringify(form),
+            body: JSON.stringify(self.state.table),
             headers: {
                 "Content-type": "application/json; charset=UTF-8",
                 "Authorization": jwtToken
             }
         })
         .then(response => response.json())
-        .then(data => self.setState({key: data.key}));
+        .then(data => self.setState({table: data}));
 
         event.preventDefault();
     }
 
+
+    componentDidMount() {
+
+        var jwtToken = this.props.jwtToken;
+        var tableId = this.props.match.params.tableId;
+        var self = this;
+
+        fetch('http://localhost:6060/tables/' + tableId, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "Authorization": jwtToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => self.setState({table: data}));
+    }
+
+
     render() {
 
-        if(this.state.key && this.state.key.tableId) {
-            var editUrl = "/tables/edit/" + this.state.key.tableId;
-            return (<Redirect to={editUrl} />);
-        }
-
-        return (
-            <form onSubmit={this.handleSubmit}>
+        var content = (<div>waiting for data</div>);
+        if(this.state.table && this.state.table.title && this.state.table.description) {
+            content = (<form onSubmit={this.handleSubmit}>
 
                 <div className="form-group">
 
@@ -72,7 +90,7 @@ class CreateTable extends Component {
                             className="form-control" 
                             id="titleInput" 
                             placeholder="Enter title" 
-                            value={this.state.title}
+                            value={this.state.table.title}
                             onChange={this.handleTitleChange} />
                 </div>
             
@@ -84,15 +102,17 @@ class CreateTable extends Component {
                             className="form-control" 
                             id="descriptionInput" 
                             placeholder="Enter description" 
-                            value={this.state.description}
+                            value={this.state.table.description}
                             onChange={this.handleDescriptionChange} />
                 </div>
 
                 <button type="submit" 
                         className="btn btn-primary">Submit</button>
 
-            </form>
-        );
+            </form>);
+        }
+
+        return content;
     }
 }
 
@@ -104,7 +124,7 @@ const mapDispatchToProps = (dispatch) => {
     return {}
 };
 
-CreateTable = connect(mapStateToProps, mapDispatchToProps)(CreateTable);
+UpdateTable = connect(mapStateToProps, mapDispatchToProps)(UpdateTable);
 
 
-export default CreateTable;
+export default UpdateTable;
