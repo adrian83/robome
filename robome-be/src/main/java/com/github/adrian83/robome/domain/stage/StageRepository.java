@@ -33,9 +33,9 @@ public class StageRepository {
   private static final String INSERT_STAGE_STMT =
       "INSERT INTO robome.stages (stage_id, table_id, user_id, title, state, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
   private static final String SELECT_STAGE_BY_ID_STMT =
-      "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ? AND user_id = ?";
+      "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ? AND user_id = ? ALLOW FILTERING";
   private static final String SELECT_STAGES_BY_TABLE_ID_STMT =
-      "SELECT * FROM robome.stages WHERE table_id = ? AND user_id = ?";
+      "SELECT * FROM robome.stages WHERE table_id = ? AND user_id = ? ALLOW FILTERING";
 
   private Session session;
 
@@ -71,10 +71,10 @@ public class StageRepository {
     return Source.from(stages);
   }
 
-  public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageKey stageId) {
+  public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageKey stageKey) {
 
     var preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
-    var bound = preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userID);
+    var bound = preparedStatement.bind(stageKey.getTableId(), stageKey.getStageId(), userID);
     var result = session.execute(bound);
     return Source.single(result)
         .map(ResultSet::one)

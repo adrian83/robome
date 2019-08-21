@@ -19,4 +19,9 @@ public class NewStage {
     return name;
   }
 
+  @Override
+  public String toString() {
+	return "NewStage [name=" + name + "]";
+  }
+
 }

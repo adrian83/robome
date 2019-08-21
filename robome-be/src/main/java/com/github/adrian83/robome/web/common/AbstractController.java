@@ -109,7 +109,7 @@ public class AbstractController extends AllDirectives {
 	}
 	
 	protected Supplier<Route> prefixVar(String prefix, Function<String, Route> action) {
-		Route route = pathPrefix(prefix, () -> pathPrefix(segment(), action));
+		Route route = pathPrefix(prefix, () -> pathPrefix(segment(), (var1) -> pathEndOrSingleSlash(() -> action.apply(var1))));
 		return () -> route;
 	}
 
@@ -142,7 +142,10 @@ public class AbstractController extends AllDirectives {
 	}
 
 	protected Supplier<Route> prefixVarPrefix(String prefix1, String prefix2, Function<String, Route> action) {
-		Route route = pathPrefix(prefix1, varPrefix(prefix2, action));
+		
+		Route route = pathPrefix(prefix1, () -> pathPrefix(segment(), (var1) -> pathPrefix(prefix2, () -> pathEndOrSingleSlash( () -> action.apply(var1)) )));
+		
+		//Route route = pathPrefix(prefix1, varPrefix(prefix2, action));
 		return () -> route;
 	}
 

@@ -26,8 +26,8 @@ public class StageService {
     this.actorMaterializer = actorMaterializer;
   }
 
-  public CompletionStage<Optional<Stage>> getStage(User user, StageKey stageId) {
-    return stageRepository.getById(user.getId(), stageId).runWith(Sink.head(), actorMaterializer);
+  public CompletionStage<Optional<Stage>> getStage(User user, StageKey stageKey) {
+    return stageRepository.getById(user.getId(), stageKey).runWith(Sink.head(), actorMaterializer);
   }
 
   public CompletionStage<List<Stage>> getTableStages(User user, TableKey id) {

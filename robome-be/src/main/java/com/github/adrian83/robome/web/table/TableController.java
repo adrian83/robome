@@ -10,6 +10,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
@@ -28,11 +31,12 @@ import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
 
 public class TableController extends AbstractController {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
+	
   public static final String TABLES = "tables";
 
   private static final UpdatedTableValidator UPDATE_VALIDATOR = new UpdatedTableValidator();
@@ -115,6 +119,8 @@ public class TableController extends AbstractController {
   private Route updateTable(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, UpdatedTable updatedTable) {
 
+	  LOGGER.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
+	  
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
@@ -125,7 +131,7 @@ public class TableController extends AbstractController {
                 uaf ->
                     tableService.updateTable(
                         uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
-            .thenApply(table -> responseProducer.response200(location(table.getKey())))
+            .thenApply(table -> responseProducer.jsonFromObject(table))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -140,21 +146,17 @@ public class TableController extends AbstractController {
             .thenApply(user -> new UserAndForm<NewTable>(user, newTable, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
-            .thenApply(table -> responseProducer.response201(location(table.getKey())))
+            .thenApply(table -> responseProducer.jsonFromObject(table))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
   private Route handleOptionsRequestWithId() {
-    return complete(responseProducer.response200(GET, POST));
+    return complete(responseProducer.response200(GET, POST, PUT));
   }
 
   private Route handleOptionsRequest() {
-    return complete(responseProducer.response200(GET, PUT, DELETE));
-  }
-
-  private Location location(TableKey tableKey) {
-    return locationFor(TableController.TABLES, tableKey.getTableId().toString());
+    return complete(responseProducer.response200(GET, DELETE));
   }
 }
