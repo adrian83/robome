@@ -35,11 +35,6 @@ class App extends Component {
 
             <UpperMenu></UpperMenu>
 
-            <div className="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-              <h1 className="display-4">qwerty</h1>
-              <p className="lead">lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum </p>
-            </div>
-
             <div className="container">
 
               <div className="App">

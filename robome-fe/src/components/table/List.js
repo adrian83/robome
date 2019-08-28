@@ -1,8 +1,12 @@
-
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+
+import Title from '../tiles/Title';
+
+import securedGet from '../../web/ajax';
+
 
 class ListTables extends Component {
 
@@ -25,32 +29,33 @@ class ListTables extends Component {
 
         var self = this;
 
-        fetch('http://localhost:6060/tables', {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
+        securedGet('http://localhost:6060/tables', jwtToken)
         .then(response => response.json())
         .then(data => self.setState({tables: data}));
     }
 
+    renderTableRow(no, id, title, description) {
+        var tableUrl = "/tables/show/" + id;
+        return (
+            <tr key={id}>
+                <th scope="row">{no++}</th>
+                <td><Link to={tableUrl}>{title}</Link></td>
+                <td>{description}</td>
+            </tr>);
+    }
+
     render() {
 
+        var self = this;
+
         var no = 1
-        var rows = this.state.tables.map((table) => {
-            var tableUrl = "/tables/show/" + table.key.tableId;
-            return (<tr key={table.key.tableId}>
-                        <th scope="row">{no++}</th>
-                        <td><Link to={tableUrl}>{table.title}</Link></td>
-                        <td>{table.description}</td>
-                    </tr>);
-        });
+        var rows = this.state.tables
+            .map(table => self.renderTableRow(no++, table.key.tableId, table.title, table.description));
 
         return (
             <div>
+                <Title title="List tables" description="list of all created tables"></Title>
+
                 <div>
                     <Link to="/tables/create/">Create table</Link>
                 </div>

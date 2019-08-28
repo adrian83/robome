@@ -19,6 +19,8 @@ class UpperMenu extends Component {
         var links = [];
         if(authenticated){
             links.push(<Link key="1" className="p-2 text-dark" to="/tables/list/">List tables</Link>);
+        } else {
+            links.push(<Link key="1" className="p-2 text-dark" to="/register">Register</Link>);
         }
 
         return (

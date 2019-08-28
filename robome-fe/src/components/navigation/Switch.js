@@ -17,6 +17,8 @@ import UpdateTable from './../table/Update';
 import CreateStage from './../stage/Create';
 import UpdateStage from './../stage/Update';
 
+import CreateActivity from './../activity/Create';
+import UpdateActivity from './../activity/Update';
 
 class Switch extends Component {
 
@@ -40,6 +42,8 @@ class Switch extends Component {
                 <Route path="/health" component={() => <Health/>} />
                 <Route path="/tables/list" component={ renderListTables } />
                 <Route path="/tables/create" component={() => <CreateTable/>} />
+                <Route path="/tables/show/:tableId/stages/show/:stageId/activities/create" render={(props) => <CreateActivity {...props}/>} />
+                <Route path="/tables/show/:tableId/stages/show/:stageId/activities/edit/:activityId" render={(props) => <UpdateActivity {...props}/>} />
                 <Route path="/tables/show/:tableId/stages/create" render={(props) => <CreateStage {...props}/>} />
                 <Route path="/tables/show/:tableId/stages/edit/:stageId" render={(props) => <UpdateStage {...props}/>} />
                 <Route path="/tables/show/:tableId" render={(props) =>  <ShowTable {...props}/>} />

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 
-class UpdateStage extends Component {
+class UpdateActivity extends Component {
 
     static propTypes = {
         jwtToken: PropTypes.string
@@ -13,18 +13,16 @@ class UpdateStage extends Component {
     constructor(props) { 
         super(props);
 
-        console.log(JSON.stringify(props))
-
-        this.state = {stage: {}};
+        this.state = {activity: {}};
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
     }
 
     handleNameChange(event) {
-        var stage = this.state.stage;
-        stage.title = event.target.value;
-        this.setState({stage: stage});
+        var activity = this.state.activity;
+        activity.name = event.target.value;
+        this.setState({activity: activity});
     }
 
     handleSubmit(event) {
@@ -40,14 +38,14 @@ class UpdateStage extends Component {
         fetch(updateUrl, {
             method: 'PUT',
             mode: 'cors',
-            body: JSON.stringify(self.state.stage),
+            body: JSON.stringify(self.state.activity),
             headers: {
                 "Content-type": "application/json; charset=UTF-8",
                 "Authorization": jwtToken
             }
         })
         .then(response => response.json())
-        .then(data => self.setState({stage: data}));
+        .then(data => self.setState({activity: data}));
 
         event.preventDefault();
     }
@@ -57,10 +55,11 @@ class UpdateStage extends Component {
 
         const jwtToken = this.props.jwtToken;
         const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId
+        const stageId = this.props.match.params.stageId;
+        const activityId = this.props.match.params.activityId;
         const self = this;
 
-        const getUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId;
+        const getUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
 
         fetch(getUrl, {
             method: 'GET',
@@ -71,7 +70,7 @@ class UpdateStage extends Component {
             }
         })
         .then(response => response.json())
-        .then(data => self.setState({stage: data}));
+        .then(data => self.setState({activity: data}));
     }
 
 
@@ -81,7 +80,7 @@ class UpdateStage extends Component {
         var showTableUrl = "/tables/show/" + tableId;
 
         var content = (<div>waiting for data</div>);
-        if(this.state.stage && this.state.stage.title) {
+        if(this.state.activity && this.state.activity.name) {
             content = (
                 <div>
                     <div>
@@ -97,7 +96,7 @@ class UpdateStage extends Component {
                                     className="form-control" 
                                     id="nameInput" 
                                     placeholder="Enter name" 
-                                    value={this.state.stage.title}
+                                    value={this.state.activity.name}
                                     onChange={this.handleNameChange} />
                         </div>
 
@@ -120,7 +119,7 @@ const mapDispatchToProps = (dispatch) => {
     return {}
 };
 
-UpdateStage = connect(mapStateToProps, mapDispatchToProps)(UpdateStage);
+UpdateActivity = connect(mapStateToProps, mapDispatchToProps)(UpdateActivity);
 
 
-export default UpdateStage;
+export default UpdateActivity;

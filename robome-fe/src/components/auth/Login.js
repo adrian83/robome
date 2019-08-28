@@ -1,9 +1,13 @@
-
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-
 import { Redirect } from 'react-router-dom';
+
+import Error from '../error/Error';
+import Title from '../tiles/Title';
+
+
+import { unsecuredPost } from '../../web/ajax';
 
 class Login extends Component {
 
@@ -21,6 +25,8 @@ class Login extends Component {
 
         this.handleEmailChange = this.handleEmailChange.bind(this);
         this.handlePasswordChange = this.handlePasswordChange.bind(this);
+
+        this.hideError = this.hideError.bind(this);
     }
 
     handleEmailChange(event) {
@@ -33,30 +39,35 @@ class Login extends Component {
 
     handleSubmit(event) {
 
+        var self = this;
+
         var form = {
             email: this.state.email,
             password: this.state.password
         }
 
-        var self = this;
-
-        fetch('http://localhost:6060/auth/login', {
-            method: 'POST',
-            mode: 'cors',
-            body: JSON.stringify(form),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8"
-            }
-        })
+        unsecuredPost('http://localhost:6060/auth/login', form)
         .then(function(response){
-
             var authToken = response.headers.get('Authorization');
-            console.log("authToken", authToken)
-
+            console.log(authToken);
             self.props.onLogin(authToken);
-        });
+        })
+        .catch(error => self.setState({error: error}));
 
         event.preventDefault();
+    }
+
+    isErrorPresent(){
+        return this.state.error && this.state.error !== {};
+    }
+
+    hideError(event){
+        this.setState({error: null});
+        event.preventDefault();
+    }
+
+    showError(){
+        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     render() {
@@ -66,40 +77,45 @@ class Login extends Component {
         }
 
         return (
-            <form onSubmit={this.handleSubmit}>
+            <div>
+                <Title title="Login" description="login"></Title>
 
-                <div className="form-group">
+                <div>{this.showError()}</div>
 
-                    <label htmlFor="emailInput">Email address</label>
+                <form onSubmit={this.handleSubmit}>
 
-                    <input type="email" 
-                            className="form-control" 
-                            id="emailInput" 
-                            aria-describedby="emailHelp" 
-                            placeholder="Enter email" 
-                            value={this.state.email}
-                            onChange={this.handleEmailChange} />
+                    <div className="form-group">
 
-                    <small id="emailHelp" 
-                            className="form-text text-muted">We'll never share your email with anyone else.</small>
-                </div>
-            
-                <div className="form-group">
+                        <label htmlFor="emailInput">Email address</label>
 
-                    <label htmlFor="passwordInput">Password</label>
+                        <input type="email" 
+                                className="form-control" 
+                                id="emailInput" 
+                                aria-describedby="emailHelp" 
+                                placeholder="Enter email" 
+                                value={this.state.email}
+                                onChange={this.handleEmailChange} />
 
-                    <input type="password" 
-                            className="form-control" 
-                            id="passwordInput" 
-                            placeholder="Password" 
-                            value={this.state.password}
-                            onChange={this.handlePasswordChange}/>
-                </div>
+                    </div>
 
-                <button type="submit" 
-                        className="btn btn-primary">Submit</button>
+                    <div className="form-group">
 
-            </form>
+                        <label htmlFor="passwordInput">Password</label>
+
+                        <input type="password" 
+                                className="form-control" 
+                                id="passwordInput" 
+                                placeholder="Password" 
+                                value={this.state.password}
+                                onChange={this.handlePasswordChange}/>
+                    </div>
+
+                    <button type="submit" 
+                            className="btn btn-primary">Login</button>
+
+                </form>
+            </div>
+
         );
     }
 }
@@ -115,6 +131,5 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 Login = connect(mapStateToProps, mapDispatchToProps)(Login);
-
 
 export default Login;

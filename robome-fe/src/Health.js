@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import Title from './components/tiles/Title';
+
 class Health extends Component {
 
     constructor(props) {
@@ -8,19 +10,27 @@ class Health extends Component {
     }
 
     componentDidMount() {
-
         var self = this;
-
         fetch('http://localhost:6060/health')
             .then(response => response.json())
             .then(data => self.setState({status: data.status}));
     }
 
     render() {
+        var status = (<div>Waiting...</div>);
         if(this.state.status) {
-            return (<div>Status: {this.state.status}</div>);
+            status = (<div>Status: {this.state.status}</div>);
         }
-        return (<div>Waiting...</div>);
+
+        return (
+            <div>
+                <Title title="Backend status" description=""></Title>
+                <div>
+                    {status}
+                </div>
+            </div>
+        
+        );
     }
 }
 

@@ -4,9 +4,10 @@ import PropTypes from 'prop-types';
 import { Redirect, Link } from 'react-router-dom';
 
 import { securedPost } from '../../web/ajax';
+import Error from '../error/Error';
 
 
-class CreateStage extends Component {
+class CreateActivity extends Component {
 
     static propTypes = {
         jwtToken: PropTypes.string
@@ -15,14 +16,21 @@ class CreateStage extends Component {
     constructor(props) { 
         super(props);
 
-        this.state = {name: ''};
+        this.state = {
+            activity: {name: ""},
+            error: {}
+        };
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
+
+        this.hideError = this.hideError.bind(this);
     }
 
     handleNameChange(event) {
-        this.setState({name: event.target.value});
+        var activity = this.state.activity;
+        activity.name = event.target.value;
+        this.setState({activity: activity});
     }
 
 
@@ -30,37 +38,51 @@ class CreateStage extends Component {
 
         event.preventDefault();
 
-        var self = this;
-
+        const self = this;
         const jwtToken = this.props.jwtToken;
         const tableId = this.props.match.params.tableId;
-        const editUrl = "http://localhost:6060/tables/" + tableId + "/stages" 
+        const stageId = this.props.match.params.stageId;
 
-        var form = {
-            name: this.state.name
-        };
+        const editUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId + "/activities" 
 
-        securedPost(editUrl, jwtToken, form)
+        securedPost(editUrl, jwtToken, this.state.activity)
         .then(response => response.json())
         .then(data => self.setState({key: data.key}))
-        .catch(error => console.log("creating stage error", error));
+        .catch(error => self.setState({error: error}));
+    }
+
+    isErrorPresent(){
+        return this.state.error && this.state.error !== {};
+    }
+
+    hideError(event){
+        this.setState({error: null});
+        event.preventDefault();
+    }
+
+    showError(){
+        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     render() {
 
-        if(this.state.key && this.state.key.tableId && this.state.key.stageId) {
-            var editUrl = "/tables/show/" + this.state.key.tableId + "/stages/edit/" + this.state.key.stageId;
+        if(this.state.key && this.state.key.tableId && this.state.key.stageId && this.state.key.activityId) {
+            var editUrl = "/tables/show/" + this.state.key.tableId + "/stages/show/" + this.state.key.stageId + "/activities/edit/" + this.state.key.activityId;
             return (<Redirect to={editUrl} />);
         }
 
-        var tableId = this.props.match.params.tableId
+        var tableId = this.props.match.params.tableId;
         var showTableUrl = "/tables/show/" + tableId;
+
+
 
         return (
             <div>
                 <div>
                     <Link to={showTableUrl}>return to table</Link>
                 </div>
+
+                <div>{this.showError()}</div>
 
                 <form onSubmit={this.handleSubmit}>
 
@@ -94,7 +116,7 @@ const mapDispatchToProps = (dispatch) => {
     return {}
 };
 
-CreateStage = connect(mapStateToProps, mapDispatchToProps)(CreateStage);
+CreateActivity = connect(mapStateToProps, mapDispatchToProps)(CreateActivity);
 
 
-export default CreateStage;
+export default CreateActivity;

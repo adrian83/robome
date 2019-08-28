@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 
+import Title from './components/tiles/Title';
+
 class Home extends Component {
 
-    constructor(props) {
-        super(props);
-        this.state = {};
-    }
-
     render() {
-        return (<div>Home</div>);
+        return (
+            <div>
+                <Title title="Home" description="welcome"></Title>
+                <div>Home</div>
+            </div>);
     }
 }
 
