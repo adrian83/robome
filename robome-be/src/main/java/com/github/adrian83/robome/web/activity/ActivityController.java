@@ -1,11 +1,18 @@
 package com.github.adrian83.robome.web.activity;
 
+import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.util.http.HttpMethod.GET;
+import static com.github.adrian83.robome.util.http.HttpMethod.POST;
+import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 import static com.github.adrian83.robome.web.stage.StageController.STAGES;
 import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
@@ -25,11 +32,12 @@ import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.server.Route;
 
 public class ActivityController extends AbstractController {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
+	
   public static final String ACTIVITIES = "activities";
 
   private ActivityService activityService;
@@ -62,11 +70,15 @@ public class ActivityController extends AbstractController {
     return route(
         get(prefixVarPrefixVarPrefixVar(TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
         post(prefixVarPrefixVarPrefixForm(TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
+        options(prefixVarPrefixVarPrefix(TABLES, STAGES, ACTIVITIES, (tableId, stageId) -> handleOptionsRequest())),
+        options(prefixVarPrefixVarPrefixVar(TABLES, STAGES, ACTIVITIES, (tableId, stageId, activityId) -> handleOptionsRequestWithId())),
         get(prefixVarPrefixVarPrefix(TABLES, STAGES, ACTIVITIES, getStageActivitiesAction)));
   }
 
   private Route getStageActivities(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
+	  
+	LOGGER.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -115,19 +127,18 @@ public class ActivityController extends AbstractController {
             .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, new NewActivityValidator()))
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
-            .thenApply(activity -> responseProducer.response201(location(activity.getKey())))
+            .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
-  private Location location(ActivityKey activityId) {
-    return locationFor(
-        TABLES,
-        activityId.getTableId().toString(),
-        STAGES,
-        activityId.getStageId().toString(),
-        ActivityController.ACTIVITIES,
-        activityId.getActivityId().toString());
-  }
+  
+  private Route handleOptionsRequestWithId() {
+	    return complete(responseProducer.response200(GET, DELETE, PUT));
+	  }
+
+	  private Route handleOptionsRequest() {
+	    return complete(responseProducer.response200(GET, POST));
+	  }
 }

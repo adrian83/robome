@@ -32,7 +32,7 @@ public class ActivityRepository {
   private static final String SELECT_ACTIVITY_BY_ID_STMT =
       "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND activity_id = ?";
   private static final String SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT =
-      "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND user_id = ?";
+      "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND user_id = ? ALLOW FILTERING";
 
   private Session session;
 
@@ -51,7 +51,7 @@ public class ActivityRepository {
                 activity.getKey().getActivityId(),
                 activity.getKey().getStageId(),
                 activity.getKey().getTableId(),
-                activity.getUserId().toString(),
+                activity.getUserId(),
                 activity.getName(),
                 activity.getState().name(),
                 TimeUtils.toDate(activity.getCreatedAt()),
@@ -65,7 +65,7 @@ public class ActivityRepository {
     PreparedStatement preparedStatement =
         session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
     BoundStatement bound =
-        preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userId.toString());
+        preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userId);
 
     return Source.from(
         session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));

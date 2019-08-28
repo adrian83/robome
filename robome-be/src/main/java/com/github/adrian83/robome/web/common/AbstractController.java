@@ -2,13 +2,11 @@ package com.github.adrian83.robome.web.common;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
@@ -20,7 +18,6 @@ import com.github.adrian83.robome.util.http.Header;
 import com.typesafe.config.Config;
 
 import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
@@ -43,9 +40,7 @@ public class AbstractController extends AllDirectives {
 		this.responseProducer = responseProducer;
 	}
 
-	protected Location locationFor(String... pathElems) {
-		return Location.create(Arrays.stream(pathElems).collect(Collectors.joining("/")));
-	}
+	
 
 	protected RawHeader jwt(String token) {
 		return RawHeader.create(Header.AUTHORIZATION.getText(), token);
@@ -145,7 +140,7 @@ public class AbstractController extends AllDirectives {
 		
 		Route route = pathPrefix(prefix1, () -> pathPrefix(segment(), (var1) -> pathPrefix(prefix2, () -> pathEndOrSingleSlash( () -> action.apply(var1)) )));
 		
-		//Route route = pathPrefix(prefix1, varPrefix(prefix2, action));
+
 		return () -> route;
 	}
 
@@ -201,8 +196,8 @@ public class AbstractController extends AllDirectives {
 
 	protected Supplier<Route> prefixVarPrefixVarPrefix(String prefix1, String prefix2, String prefix3,
 			BiFunction<String, String, Route> action) {
-
-		Route route = pathPrefix(prefix1, varPrefixVarPrefix(prefix2, prefix3, action));
+		
+		Route route = pathPrefix(prefix1, () -> pathPrefix(segment(), (var1) -> pathPrefix(prefix2, () -> pathPrefix(segment(), (var2) -> pathPrefix(prefix3, () -> pathEndOrSingleSlash( () -> action.apply(var1, var2)) )))));
 		return () -> route;
 	}
 
