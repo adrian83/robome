@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import securedGet, { securedPut } from '../../web/ajax';
 
 class UpdateTable extends Component {
 
@@ -37,21 +38,15 @@ class UpdateTable extends Component {
 
     handleSubmit(event) {
 
-        const jwtToken = this.props.jwtToken;
         const self = this;
-        const updateUrl = 'http://localhost:6060/tables/' + this.props.match.params.tableId;
+        const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const tableId = this.props.match.params.tableId
+        const updateUrl = backendHost + "/tables/" + tableId;
         
-        fetch(updateUrl, {
-            method: 'PUT',
-            mode: 'cors',
-            body: JSON.stringify(self.state.table),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => self.setState({table: data}));
+        securedPut(updateUrl, jwtToken, self.state.table)
+            .then(response => response.json())
+            .then(data => self.setState({table: data}));
 
         event.preventDefault();
     }
@@ -59,20 +54,14 @@ class UpdateTable extends Component {
 
     componentDidMount() {
 
-        var jwtToken = this.props.jwtToken;
-        var tableId = this.props.match.params.tableId;
-        var self = this;
-
-        fetch('http://localhost:6060/tables/' + tableId, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => self.setState({table: data}));
+        const self = this;
+        const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const tableId = this.props.match.params.tableId;
+        
+        securedGet(backendHost + "/tables/" + tableId, jwtToken)
+            .then(response => response.json())
+            .then(data => self.setState({table: data}));
     }
 
 

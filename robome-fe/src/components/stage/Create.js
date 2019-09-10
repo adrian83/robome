@@ -28,22 +28,23 @@ class CreateStage extends Component {
 
     handleSubmit(event) {
 
-        event.preventDefault();
-
-        var self = this;
-
+        const self = this;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const jwtToken = this.props.jwtToken;
         const tableId = this.props.match.params.tableId;
-        const editUrl = "http://localhost:6060/tables/" + tableId + "/stages" 
+
+        const editUrl = backendHost + "/tables/" + tableId + "/stages" 
 
         var form = {
             name: this.state.name
         };
 
         securedPost(editUrl, jwtToken, form)
-        .then(response => response.json())
-        .then(data => self.setState({key: data.key}))
-        .catch(error => console.log("creating stage error", error));
+            .then(response => response.json())
+            .then(data => self.setState({key: data.key}))
+            .catch(error => self.setState({error: error}));
+            
+        event.preventDefault();
     }
 
     render() {

@@ -22,16 +22,13 @@ class ListTables extends Component {
 
     componentDidMount() {
 
-        const { jwtToken } = this.props;
-        if (!jwtToken) {
-            return;
-        }
+        const self = this;
+        const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
-        var self = this;
-
-        securedGet('http://localhost:6060/tables', jwtToken)
-        .then(response => response.json())
-        .then(data => self.setState({tables: data}));
+        securedGet(backendHost + "/tables", jwtToken)
+            .then(response => response.json())
+            .then(data => self.setState({tables: data}));
     }
 
     renderTableRow(no, id, title, description) {

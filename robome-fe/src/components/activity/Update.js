@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
+import securedGet, { securedPut } from '../../web/ajax';
 
 class UpdateActivity extends Component {
 
@@ -27,25 +28,17 @@ class UpdateActivity extends Component {
 
     handleSubmit(event) {
 
-        const jwtToken = this.props.jwtToken;
         const self = this;
-
+        const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
 
-        const updateUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId;
+        const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
         
-        fetch(updateUrl, {
-            method: 'PUT',
-            mode: 'cors',
-            body: JSON.stringify(self.state.activity),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => self.setState({activity: data}));
+        securedPut(updateUrl, jwtToken, self.state.activity)
+            .then(response => response.json())
+            .then(data => self.setState({activity: data}));
 
         event.preventDefault();
     }
@@ -53,24 +46,18 @@ class UpdateActivity extends Component {
 
     componentDidMount() {
 
+        const self = this;
         const jwtToken = this.props.jwtToken;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
         const activityId = this.props.match.params.activityId;
-        const self = this;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        
+        const getActivityUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
 
-        const getUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
-
-        fetch(getUrl, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => self.setState({activity: data}));
+        securedGet(getActivityUrl, jwtToken)
+            .then(response => response.json())
+            .then(data => self.setState({activity: data}));
     }
 
 

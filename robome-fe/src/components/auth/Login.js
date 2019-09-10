@@ -39,20 +39,21 @@ class Login extends Component {
 
     handleSubmit(event) {
 
-        var self = this;
+        const self = this;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
         var form = {
             email: this.state.email,
             password: this.state.password
         }
 
-        unsecuredPost('http://localhost:6060/auth/login', form)
-        .then(function(response){
-            var authToken = response.headers.get('Authorization');
-            console.log(authToken);
-            self.props.onLogin(authToken);
-        })
-        .catch(error => self.setState({error: error}));
+        unsecuredPost(backendHost + "/auth/login", form)
+            .then(function(response){
+                var authToken = response.headers.get('Authorization');
+                console.log(authToken);
+                self.props.onLogin(authToken);
+            })
+            .catch(error => self.setState({error: error}));
 
         event.preventDefault();
     }

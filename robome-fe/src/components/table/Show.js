@@ -24,51 +24,53 @@ class ShowTable extends Component {
     }
 
     fetchActivities(stage, jwtToken) {
-        var stageId = stage.key.stageId;
-        var tableId = stage.key.tableId;
 
-        var fetchActivitiesUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId + "/activities";
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const stageId = stage.key.stageId;
+        const tableId = stage.key.tableId;
+
+        var fetchActivitiesUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities";
 
         return securedGet(fetchActivitiesUrl, jwtToken)
-        .then(response => response.json());
+            .then(response => response.json());
     }
 
     componentDidMount() {
 
-        var jwtToken = this.props.jwtToken;
-        var tableId = this.props.match.params.tableId;
+        const self = this;
+        const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const tableId = this.props.match.params.tableId;
 
-        var fetchTableUrl = "http://localhost:6060/tables/" + tableId;
-        var fetchStagesUrl = "http://localhost:6060/tables/" + tableId + "/stages";
-
-        var self = this;
+        const fetchTableUrl = backendHost + "/tables/" + tableId;
+        const fetchStagesUrl = backendHost + "/tables/" + tableId + "/stages";
 
         securedGet(fetchTableUrl, jwtToken)
-        .then(response => response.json())
-        .then(data => self.setState({table: data}))
-        .catch(error => self.setState({error: error}));
+            .then(response => response.json())
+            .then(data => self.setState({table: data}))
+            .catch(error => self.setState({error: error}));
 
         securedGet(fetchStagesUrl, jwtToken)
-        .then(response => response.json())
-        .then(function(data){
-            self.setState({stages: data});
-            return data;
-        })
-        .then(function(data){
+            .then(response => response.json())
+            .then(function(data){
+                self.setState({stages: data});
+                return data;
+            })
+            .then(function(data){
 
-            Promise.all(data.map(stage => self.fetchActivities(stage, jwtToken)))
-            .then(function(iter){
+                Promise.all(data.map(stage => self.fetchActivities(stage, jwtToken)))
+                    .then(function(iter){
 
-                var activities = {};
-                iter.forEach(function(act){
-                    if(act && act.length){
-                        activities[act[0].key.stageId] = act;
-                    }
-                });
-                self.setState({activities: activities});
-            });
-        })
-        .catch(error => self.setState({error: error}));
+                        var activities = {};
+                        iter.forEach(function(act){
+                            if(act && act.length){
+                                activities[act[0].key.stageId] = act;
+                            }
+                        });
+                        self.setState({activities: activities});
+                    });
+            })
+            .catch(error => self.setState({error: error}));
     }
 
     renderStage(stage) {

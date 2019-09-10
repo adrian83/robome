@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
+import securedGet, { securedPut } from '../../web/ajax';
+
 
 class UpdateStage extends Component {
 
@@ -12,8 +14,6 @@ class UpdateStage extends Component {
 
     constructor(props) { 
         super(props);
-
-        console.log(JSON.stringify(props))
 
         this.state = {stage: {}};
 
@@ -29,51 +29,35 @@ class UpdateStage extends Component {
 
     handleSubmit(event) {
 
-        const jwtToken = this.props.jwtToken;
         const self = this;
-
+        const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId
+        const stageId = this.props.match.params.stageId;
 
-        const updateUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId;
+        const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
         
-        fetch(updateUrl, {
-            method: 'PUT',
-            mode: 'cors',
-            body: JSON.stringify(self.state.stage),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => self.setState({stage: data}));
+        securedPut(updateUrl, jwtToken, self.state.stage)
+            .then(response => response.json())
+            .then(data => self.setState({stage: data}));
 
         event.preventDefault();
     }
 
-
     componentDidMount() {
 
+        const self = this;
         const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
-        const self = this;
+        
+        const getStageUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
 
-        const getUrl = "http://localhost:6060/tables/" + tableId + "/stages/" + stageId;
-
-        fetch(getUrl, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": jwtToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => self.setState({stage: data}));
+        securedGet(getStageUrl, jwtToken)
+            .then(response => response.json())
+            .then(data => self.setState({stage: data}));
     }
-
 
     render() {
 

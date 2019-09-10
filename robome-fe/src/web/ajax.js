@@ -70,6 +70,17 @@ export function securedPost(url, authToken, data) {
     .then(handleBadRequestResponse);
 }
 
+export function securedPut(url, authToken, data) {
+    return fetch(url, {
+        method: 'PUT',
+        mode: 'cors',
+        body: JSON.stringify(data),
+        headers: headersWithAuthToken(authToken)
+    })
+    .then(handleServerSideError)
+    .then(handleBadRequestResponse);
+}
+
 export function unsecuredPost(url, data) {
     return fetch(url, {
         method: 'POST',
@@ -86,6 +97,16 @@ export default function securedGet(url, authToken) {
         method: 'GET',
         mode: 'cors',
         headers: headersWithAuthToken(authToken)
+    })
+    .then(handleServerSideError)
+    .then(handleBadRequestResponse);
+}
+
+export function unsecuredGet(url) {
+    return fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        headers: headers()
     })
     .then(handleServerSideError)
     .then(handleBadRequestResponse);

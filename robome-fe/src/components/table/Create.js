@@ -35,19 +35,20 @@ class CreateTable extends Component {
 
     handleSubmit(event) {
 
-        event.preventDefault();
-
         const self = this;
         const jwtToken = this.props.jwtToken;
+        const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
         const form = {
             title: this.state.title,
             description: this.state.description
         }
 
-        securedPost('http://localhost:6060/tables', jwtToken, form)
-        .then(response => response.json())
-        .then(data => self.setState({key: data.key}));
+        securedPost(backendHost + "/tables", jwtToken, form)
+            .then(response => response.json())
+            .then(data => self.setState({key: data.key}));
+
+        event.preventDefault();
     }
 
     render() {
