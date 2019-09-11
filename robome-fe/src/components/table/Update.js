@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import Title from '../tiles/Title';
+
 import securedGet, { securedPut } from '../../web/ajax';
 
 class UpdateTable extends Component {
@@ -43,8 +45,10 @@ class UpdateTable extends Component {
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId
         const updateUrl = backendHost + "/tables/" + tableId;
+
+        const tab = {title: self.state.table.title, description: self.state.table.description};
         
-        securedPut(updateUrl, jwtToken, self.state.table)
+        securedPut(updateUrl, jwtToken, tab)
             .then(response => response.json())
             .then(data => self.setState({table: data}));
 
@@ -69,36 +73,44 @@ class UpdateTable extends Component {
 
         var content = (<div>waiting for data</div>);
         if(this.state.table && this.state.table.title && this.state.table.description) {
-            content = (<form onSubmit={this.handleSubmit}>
+            content = (
+            <div>
+                <Title title={this.state.table.title} description={this.state.table.description}></Title>
 
-                <div className="form-group">
+                <form onSubmit={this.handleSubmit}>
 
-                    <label htmlFor="titleInput">Title</label>
+                    <div className="form-group">
 
-                    <input type="title" 
-                            className="form-control" 
-                            id="titleInput" 
-                            placeholder="Enter title" 
-                            value={this.state.table.title}
-                            onChange={this.handleTitleChange} />
-                </div>
+                        <label htmlFor="titleInput">Title</label>
+
+                        <input type="title" 
+                                className="form-control" 
+                                id="titleInput" 
+                                placeholder="Enter title" 
+                                value={this.state.table.title}
+                                onChange={this.handleTitleChange} />
+                    </div>
+
+                    <div className="form-group">
+
+                        <label htmlFor="descriptionInput">Description</label>
+
+                        <input type="description" 
+                                className="form-control" 
+                                id="descriptionInput" 
+                                placeholder="Enter description" 
+                                value={this.state.table.description}
+                                onChange={this.handleDescriptionChange} />
+                    </div>
+
+                    <button type="submit" 
+                            className="btn btn-primary">Submit</button>
+
+                </form>
+
+            </div>
             
-                <div className="form-group">
-
-                    <label htmlFor="descriptionInput">Title</label>
-
-                    <input type="description" 
-                            className="form-control" 
-                            id="descriptionInput" 
-                            placeholder="Enter description" 
-                            value={this.state.table.description}
-                            onChange={this.handleDescriptionChange} />
-                </div>
-
-                <button type="submit" 
-                        className="btn btn-primary">Submit</button>
-
-            </form>);
+            );
         }
 
         return content;

@@ -87,7 +87,7 @@ class ShowTable extends Component {
 
             if(stageActivities){
                 activities = stageActivities.map(act => (
-                    <span className="badge badge-light" key={act.key.activityId}>{act.name}</span>));
+                    <span className="badge badge-light" style={{marginLeft: '10px'}} key={act.key.activityId}>{act.name}</span>));
             }
         }
 
