@@ -38,7 +38,7 @@ public class TableRepository {
   private static final String DELETE_BY_ID_STMT =
       "DELETE * FROM robome.tables WHERE table_id = ? AND user_id = ?";
   private static final String UPDATE_STMT =
-      "UPDATE robome.tables SET title = ?, description = ?, state = ?, modified_at = ? WHERE table_id = ?";
+      "UPDATE robome.tables SET title = ?, description = ?, state = ?, modified_at = ? WHERE table_id = ? AND user_id = ?";
 
   private Session session;
 
@@ -71,7 +71,8 @@ public class TableRepository {
                 tab.getDescription(),
                 tab.getState().name(),
                 TimeUtils.toDate(tab.getModifiedAt()),
-                table.getKey().getTableId().toString());
+                table.getKey().getTableId(),
+                table.getUserId());
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 

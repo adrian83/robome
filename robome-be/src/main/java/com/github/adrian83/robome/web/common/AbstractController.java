@@ -109,7 +109,7 @@ public class AbstractController extends AllDirectives {
 	}
 
 	protected <T> Supplier<Route> prefixVarForm(String prefix, Class<T> clazz,  BiFunction<String, Class<T>, Route> action) {
-		Route route = pathPrefix(prefix, () -> pathPrefix(segment(), val -> action.apply(val, clazz)));
+		Route route = pathPrefix(prefix, () -> pathPrefix(segment(), val -> pathEndOrSingleSlash(() -> action.apply(val, clazz))));
 		return () -> route;
 	}
 	

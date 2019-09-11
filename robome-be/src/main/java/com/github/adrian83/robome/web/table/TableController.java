@@ -57,13 +57,13 @@ public class TableController extends AbstractController {
 
   public Route createRoute() {
     return route(
+    	put(prefixVarForm(TABLES, UpdatedTable.class, updateTableAction)),
         options(prefix(TABLES, handleOptionsRequest())),
         post(prefixForm(TABLES, NewTable.class, createTableAction)),
         get(prefix(TABLES, jwtSecured(this::getTables))),
         options(prefixVar(TABLES, tableId -> handleOptionsRequestWithId())),
         get(prefixVar(TABLES, getTableAction)),
-        delete(prefixVar(TABLES, deleteTableAction)),
-        put(prefixVarForm(TABLES, UpdatedTable.class, updateTableAction)));
+        delete(prefixVar(TABLES, deleteTableAction)));
   }
 
   Function<String, Route> getTableAction = (var tableId) -> jwtSecured(tableId, this::getTableById);
@@ -78,6 +78,8 @@ public class TableController extends AbstractController {
       (var clazz) -> jwtSecured(clazz, this::persistTable);
 
   private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
+	  
+	  LOGGER.info("New list table request");
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -91,6 +93,8 @@ public class TableController extends AbstractController {
   }
 
   private Route getTableById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+	  
+	  LOGGER.info("New find table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -104,6 +108,8 @@ public class TableController extends AbstractController {
   }
 
   private Route deleteTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+	  
+	  LOGGER.info("New delete table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -139,6 +145,8 @@ public class TableController extends AbstractController {
 
   private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
 
+	  LOGGER.info("New persist table request, table: {}", newTable);
+	  
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
