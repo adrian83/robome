@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Redirect, Link } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
+
+import TableLink from '../navigation/TableLink';
+import Error from '../error/Error';
+import Title from '../tiles/Title';
 
 import { securedPost } from '../../web/ajax';
 
@@ -19,6 +23,8 @@ class CreateStage extends Component {
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
+
+        this.hideError = this.hideError.bind(this);
     }
 
     handleNameChange(event) {
@@ -47,6 +53,19 @@ class CreateStage extends Component {
         event.preventDefault();
     }
 
+    isErrorPresent(){
+        return this.state.error && this.state.error !== {};
+    }
+
+    hideError(event){
+        this.setState({error: null});
+        event.preventDefault();
+    }
+
+    showError(){
+        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
+    }
+
     render() {
 
         if(this.state.key && this.state.key.tableId && this.state.key.stageId) {
@@ -54,13 +73,14 @@ class CreateStage extends Component {
             return (<Redirect to={editUrl} />);
         }
 
-        var tableId = this.props.match.params.tableId
-        var showTableUrl = "/tables/show/" + tableId;
-
         return (
             <div>
+                <Title title="Create new stage" description="Fill basic data"></Title>
+
+                <div>{this.showError()}</div>
+
                 <div>
-                    <Link to={showTableUrl}>return to table</Link>
+                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
                 </div>
 
                 <form onSubmit={this.handleSubmit}>

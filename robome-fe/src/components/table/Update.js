@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import Error from '../error/Error';
 import Title from '../tiles/Title';
 
 import securedGet, { securedPut } from '../../web/ajax';
@@ -25,7 +26,6 @@ class UpdateTable extends Component {
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     }
 
-
     handleTitleChange(event) {
         var table = this.state.table;
         table.title = event.target.value;
@@ -36,6 +36,19 @@ class UpdateTable extends Component {
         var table = this.state.table;
         table.description = event.target.value;
         this.setState({table: table});
+    }
+
+    isErrorPresent(){
+        return this.state.error && this.state.error !== {};
+    }
+
+    hideError(event){
+        this.setState({error: null});
+        event.preventDefault();
+    }
+
+    showError(){
+        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     handleSubmit(event) {
@@ -55,7 +68,6 @@ class UpdateTable extends Component {
         event.preventDefault();
     }
 
-
     componentDidMount() {
 
         const self = this;
@@ -68,7 +80,6 @@ class UpdateTable extends Component {
             .then(data => self.setState({table: data}));
     }
 
-
     render() {
 
         var content = (<div>waiting for data</div>);
@@ -76,6 +87,8 @@ class UpdateTable extends Component {
             content = (
             <div>
                 <Title title={this.state.table.title} description={this.state.table.description}></Title>
+
+                <div>{this.showError()}</div>
 
                 <form onSubmit={this.handleSubmit}>
 

@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 
+import Error from '../error/Error';
 import Title from '../tiles/Title';
 
 import { securedPost } from '../../web/ajax';
@@ -18,6 +19,8 @@ class CreateTable extends Component {
         super(props);
 
         this.state = {title: '', description: ''};
+
+        this.hideError = this.hideError.bind(this);
 
         this.handleSubmit = this.handleSubmit.bind(this);
 
@@ -51,6 +54,19 @@ class CreateTable extends Component {
         event.preventDefault();
     }
 
+    isErrorPresent(){
+        return this.state.error && this.state.error !== {};
+    }
+
+    hideError(event){
+        this.setState({error: null});
+        event.preventDefault();
+    }
+
+    showError(){
+        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
+    }
+
     render() {
 
         if(this.state.key && this.state.key.tableId) {
@@ -61,6 +77,8 @@ class CreateTable extends Component {
         return (
             <div>
                 <Title title="Create table" description="create table"></Title>
+
+                <div>{this.showError()}</div>
 
                 <form onSubmit={this.handleSubmit}>
 

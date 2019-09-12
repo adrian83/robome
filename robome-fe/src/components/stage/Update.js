@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+
+import TableLink from '../navigation/TableLink';
+import Error from '../error/Error';
+import Title from '../tiles/Title';
 
 import securedGet, { securedPut } from '../../web/ajax';
 
@@ -19,6 +22,8 @@ class UpdateStage extends Component {
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
+
+        this.hideError = this.hideError.bind(this);
     }
 
     handleNameChange(event) {
@@ -44,6 +49,19 @@ class UpdateStage extends Component {
         event.preventDefault();
     }
 
+    isErrorPresent(){
+        return this.state.error && this.state.error !== {};
+    }
+
+    hideError(event){
+        this.setState({error: null});
+        event.preventDefault();
+    }
+
+    showError(){
+        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
+    }
+
     componentDidMount() {
 
         const self = this;
@@ -59,41 +77,51 @@ class UpdateStage extends Component {
             .then(data => self.setState({stage: data}));
     }
 
-    render() {
-
-        var tableId = this.props.match.params.tableId
-        var showTableUrl = "/tables/show/" + tableId;
-
-        var content = (<div>waiting for data</div>);
-        if(this.state.stage && this.state.stage.title) {
-            content = (
-                <div>
-                    <div>
-                        <Link to={showTableUrl}>return to table</Link>
-                    </div>
-                    <form onSubmit={this.handleSubmit}>
-
-                        <div className="form-group">
-
-                            <label htmlFor="nameInput">Name</label>
-
-                            <input type="name" 
-                                    className="form-control" 
-                                    id="nameInput" 
-                                    placeholder="Enter name" 
-                                    value={this.state.stage.title}
-                                    onChange={this.handleNameChange} />
-                        </div>
-
-                        <button type="submit" 
-                                className="btn btn-primary">Submit</button>
-
-                    </form>
-                </div>);
-        }
-
-        return content;
+    dataAvailable() {
+        return this.state.stage.key;
     }
+
+    render() {
+        return this.dataAvailable() ? this.renderPage() : this.renderDummyPage();
+    }
+
+    renderPage() {
+        return (
+            <div>
+                <Title title={this.state.stage.title} description=""></Title>
+
+                <div>{this.showError()}</div>
+
+                <div>
+                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                </div>
+
+                <form onSubmit={this.handleSubmit}>
+
+                    <div className="form-group">
+
+                        <label htmlFor="nameInput">Name</label>
+
+                        <input type="name" 
+                                className="form-control" 
+                                id="nameInput" 
+                                placeholder="Enter name" 
+                                value={this.state.stage.title}
+                                onChange={this.handleNameChange} />
+                    </div>
+
+                    <button type="submit" 
+                            className="btn btn-primary">Submit</button>
+
+                </form>
+            </div>);
+    }
+
+    renderDummyPage() {
+        return (<div>waiting for data</div>);
+    }
+
+
 }
 
 const mapStateToProps = (state) => {
