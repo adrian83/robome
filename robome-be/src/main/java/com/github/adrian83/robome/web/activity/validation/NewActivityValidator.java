@@ -13,19 +13,18 @@ import com.google.common.base.Strings;
 
 public class NewActivityValidator implements Validator<NewActivity> {
 
-	  private static final String NAME_LABEL = "name";
-	  private static final String EMPTY_NAME_KEY = "activity.create.name.empty";
-	  private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
+  private static final String NAME_LABEL = "name";
+  private static final String EMPTY_NAME_KEY = "activity.create.name.empty";
+  private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
 
-	  private static final ValidationError EMPTY_NAME =
-	      new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
-	
-	@Override
-	public List<ValidationError> validate(NewActivity form) {
-	    return Stream.of(Validation.check(form.getName(), EMPTY_NAME, Strings::isNullOrEmpty))
-	            .filter(Optional::isPresent)
-	            .map(Optional::get)
-	            .collect(Collectors.toList());
-	}
+  private static final ValidationError EMPTY_NAME =
+      new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
 
+  @Override
+  public List<ValidationError> validate(NewActivity form) {
+    return Stream.of(Validation.check(form.getName(), EMPTY_NAME, Strings::isNullOrEmpty))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
+  }
 }

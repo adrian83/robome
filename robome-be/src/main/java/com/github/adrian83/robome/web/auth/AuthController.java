@@ -22,6 +22,7 @@ import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.auth.validation.LoginValidator;
 import com.github.adrian83.robome.web.auth.validation.RegisterValidator;
 import com.github.adrian83.robome.web.common.AbstractController;
+import com.github.adrian83.robome.web.common.Routes;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -31,7 +32,7 @@ import akka.http.javadsl.server.Route;
 public class AuthController extends AbstractController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
-	
+
   public static final String AUTH = "auth";
   public static final String LOGIN = "login";
   public static final String REGISTER = "register";
@@ -40,6 +41,7 @@ public class AuthController extends AbstractController {
   private static final RegisterValidator REGISTER_VALIDATOR = new RegisterValidator();
 
   private UserService userService;
+  private Routes routes;
 
   @Inject
   public AuthController(
@@ -47,17 +49,19 @@ public class AuthController extends AbstractController {
       JwtAuthorizer jwtAuthorizer,
       Config config,
       ExceptionHandler exceptionHandler,
-      Response responseProducer) {
+      Response responseProducer,
+      Routes routes) {
     super(jwtAuthorizer, exceptionHandler, config, responseProducer);
     this.userService = userService;
+    this.routes = routes;
   }
 
   public Route createRoute() {
     return route(
-        options(prefixPrefix(AUTH, LOGIN, handleLoginOptionsRequest())),
-        post(prefixPrefixForm(AUTH, LOGIN, Login.class, loginAction)),
-        options(prefixPrefix(AUTH, REGISTER, handleRegisterOptionsRequest())),
-        post(prefixPrefixForm(AUTH, REGISTER, Register.class, registerAction)));
+        options(routes.prefixPrefixSlash(AUTH, LOGIN, handleLoginOptionsRequest())),
+        post(routes.prefixPrefixFormSlash(AUTH, LOGIN, Login.class, loginAction)),
+        options(routes.prefixPrefixSlash(AUTH, REGISTER, handleRegisterOptionsRequest())),
+        post(routes.prefixPrefixFormSlash(AUTH, REGISTER, Register.class, registerAction)));
   }
 
   Function<Class<Register>, Route> registerAction =
@@ -67,17 +71,16 @@ public class AuthController extends AbstractController {
       (Class<Login> clazz) -> unsecured(clazz, this::loginUser);
 
   private Route loginUser(Login login) {
-	    
-	LOGGER.info("Signing in user: {}", login);
+
+    LOGGER.info("Signing in user: {}", login);
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(login)
             .thenApply(form -> Validation.validate(form, LOGIN_VALIDATOR))
             .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
             .thenApply(maybeUser -> userWithPasswordExists(maybeUser, login.getPassword()))
-            .thenApply(
-                user ->
-                    responseProducer.response200(jwt(jwtAuthorizer.createAuthorizationToken(user))))
+            .thenApply(jwtAuthorizer::createAuthorizationToken)
+            .thenApply(token -> responseProducer.response200(jwt(token)))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -85,8 +88,8 @@ public class AuthController extends AbstractController {
 
   private Route registerUser(Register register) {
 
-	LOGGER.info("Registering new user: {}", register);
-	  
+    LOGGER.info("Registering new user: {}", register);
+
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(register)
             .thenApply(form -> Validation.validate(form, REGISTER_VALIDATOR))
@@ -97,12 +100,9 @@ public class AuthController extends AbstractController {
 
     return completeWithFuture(responseF);
   }
-  
+
   private User toUser(Register form) {
-	  return new User(
-              form.getEmail(),
-              hashPassword(form.getPassword()),
-              DEFAULT_USER_ROLES);
+    return new User(form.getEmail(), hashPassword(form.getPassword()), DEFAULT_USER_ROLES);
   }
 
   private Route handleRegisterOptionsRequest() {

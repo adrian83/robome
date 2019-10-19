@@ -25,6 +25,7 @@ import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.common.AbstractController;
+import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.table.validation.NewTableValidator;
 import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
 import com.google.inject.Inject;
@@ -43,6 +44,7 @@ public class TableController extends AbstractController {
   private static final NewTableValidator CREATE_VALIDATOR = new NewTableValidator();
 
   private TableService tableService;
+  private Routes routes;
 
   @Inject
   public TableController(
@@ -50,20 +52,22 @@ public class TableController extends AbstractController {
       JwtAuthorizer jwtAuthorizer,
       Config config,
       ExceptionHandler exceptionHandler,
-      Response response) {
+      Response response,
+       Routes routes) {
     super(jwtAuthorizer, exceptionHandler, config, response);
     this.tableService = tableService;
+    this.routes = routes;
   }
 
   public Route createRoute() {
     return route(
-    	put(prefixVarForm(TABLES, UpdatedTable.class, updateTableAction)),
-        options(prefix(TABLES, handleOptionsRequest())),
-        post(prefixForm(TABLES, NewTable.class, createTableAction)),
-        get(prefix(TABLES, jwtSecured(this::getTables))),
-        options(prefixVar(TABLES, tableId -> handleOptionsRequestWithId())),
-        get(prefixVar(TABLES, getTableAction)),
-        delete(prefixVar(TABLES, deleteTableAction)));
+    	put(routes.prefixVarFormSlash(TABLES, UpdatedTable.class, updateTableAction)),
+        options(routes.prefixSlash(TABLES, handleOptionsRequest())),
+        post(routes.prefixFormSlash(TABLES, NewTable.class, createTableAction)),
+        get(routes.prefixSlash(TABLES, jwtSecured(this::getTables))),
+        options(routes.prefixVarSlash(TABLES, tableId -> handleOptionsRequestWithId())),
+        get(routes.prefixVarSlash(TABLES, getTableAction)),
+        delete(routes.prefixVarSlash(TABLES, deleteTableAction)));
   }
 
   Function<String, Route> getTableAction = (var tableId) -> jwtSecured(tableId, this::getTableById);

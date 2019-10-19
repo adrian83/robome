@@ -26,6 +26,7 @@ import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.common.AbstractController;
+import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
@@ -33,7 +34,7 @@ import com.typesafe.config.Config;
 import akka.http.javadsl.server.Route;
 
 public class StageController extends AbstractController {
-	
+
   private static final Logger LOGGER = LoggerFactory.getLogger(StageController.class);
 
   public static final String STAGES = "stages";
@@ -41,6 +42,7 @@ public class StageController extends AbstractController {
   private static final NewStageValidator CREATE_VALIDATOR = new NewStageValidator();
 
   private StageService stageService;
+  private Routes routes;
 
   @Inject
   public StageController(
@@ -48,19 +50,20 @@ public class StageController extends AbstractController {
       JwtAuthorizer jwtAuthorizer,
       Config config,
       Response responseProducer,
-      ExceptionHandler exceptionHandler) {
+      ExceptionHandler exceptionHandler,
+      Routes routes) {
     super(jwtAuthorizer, exceptionHandler, config, responseProducer);
     this.stageService = stageService;
+    this.routes = routes;
   }
 
   public Route createRoute() {
     return route(
-        get(prefixVarPrefix(TABLES, STAGES, getTableStagesAction)),
-        get(prefixVarPrefixVar(TABLES, STAGES, getStageByIdAction)),
-        options(prefixVarPrefix(TABLES, STAGES, (tableId) -> handleOptionsRequest())),
-        options(prefixVarPrefixVar(TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
-        post(prefixVarPrefixForm(TABLES, STAGES, NewStage.class, persistStageAction)));
-    
+        get(routes.prefixVarPrefixSlash(TABLES, STAGES, getTableStagesAction)),
+        get(routes.prefixVarPrefixVar(TABLES, STAGES, getStageByIdAction)),
+        options(routes.prefixVarPrefixSlash(TABLES, STAGES, (tableId) -> handleOptionsRequest())),
+        options(routes.prefixVarPrefixVar(TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
+        post(routes.prefixVarPrefixFormSlash(TABLES, STAGES, NewStage.class, persistStageAction)));
   }
 
   private Function<String, Route> getTableStagesAction =
@@ -74,8 +77,8 @@ public class StageController extends AbstractController {
 
   private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
-	LOGGER.info("New list stages request, tableId: {}", tableIdStr);
-	  
+    LOGGER.info("New list stages request, tableId: {}", tableIdStr);
+
     var responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
@@ -90,8 +93,8 @@ public class StageController extends AbstractController {
   private Route getStageById(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
 
-	LOGGER.info("New get stage by id request, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
-	  
+    LOGGER.info("New get stage by id request, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
+
     var responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
@@ -106,15 +109,16 @@ public class StageController extends AbstractController {
   private Route persistStage(
       CompletionStage<Optional<User>> maybeUserF, String tableId, NewStage newStage) {
 
-	LOGGER.info("New persist stage request, tableId: {}, newStage: {}", tableId, newStage);
-    
-	var responseF =
+    LOGGER.info("New persist stage request, tableId: {}, newStage: {}", tableId, newStage);
+
+    var responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
             .thenApply(user -> new UserAndForm<NewStage>(user, newStage, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> stageService.saveStage(uaf.getUser(), fromString(tableId), uaf.getForm()))
+            .thenCompose(
+                uaf -> stageService.saveStage(uaf.getUser(), fromString(tableId), uaf.getForm()))
             .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
@@ -128,5 +132,4 @@ public class StageController extends AbstractController {
   private Route handleOptionsRequest() {
     return complete(responseProducer.response200(GET, POST));
   }
-  
 }

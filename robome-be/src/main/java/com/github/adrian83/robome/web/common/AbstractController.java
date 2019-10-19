@@ -1,12 +1,10 @@
 package com.github.adrian83.robome.web.common;
 
-import static akka.http.javadsl.server.PathMatchers.segment;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
@@ -24,194 +22,106 @@ import akka.http.javadsl.server.Route;
 
 public class AbstractController extends AllDirectives {
 
-	protected static final String CORS_ORIGIN_KEY = "cors.origin";
+  protected static final String CORS_ORIGIN_KEY = "cors.origin";
 
-	protected JwtAuthorizer jwtAuthorizer;
-	protected ExceptionHandler exceptionHandler;
-	protected Response responseProducer;
+  protected JwtAuthorizer jwtAuthorizer;
+  protected ExceptionHandler exceptionHandler;
+  protected Response responseProducer;
 
-	protected Config config;
+  protected Config config;
 
-	protected AbstractController(JwtAuthorizer jwtAuthorizer, ExceptionHandler exceptionHandler, Config config,
-			Response responseProducer) {
-		this.jwtAuthorizer = jwtAuthorizer;
-		this.exceptionHandler = exceptionHandler;
-		this.config = config;
-		this.responseProducer = responseProducer;
-	}
+  protected AbstractController(
+      JwtAuthorizer jwtAuthorizer,
+      ExceptionHandler exceptionHandler,
+      Config config,
+      Response responseProducer) {
+    this.jwtAuthorizer = jwtAuthorizer;
+    this.exceptionHandler = exceptionHandler;
+    this.config = config;
+    this.responseProducer = responseProducer;
+  }
 
-	
+  protected RawHeader jwt(String token) {
+    return RawHeader.create(Header.AUTHORIZATION.getText(), token);
+  }
 
-	protected RawHeader jwt(String token) {
-		return RawHeader.create(Header.AUTHORIZATION.getText(), token);
-	}
+  protected Route jwtSecured(Function<CompletionStage<Optional<User>>, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, logic));
+  }
 
+  protected <T> Route jwtSecured(
+      T param, BiFunction<CompletionStage<Optional<User>>, T, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(),
+        jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param)));
+  }
 
-	protected Route jwtSecured(Function<CompletionStage<Optional<User>>, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> secured(jwtToken, logic));
-	}
+  protected <T, P> Route jwtSecured(
+      T param1, P param2, TriFunction<CompletionStage<Optional<User>>, T, P, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(),
+        jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2)));
+  }
 
-	protected <T> Route jwtSecured(T param, BiFunction<CompletionStage<Optional<User>>, T, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(),
-				jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param)));
-	}
+  protected <T, P, R> Route jwtSecured(
+      T param1,
+      P param2,
+      R param3,
+      TetraFunction<CompletionStage<Optional<User>>, T, P, R, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(),
+        jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2, param3)));
+  }
 
-	protected <T, P> Route jwtSecured(T param1, P param2,
-			TriFunction<CompletionStage<Optional<User>>, T, P, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(),
-				jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2)));
-	}
+  protected <T> Route jwtSecured(
+      Class<T> clazz, BiFunction<CompletionStage<Optional<User>>, T, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(),
+        jwtToken ->
+            jwtAuthorizer.authorized(
+                jwtToken,
+                userData ->
+                    entity(Jackson.unmarshaller(clazz), form -> logic.apply(userData, form))));
+  }
 
-	protected <T, P, R> Route jwtSecured(T param1, P param2, R param3,
-			TetraFunction<CompletionStage<Optional<User>>, T, P, R, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(),
-				jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2, param3)));
-	}
+  protected <T, P> Route jwtSecured(
+      P param, Class<T> clazz, TriFunction<CompletionStage<Optional<User>>, P, T, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(),
+        jwtToken ->
+            jwtAuthorizer.authorized(
+                jwtToken,
+                userData ->
+                    entity(
+                        Jackson.unmarshaller(clazz), form -> logic.apply(userData, param, form))));
+  }
 
-	protected <T> Route jwtSecured(Class<T> clazz, BiFunction<CompletionStage<Optional<User>>, T, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> jwtAuthorizer.authorized(jwtToken,
-				userData -> entity(Jackson.unmarshaller(clazz), form -> logic.apply(userData, form))));
-	}
+  protected <T, P, R> Route jwtSecured(
+      P param1,
+      R param2,
+      Class<T> clazz,
+      TetraFunction<CompletionStage<Optional<User>>, P, R, T, Route> logic) {
+    return optionalHeaderValueByName(
+        Header.AUTHORIZATION.getText(),
+        jwtToken ->
+            jwtAuthorizer.authorized(
+                jwtToken,
+                userData ->
+                    entity(
+                        Jackson.unmarshaller(clazz),
+                        form -> logic.apply(userData, param1, param2, form))));
+  }
 
-	protected <T, P> Route jwtSecured(P param, Class<T> clazz,
-			TriFunction<CompletionStage<Optional<User>>, P, T, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> jwtAuthorizer.authorized(jwtToken,
-				userData -> entity(Jackson.unmarshaller(clazz), form -> logic.apply(userData, param, form))));
-	}
+  protected Route secured(
+      Optional<String> jwtToken, Function<CompletionStage<Optional<User>>, Route> logic) {
+    return jwtAuthorizer.authorized(jwtToken, logic);
+  }
 
-	protected <T, P, R> Route jwtSecured(P param1, R param2, Class<T> clazz,
-			TetraFunction<CompletionStage<Optional<User>>, P, R, T, Route> logic) {
-		return optionalHeaderValueByName(Header.AUTHORIZATION.getText(), jwtToken -> jwtAuthorizer.authorized(jwtToken,
-				userData -> entity(Jackson.unmarshaller(clazz), form -> logic.apply(userData, param1, param2, form))));
-	}
+  protected <T> Route unsecured(Class<T> clazz, Function<T, Route> logic) {
+    return entity(Jackson.unmarshaller(clazz), form -> logic.apply(form));
+  }
 
-	protected Route secured(Optional<String> jwtToken, Function<CompletionStage<Optional<User>>, Route> logic) {
-		return jwtAuthorizer.authorized(jwtToken, logic);
-	}
-	
-	protected <T> Route unsecured(Class<T> clazz, Function<T, Route> logic) {
-		return  entity(Jackson.unmarshaller(clazz), form -> logic.apply(form));
-	}
+  // pathEndOrSingleSlash
 
-	//pathEndOrSingleSlash
-	
-	protected Supplier<Route> prefix(String prefix, Route route) {
-		return () -> pathPrefix(prefix, () -> pathEndOrSingleSlash(() -> route));
-	}
-
-	protected Supplier<Route> prefixPrefix(String prefix1, String prefix2, Route route) {
-		return () -> pathPrefix(prefix1, () -> pathPrefix(prefix2, () -> pathEndOrSingleSlash(() -> route)));
-	}
-	
-	protected Supplier<Route> prefixVar(String prefix, Function<String, Route> action) {
-		Route route = pathPrefix(prefix, () -> pathPrefix(segment(), (var1) -> pathEndOrSingleSlash(() -> action.apply(var1))));
-		return () -> route;
-	}
-
-	protected <T> Supplier<Route> prefixVarForm(String prefix, Class<T> clazz,  BiFunction<String, Class<T>, Route> action) {
-		Route route = pathPrefix(prefix, () -> pathPrefix(segment(), val -> pathEndOrSingleSlash(() -> action.apply(val, clazz))));
-		return () -> route;
-	}
-	
-	protected <T> Supplier<Route> prefixForm(String prefix, Class<T> clazz, Function<Class<T>, Route> action) {
-		Route route = pathPrefix(prefix, () -> pathEndOrSingleSlash(() -> action.apply(clazz)));
-		return () -> route;
-	}
-	
-	protected <T> Supplier<Route> prefixPrefixForm(String prefix1, String prefix2, Class<T> clazz, Function<Class<T>, Route> action) {
-		return () -> pathPrefix(prefix1, () -> pathPrefix(prefix2, () -> pathEndOrSingleSlash(() -> action.apply(clazz))));
-	}
-
-	protected Supplier<Route> varPrefix(String prefix, Function<String, Route> action) {
-		Route route = pathPrefix(segment(), val -> pathPrefix(prefix, () -> action.apply(val)));
-		return () -> route;
-	}
-
-	protected <T> Supplier<Route> varPrefixForm(String prefix, Class<T> clazz,
-			BiFunction<String, Class<T>, Route> action) {
-
-		Function<String, Function<Class<T>, Route>> f = (String val) -> (Class<T> c) -> action.apply(val, c);
-
-		Route route = pathPrefix(segment(), val -> prefixForm(prefix, clazz, f.apply(val)).get());
-		return () -> route;
-	}
-
-	protected Supplier<Route> prefixVarPrefix(String prefix1, String prefix2, Function<String, Route> action) {
-		
-		Route route = pathPrefix(prefix1, () -> pathPrefix(segment(), (var1) -> pathPrefix(prefix2, () -> pathEndOrSingleSlash( () -> action.apply(var1)) )));
-		
-
-		return () -> route;
-	}
-
-	protected <T> Supplier<Route> prefixVarPrefixForm(String prefix1, String prefix2, Class<T> clazz,
-			BiFunction<String, Class<T>, Route> action) {
-		Route route = pathPrefix(prefix1, varPrefixForm(prefix2, clazz, action));
-		return () -> route;
-	}
-
-	protected Supplier<Route> varPrefixVar(String prefix, BiFunction<String, String, Route> action) {
-
-		Function<String, Function<String, Route>> f = (String val1) -> (String val2) -> action.apply(val1, val2);
-
-		Route route = pathPrefix(segment(), val -> prefixVar(prefix, f.apply(val)).get());
-		return () -> route;
-	}
-
-	protected Supplier<Route> varPrefixVarPrefix(String prefix1, String prefix2,
-			BiFunction<String, String, Route> action) {
-
-		Function<String, Function<String, Route>> f = (String val1) -> (String val2) -> action.apply(val1, val2);
-
-		Route route = pathPrefix(segment(), val1 -> prefixVarPrefix(prefix1, prefix2, f.apply(val1)).get());
-		return () -> route;
-	}
-
-	protected <T> Supplier<Route> varPrefixVarPrefixForm(String prefix1, String prefix2, Class<T> clazz,
-			TriFunction<String, String, Class<T>, Route> action) {
-
-		Function<String, BiFunction<String, Class<T>, Route>> f = (
-				String val1) -> (String val2, Class<T> c) -> action.apply(val1, val2, c);
-
-		Route route = pathPrefix(segment(), val1 -> prefixVarPrefixForm(prefix1, prefix2, clazz, f.apply(val1)).get());
-		return () -> route;
-	}
-
-	protected Supplier<Route> prefixVarPrefixVar(String prefix1, String prefix2,
-			BiFunction<String, String, Route> action) {
-
-		Route route = pathPrefix(prefix1, varPrefixVar(prefix2, action));
-		return () -> route;
-	}
-
-	protected Supplier<Route> varPrefixVarPrefixVar(String prefix1, String prefix2,
-			TriFunction<String, String, String, Route> action) {
-
-		Function<String, BiFunction<String, String, Route>> f = (
-				String val1) -> (String val2, String val3) -> action.apply(val1, val2, val3);
-
-		Route route = pathPrefix(segment(), val -> prefixVarPrefixVar(prefix1, prefix2, f.apply(val)).get());
-		return () -> route;
-	}
-
-	protected Supplier<Route> prefixVarPrefixVarPrefix(String prefix1, String prefix2, String prefix3,
-			BiFunction<String, String, Route> action) {
-		
-		Route route = pathPrefix(prefix1, () -> pathPrefix(segment(), (var1) -> pathPrefix(prefix2, () -> pathPrefix(segment(), (var2) -> pathPrefix(prefix3, () -> pathEndOrSingleSlash( () -> action.apply(var1, var2)) )))));
-		return () -> route;
-	}
-
-	protected <T> Supplier<Route> prefixVarPrefixVarPrefixForm(String prefix1, String prefix2, String prefix3,
-			Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
-
-		Route route = pathPrefix(prefix1, varPrefixVarPrefixForm(prefix2, prefix3, clazz, action));
-		return () -> route;
-	}
-
-	protected Supplier<Route> prefixVarPrefixVarPrefixVar(String prefix1, String prefix2, String prefix3,
-			TriFunction<String, String, String, Route> action) {
-
-		Route route = pathPrefix(prefix1, varPrefixVarPrefixVar(prefix2, prefix3, action));
-		return () -> route;
-	}
 }

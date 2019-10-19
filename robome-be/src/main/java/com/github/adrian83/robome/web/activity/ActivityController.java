@@ -28,6 +28,7 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
 import com.github.adrian83.robome.web.common.AbstractController;
+import com.github.adrian83.robome.web.common.Routes;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -37,10 +38,11 @@ import akka.http.javadsl.server.Route;
 public class ActivityController extends AbstractController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
-	
+
   public static final String ACTIVITIES = "activities";
 
   private ActivityService activityService;
+  private Routes routes;
 
   @Inject
   public ActivityController(
@@ -48,9 +50,11 @@ public class ActivityController extends AbstractController {
       Config config,
       ActivityService activityService,
       ExceptionHandler exceptionHandler,
-      Response responseProducer) {
+      Response responseProducer,
+      Routes routes) {
     super(jwtAuthorizer, exceptionHandler, config, responseProducer);
     this.activityService = activityService;
+    this.routes = routes;
   }
 
   private TriFunction<String, String, String, Route> getActivityByIdAction =
@@ -64,21 +68,28 @@ public class ActivityController extends AbstractController {
   private BiFunction<String, String, Route> getStageActivitiesAction =
       (String tableId, String stageId) -> jwtSecured(tableId, stageId, this::getStageActivities);
 
-
-
   public Route createRoute() {
     return route(
-        get(prefixVarPrefixVarPrefixVar(TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
-        post(prefixVarPrefixVarPrefixForm(TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
-        options(prefixVarPrefixVarPrefix(TABLES, STAGES, ACTIVITIES, (tableId, stageId) -> handleOptionsRequest())),
-        options(prefixVarPrefixVarPrefixVar(TABLES, STAGES, ACTIVITIES, (tableId, stageId, activityId) -> handleOptionsRequestWithId())),
-        get(prefixVarPrefixVarPrefix(TABLES, STAGES, ACTIVITIES, getStageActivitiesAction)));
+        get(routes.prefixVarPrefixVarPrefixVarSlash(TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
+        post(
+            routes.prefixVarPrefixVarPrefixFormSlash(
+                TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
+        options(
+            routes.prefixVarPrefixVarPrefixSlash(
+                TABLES, STAGES, ACTIVITIES, (tableId, stageId) -> handleOptionsRequest())),
+        options(
+            routes.prefixVarPrefixVarPrefixVarSlash(
+                TABLES,
+                STAGES,
+                ACTIVITIES,
+                (tableId, stageId, activityId) -> handleOptionsRequestWithId())),
+        get(routes.prefixVarPrefixVarPrefixSlash(TABLES, STAGES, ACTIVITIES, getStageActivitiesAction)));
   }
 
   private Route getStageActivities(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
-	  
-	LOGGER.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
+
+    LOGGER.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -124,21 +135,24 @@ public class ActivityController extends AbstractController {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, new NewActivityValidator()))
+            .thenApply(
+                user -> new UserAndForm<NewActivity>(user, newActivity, new NewActivityValidator()))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> activityService.saveActivity(uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
+            .thenCompose(
+                uaf ->
+                    activityService.saveActivity(
+                        uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
             .thenApply(responseProducer::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
-  
   private Route handleOptionsRequestWithId() {
-	    return complete(responseProducer.response200(GET, DELETE, PUT));
-	  }
+    return complete(responseProducer.response200(GET, DELETE, PUT));
+  }
 
-	  private Route handleOptionsRequest() {
-	    return complete(responseProducer.response200(GET, POST));
-	  }
+  private Route handleOptionsRequest() {
+    return complete(responseProducer.response200(GET, POST));
+  }
 }
