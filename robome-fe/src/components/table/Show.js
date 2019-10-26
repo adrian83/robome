@@ -23,15 +23,15 @@ class ShowTable extends Component {
         this.hideError = this.hideError.bind(this);
     }
 
-    fetchActivities(stage, jwtToken) {
 
+    fetchStage(stageKey, jwtToken) {
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
-        const stageId = stage.key.stageId;
-        const tableId = stage.key.tableId;
+        const stageId = stageKey.stageId;
+        const tableId = stageKey.tableId;
 
-        var fetchActivitiesUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities";
+        var fetchStageUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
 
-        return securedGet(fetchActivitiesUrl, jwtToken)
+        return securedGet(fetchStageUrl, jwtToken)
             .then(response => response.json());
     }
 
@@ -47,29 +47,19 @@ class ShowTable extends Component {
 
         securedGet(fetchTableUrl, jwtToken)
             .then(response => response.json())
-            .then(data => self.setState({table: data}))
-            .catch(error => self.setState({error: error}));
+            .then(function(table){
 
-        securedGet(fetchStagesUrl, jwtToken)
-            .then(response => response.json())
-            .then(function(data){
-                self.setState({stages: data});
-                return data;
-            })
-            .then(function(data){
 
-                Promise.all(data.map(stage => self.fetchActivities(stage, jwtToken)))
-                    .then(function(iter){
-
-                        var activities = {};
-                        iter.forEach(function(act){
-                            if(act && act.length){
-                                activities[act[0].key.stageId] = act;
-                            }
-                        });
-                        self.setState({activities: activities});
+                
+                Promise.all(table.stages.map(stage => self.fetchStage(stage.key, jwtToken)))
+                    .then(function(stages){
+                        table.stages = stages;
                     });
+
+
+                return table;
             })
+            .then(data => self.setState({table: data}))
             .catch(error => self.setState({error: error}));
     }
 
@@ -118,6 +108,8 @@ class ShowTable extends Component {
     render() {
 
         var self = this;
+
+        var stages = [];
         
         var tableData = (<div>waiting for table data</div>);
         if(this.state.table && this.state.table.key && this.state.table.key.tableId) {
@@ -128,11 +120,8 @@ class ShowTable extends Component {
                     <br/>
                     <Link to={newStageUrl}>new stage</Link>
                 </div>);
-        }
 
-        var stages = [];
-        if(this.state.stages){
-            stages = this.state.stages.map(stage => self.renderStage(stage));
+            stages = this.state.table.stages.map(stage => self.renderStage(stage));
         }
 
 
