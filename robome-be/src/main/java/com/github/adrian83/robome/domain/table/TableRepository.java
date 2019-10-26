@@ -13,7 +13,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.table.model.Table;
+import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.TableState;
 import com.google.inject.Inject;
@@ -47,7 +47,7 @@ public class TableRepository {
     this.session = session;
   }
 
-  public Sink<Table, CompletionStage<Done>> saveTable() {
+  public Sink<TableEntity, CompletionStage<Done>> saveTable() {
 
     PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
     return CassandraSink.create(1, preparedStatement, this::createInserBoundStatement, session);
@@ -61,10 +61,10 @@ public class TableRepository {
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 
-  public Sink<Table, CompletionStage<Done>> updateTable(Table table) {
+  public Sink<TableEntity, CompletionStage<Done>> updateTable(TableEntity table) {
 
     PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
-    BiFunction<Table, PreparedStatement, BoundStatement> boundStmt =
+    BiFunction<TableEntity, PreparedStatement, BoundStatement> boundStmt =
         (tab, stmt) ->
             stmt.bind(
                 tab.getTitle(),
@@ -76,7 +76,7 @@ public class TableRepository {
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 
-  public Source<Optional<Table>, NotUsed> getById(UUID userId, UUID tableId) {
+  public Source<Optional<TableEntity>, NotUsed> getById(UUID userId, UUID tableId) {
     PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
     BoundStatement bound = preparedStatement.bind(userId, tableId);
     ResultSet result = session.execute(bound);
@@ -86,18 +86,18 @@ public class TableRepository {
         .map(mayneRow -> mayneRow.map(this::fromRow));
   }
 
-  public Source<Table, NotUsed> getAllTables() {
+  public Source<TableEntity, NotUsed> getAllTables() {
     Statement preparedStatement = new SimpleStatement(SELECT_ALL_STMT);
     return CassandraSource.create(preparedStatement, session).map(this::fromRow);
   }
 
-  public Source<Table, NotUsed> getUserTables(UUID userId) {
+  public Source<TableEntity, NotUsed> getUserTables(UUID userId) {
     PreparedStatement preparedStatement = session.prepare(SELECT_BY_EMAIL_STMT);
     BoundStatement bound = preparedStatement.bind(userId);
     return CassandraSource.create(bound, session).map(this::fromRow);
   }
 
-  private BoundStatement createInserBoundStatement(Table table, PreparedStatement preparedStmt) {
+  private BoundStatement createInserBoundStatement(TableEntity table, PreparedStatement preparedStmt) {
 
     return preparedStmt.bind(
         table.getKey().getTableId(),
@@ -109,9 +109,9 @@ public class TableRepository {
         TimeUtils.toDate(table.getModifiedAt()));
   }
 
-  private Table fromRow(Row row) {
+  private TableEntity fromRow(Row row) {
 
-    return new Table(
+    return new TableEntity(
         new TableKey(row.get("table_id", UUID.class)),
         row.getUUID("user_id"),
         row.getString("title"),

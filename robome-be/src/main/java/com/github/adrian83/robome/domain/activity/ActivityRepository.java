@@ -12,7 +12,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.activity.model.Activity;
+import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.ActivityState;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -41,11 +41,11 @@ public class ActivityRepository {
     this.session = session;
   }
 
-  public Sink<Activity, CompletionStage<Done>> saveActivity() {
+  public Sink<ActivityEntity, CompletionStage<Done>> saveActivity() {
 
     PreparedStatement preparedStatement = session.prepare(INSERT_ACTIVITY_STMT);
 
-    BiFunction<Activity, PreparedStatement, BoundStatement> statementBinder =
+    BiFunction<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
         (activity, statement) ->
             statement.bind(
                 activity.getKey().getActivityId(),
@@ -60,7 +60,7 @@ public class ActivityRepository {
     return CassandraSink.create(1, preparedStatement, statementBinder, session);
   }
 
-  public Source<Activity, NotUsed> getStageActivities(UUID userId, StageKey stageId) {
+  public Source<ActivityEntity, NotUsed> getStageActivities(UUID userId, StageKey stageId) {
 	  
     PreparedStatement preparedStatement =
         session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
@@ -71,7 +71,7 @@ public class ActivityRepository {
         session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
   }
 
-  public Source<Optional<Activity>, NotUsed> getById(ActivityKey activityId) {
+  public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityId) {
     PreparedStatement preparedStatement = session.prepare(SELECT_ACTIVITY_BY_ID_STMT);
     BoundStatement bound =
         preparedStatement.bind(
@@ -84,11 +84,11 @@ public class ActivityRepository {
       return Source.single(Optional.empty());
     }
 
-    Activity activity = fromRow(row);
+    ActivityEntity activity = fromRow(row);
     return Source.single(Optional.of(activity));
   }
 
-  private Activity fromRow(Row row) {
+  private ActivityEntity fromRow(Row row) {
 
     ActivityKey id =
         new ActivityKey(
@@ -96,7 +96,7 @@ public class ActivityRepository {
             row.get("stage_id", UUID.class),
             row.get("activity_id", UUID.class));
 
-    return new Activity(
+    return new ActivityEntity(
         id,
         row.get("user_id", UUID.class),
         row.getString("name"),

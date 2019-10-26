@@ -14,7 +14,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.stage.model.Stage;
+import com.github.adrian83.robome.domain.stage.model.StageEntity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.stage.model.StageState;
 import com.google.inject.Inject;
@@ -44,10 +44,10 @@ public class StageRepository {
     this.session = session;
   }
 
-  public Sink<Stage, CompletionStage<Done>> saveStage() {
+  public Sink<StageEntity, CompletionStage<Done>> saveStage() {
     PreparedStatement preparedStatement = session.prepare(INSERT_STAGE_STMT);
 
-    BiFunction<Stage, PreparedStatement, BoundStatement> statementBinder =
+    BiFunction<StageEntity, PreparedStatement, BoundStatement> statementBinder =
         (stage, statement) -> {
           Date created = TimeUtils.toDate(stage.getCreatedAt());
           Date modified = TimeUtils.toDate(stage.getModifiedAt());
@@ -64,14 +64,14 @@ public class StageRepository {
     return CassandraSink.create(1, preparedStatement, statementBinder, session);
   }
 
-  public Source<Stage, NotUsed> getTableStages(UUID userID, UUID tableUuid) {
+  public Source<StageEntity, NotUsed> getTableStages(UUID userID, UUID tableUuid) {
     var preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
     var bound = preparedStatement.bind(tableUuid, userID);
     var stages = session.execute(bound).all().stream().map(this::fromRow).collect(toList());
     return Source.from(stages);
   }
 
-  public Source<Optional<Stage>, NotUsed> getById(UUID userID, StageKey stageKey) {
+  public Source<Optional<StageEntity>, NotUsed> getById(UUID userID, StageKey stageKey) {
 
     var preparedStatement = session.prepare(SELECT_STAGE_BY_ID_STMT);
     var bound = preparedStatement.bind(stageKey.getTableId(), stageKey.getStageId(), userID);
@@ -82,10 +82,10 @@ public class StageRepository {
         .map(mayneRow -> mayneRow.map(this::fromRow));
   }
 
-  private Stage fromRow(Row row) {
+  private StageEntity fromRow(Row row) {
 
     var id = new StageKey(row.get(TABLE_ID_FIELD, UUID.class), row.get(STAGE_ID_FIELD, UUID.class));
-    return new Stage(
+    return new StageEntity(
         id,
         row.get("user_id", UUID.class),
         row.getString("title"),

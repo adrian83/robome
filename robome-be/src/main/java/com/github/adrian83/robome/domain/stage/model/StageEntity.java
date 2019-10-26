@@ -1,15 +1,12 @@
 package com.github.adrian83.robome.domain.stage.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import com.github.adrian83.robome.common.time.TimeUtils;
-import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 
-public class Stage {
+public class StageEntity {
 
   private StageKey key;
   private UUID userId;
@@ -17,9 +14,8 @@ public class Stage {
   private StageState state;
   private LocalDateTime createdAt;
   private LocalDateTime modifiedAt;
-  private List<Activity> activities;
 
-  public Stage(
+  public StageEntity(
       StageKey key,
       UUID userId,
       String title,
@@ -33,25 +29,12 @@ public class Stage {
     this.state = state;
     this.createdAt = createdAt;
     this.modifiedAt = modifiedAt;
-    this.activities = new ArrayList<Activity>();
   }
-  
-  public Stage(TableKey tableKey, UUID userId, String title) {
+
+  public StageEntity(TableKey tableKey, UUID userId, String title) {
     this(new StageKey(tableKey), userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
   }
 
-  public Stage withActivities(List<Activity> activities) {
-	  Stage stage = new Stage(
-		      this.key,
-		      this.userId,
-		      this.title,
-		      this.state,
-		      this.createdAt,
-		      this.modifiedAt);
-	  stage.activities = activities;
-	  return stage;
-  }
-  
   public StageKey getKey() {
     return key;
   }
@@ -76,9 +59,4 @@ public class Stage {
     return modifiedAt;
   }
 
-public List<Activity> getActivities() {
-	return activities;
-}
-
-  
 }

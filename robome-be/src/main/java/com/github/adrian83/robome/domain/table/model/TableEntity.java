@@ -1,13 +1,11 @@
 package com.github.adrian83.robome.domain.table.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-import com.github.adrian83.robome.domain.stage.model.Stage;
+import com.github.adrian83.robome.common.time.TimeUtils;
 
-public class Table {
+public class TableEntity {
 
   private TableKey key;
   private UUID userId;
@@ -16,10 +14,19 @@ public class Table {
   private TableState state;
   private LocalDateTime createdAt;
   private LocalDateTime modifiedAt;
-  private List<Stage> stages;
 
+  public TableEntity(UUID userId, String title, String description) {
+    this(
+        new TableKey(),
+        userId,
+        title,
+        description,
+        TableState.ACTIVE,
+        TimeUtils.utcNow(),
+        TimeUtils.utcNow());
+  }
 
-  public Table(
+  public TableEntity(
       TableKey key,
       UUID userId,
       String title,
@@ -35,20 +42,21 @@ public class Table {
     this.state = state;
     this.createdAt = createdAt;
     this.modifiedAt = modifiedAt;
-    this.stages = new ArrayList<Stage>();
   }
-  
-  public Table withStages(List<Stage> stages) {
-	  Table table = new Table(
-		      this.key,
-		      this.userId,
-		      this.title,
-		      this.description,
-		      this.state,
-		      this.createdAt,
-		      this.modifiedAt);
-	  table.stages = stages;
-	  return table;
+
+  public static TableEntity newTable(TableKey id, UUID userId, String title, String description) {
+    return new TableEntity(
+        id, userId, title, description, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+  }
+
+  public static TableEntity updatedTable(
+      TableKey id,
+      UUID userId,
+      String title,
+      String description,
+      TableState state,
+      LocalDateTime createdAt) {
+    return new TableEntity(id, userId, title, description, state, createdAt, TimeUtils.utcNow());
   }
 
   public TableKey getKey() {
@@ -79,8 +87,4 @@ public class Table {
     return modifiedAt;
   }
 
-public List<Stage> getStages() {
-	return stages;
-}
-  
 }

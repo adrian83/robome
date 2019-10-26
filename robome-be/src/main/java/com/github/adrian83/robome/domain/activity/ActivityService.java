@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.activity.model.Activity;
+import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -28,24 +29,38 @@ public class ActivityService {
   }
 
   public CompletionStage<Optional<Activity>> getActivity(User user, ActivityKey activityId) {
-    return activityRepository.getById(activityId).runWith(Sink.head(), actorMaterializer);
+    return activityRepository.getById(activityId)
+    		.map((maybeActivity) -> maybeActivity.map(this::toActivity))
+    		.runWith(Sink.head(), actorMaterializer);
   }
 
-  public CompletionStage<List<Activity>> getStageActivities(User user, StageKey stageId) {
+  public CompletionStage<List<Activity>> getStageActivities(User user, StageKey stageKey) {
     return activityRepository
-        .getStageActivities(user.getId(), stageId)
+        .getStageActivities(user.getId(), stageKey)
+        .map(this::toActivity)
         .runWith(Sink.seq(), actorMaterializer);
   }
 
   public CompletionStage<Activity> saveActivity(User user, StageKey stageKey, NewActivity newActivity) {
 
-    Activity activity = new Activity(stageKey, user.getId(), newActivity.getName());
+    ActivityEntity entity = new ActivityEntity(stageKey, user.getId(), newActivity.getName());
 
-    Sink<Activity, CompletionStage<Activity>> sink =
+    Sink<ActivityEntity, CompletionStage<Activity>> sink =
         activityRepository
             .saveActivity()
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> activity));
+            .mapMaterializedValue(doneF -> doneF.thenApply(done -> toActivity(entity)));
 
-    return Source.lazily(() -> Source.single(activity)).runWith(sink, actorMaterializer);
+    return Source.lazily(() -> Source.single(entity)).runWith(sink, actorMaterializer);
   }
+  
+  private Activity toActivity(ActivityEntity entity) {
+	  return new Activity(
+			  entity.getKey(),
+			  entity.getUserId(),
+			  entity.getName(),
+			  entity.getState(),
+			  entity.getCreatedAt(),
+			  entity.getModifiedAt());
+  }
+  
 }
