@@ -18,21 +18,9 @@ class ShowTable extends Component {
     constructor(props) { 
         super(props);
 
-        this.state = {table: {}, stages: []};
+        this.state = {table: {}};
 
         this.hideError = this.hideError.bind(this);
-    }
-
-
-    fetchStage(stageKey, jwtToken) {
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
-        const stageId = stageKey.stageId;
-        const tableId = stageKey.tableId;
-
-        var fetchStageUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
-
-        return securedGet(fetchStageUrl, jwtToken)
-            .then(response => response.json());
     }
 
     componentDidMount() {
@@ -43,53 +31,11 @@ class ShowTable extends Component {
         const tableId = this.props.match.params.tableId;
 
         const fetchTableUrl = backendHost + "/tables/" + tableId;
-        const fetchStagesUrl = backendHost + "/tables/" + tableId + "/stages";
 
         securedGet(fetchTableUrl, jwtToken)
             .then(response => response.json())
-            .then(function(table){
-
-
-                
-                Promise.all(table.stages.map(stage => self.fetchStage(stage.key, jwtToken)))
-                    .then(function(stages){
-                        table.stages = stages;
-                    });
-
-
-                return table;
-            })
             .then(data => self.setState({table: data}))
             .catch(error => self.setState({error: error}));
-    }
-
-    renderStage(stage) {
-
-        const tableId = stage.key.tableId;
-        const stageId = stage.key.stageId;
-
-        var newActivityUrl = "/tables/show/" + tableId + "/stages/show/" + stageId + "/activities/create";
-
-
-        var activities = [];
-        if(this.state.activities){
-            var stageActivities = this.state.activities[stageId];
-
-            if(stageActivities){
-                activities = stageActivities.map(act => (
-                    <span className="badge badge-light" style={{marginLeft: '10px'}} key={act.key.activityId}>{act.name}</span>));
-            }
-        }
-
-        return (
-            <div key={stage.title}>
-                <h3>{stage.title}</h3>
-                <div><Link to={newActivityUrl}>new activity</Link></div>
-                <h4>
-                    {activities}
-                </h4>
-                <br/><br/>
-            </div>);
     }
 
     isErrorPresent(){
@@ -137,6 +83,32 @@ class ShowTable extends Component {
                 {stages}
             </div>
         );
+    }
+
+    renderStage(stage) {
+
+        const tableId = stage.key.tableId;
+        const stageId = stage.key.stageId;
+
+        var newActivityUrl = "/tables/show/" + tableId + "/stages/show/" + stageId + "/activities/create";
+
+        var activities = [];
+        if(stage.activities){
+            activities = stage.activities.map(act => (
+                <span className="badge badge-light" 
+                        style={{marginLeft: '10px'}} 
+                        key={act.key.activityId}>{act.name}</span>));
+        }
+
+        return (
+            <div key={stage.title}>
+                <h3>{stage.title}</h3>
+                <div><Link to={newActivityUrl}>new activity</Link></div>
+                <h4>
+                    {activities}
+                </h4>
+                <br/><br/>
+            </div>);
     }
 }
 
