@@ -5,9 +5,9 @@ const Reducer = (state, action) => {
     console.log("action", action)
     switch (action.type) {
         case 'STORE_JWT_TOKEN':
-            return { ...state, jwtToken: action.jwtToken };
+            return { ...state, authenticated: action.authenticated };
         case 'REMOVE_JWT_TOKEN':
-                return { ...state, jwtToken: null };
+                return { ...state, authenticated: null };
         default:
             return state;
         }

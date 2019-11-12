@@ -1,15 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import securedGet, { securedPut } from '../../web/ajax';
 
 class UpdateActivity extends Component {
-
-    static propTypes = {
-        jwtToken: PropTypes.string
-    };
 
     constructor(props) { 
         super(props);
@@ -29,14 +24,13 @@ class UpdateActivity extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const backendHost = process.env.REACT_APP_BACKEND_HOST
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
 
         const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
         
-        securedPut(updateUrl, jwtToken, self.state.activity)
+        securedPut(updateUrl, self.state.activity)
             .then(response => response.json())
             .then(data => self.setState({activity: data}));
 
@@ -47,7 +41,6 @@ class UpdateActivity extends Component {
     componentDidMount() {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
         const activityId = this.props.match.params.activityId;
@@ -55,7 +48,7 @@ class UpdateActivity extends Component {
         
         const getActivityUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
 
-        securedGet(getActivityUrl, jwtToken)
+        securedGet(getActivityUrl)
             .then(response => response.json())
             .then(data => self.setState({activity: data}));
     }
@@ -99,7 +92,7 @@ class UpdateActivity extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return { };
 };
 
 const mapDispatchToProps = (dispatch) => {

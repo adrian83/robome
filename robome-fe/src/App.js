@@ -22,7 +22,7 @@ const persistConfig = {
 
 const persistedReducer = persistReducer(persistConfig, Reducer)
 
-const store = createStore(persistedReducer, { jwtToken: "" });
+const store = createStore(persistedReducer, { authenticated: false });
 const persistor = persistStore(store)
 
 class App extends Component {

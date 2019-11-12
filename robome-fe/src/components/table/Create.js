@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 
 import Error from '../error/Error';
@@ -11,9 +10,7 @@ import { securedPost } from '../../web/ajax';
 
 class CreateTable extends Component {
 
-    static propTypes = {
-        jwtToken: PropTypes.string
-    };
+
 
     constructor(props) { 
         super(props);
@@ -39,7 +36,6 @@ class CreateTable extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
         const form = {
@@ -47,7 +43,7 @@ class CreateTable extends Component {
             description: this.state.description
         }
 
-        securedPost(backendHost + "/tables", jwtToken, form)
+        securedPost(backendHost + "/tables", form)
             .then(response => response.json())
             .then(data => self.setState({key: data.key}));
 
@@ -117,7 +113,7 @@ class CreateTable extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return {};
 };
 
 const mapDispatchToProps = (dispatch) => {

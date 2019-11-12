@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 
 import TableLink from '../navigation/TableLink';
 import Error from '../error/Error';
@@ -10,10 +9,6 @@ import securedGet, { securedPut } from '../../web/ajax';
 
 
 class UpdateStage extends Component {
-
-    static propTypes = {
-        jwtToken: PropTypes.string
-    };
 
     constructor(props) { 
         super(props);
@@ -35,14 +30,15 @@ class UpdateStage extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
 
         const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
         
-        securedPut(updateUrl, jwtToken, self.state.stage)
+        const stage = {title: self.state.stage.title};
+
+        securedPut(updateUrl, stage)
             .then(response => response.json())
             .then(data => self.setState({stage: data}));
 
@@ -65,14 +61,13 @@ class UpdateStage extends Component {
     componentDidMount() {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
         
         const getStageUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
 
-        securedGet(getStageUrl, jwtToken)
+        securedGet(getStageUrl)
             .then(response => response.json())
             .then(data => self.setState({stage: data}));
     }
@@ -125,7 +120,7 @@ class UpdateStage extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return {};
 };
 
 const mapDispatchToProps = (dispatch) => {

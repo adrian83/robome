@@ -7,12 +7,12 @@ import Error from '../error/Error';
 import Title from '../tiles/Title';
 
 
-import { unsecuredPost } from '../../web/ajax';
+import { login } from '../../web/ajax';
 
 class Login extends Component {
 
     static propTypes = {
-        jwtToken: PropTypes.string,
+        authenticated: PropTypes.bool,
         onLogin: PropTypes.func
     };
 
@@ -47,13 +47,17 @@ class Login extends Component {
             password: this.state.password
         }
 
-        unsecuredPost(backendHost + "/auth/login", form)
-            .then(function(response){
-                var authToken = response.headers.get('Authorization');
-                console.log(authToken);
-                self.props.onLogin(authToken);
-            })
+        login(backendHost + "/auth/login", form)
+            .then(request => self.props.onLogin(true))
             .catch(error => self.setState({error: error}));
+
+        // unsecuredPost(backendHost + "/auth/login", form)
+        //     .then(function(response){
+        //         var authToken = response.headers.get('Authorization');
+        //         console.log(authToken);
+        //         self.props.onLogin(authToken);
+        //     })
+        //     .catch(error => self.setState({error: error}));
 
         event.preventDefault();
     }
@@ -73,7 +77,7 @@ class Login extends Component {
 
     render() {
 
-        if (this.props.jwtToken !== null && this.props.jwtToken !== "") {
+        if (this.props.authenticated) {
             return <Redirect to='/' />
         }
 
@@ -122,12 +126,12 @@ class Login extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return { authenticated: state.authenticated };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onLogin: (jwtToken) => dispatch({ type: 'STORE_JWT_TOKEN', jwtToken: jwtToken })
+        onLogin: (authenticated) => dispatch({ type: 'STORE_JWT_TOKEN', authenticated: authenticated })
     }
 };
 

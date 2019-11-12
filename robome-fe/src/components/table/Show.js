@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import Error from '../error/Error';
@@ -10,10 +9,6 @@ import securedGet from '../../web/ajax';
 
 
 class ShowTable extends Component {
-
-    static propTypes = {
-        jwtToken: PropTypes.string
-    };
 
     constructor(props) { 
         super(props);
@@ -26,13 +21,12 @@ class ShowTable extends Component {
     componentDidMount() {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
 
         const fetchTableUrl = backendHost + "/tables/" + tableId;
 
-        securedGet(fetchTableUrl, jwtToken)
+        securedGet(fetchTableUrl)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .catch(error => self.setState({error: error}));
@@ -52,24 +46,26 @@ class ShowTable extends Component {
     }
 
     render() {
-
-        var self = this;
-
-        var stages = [];
         
         var tableData = (<div>waiting for table data</div>);
         if(this.state.table && this.state.table.key && this.state.table.key.tableId) {
-            var editUrl = "/tables/edit/" + this.state.table.key.tableId;
-            var newStageUrl = "/tables/show/" + this.state.table.key.tableId + "/stages/create";
-            tableData = (<div>
-                    <Link to={editUrl}>edit</Link>
-                    <br/>
-                    <Link to={newStageUrl}>new stage</Link>
-                </div>);
-
-            stages = this.state.table.stages.map(stage => self.renderStage(stage));
+            tableData = this.renderTable(this.state.table);
         }
 
+        return (
+            <div>
+                {tableData}
+            </div>
+        );
+    }
+
+    renderTable(table) {
+
+        var self = this;
+        var editUrl = "/tables/edit/" + table.key.tableId;
+        var newStageUrl = "/tables/show/" + table.key.tableId + "/stages/create";
+
+        var stages = table.stages.map(stage => self.renderStage(stage));
 
         return (
             <div>
@@ -78,42 +74,52 @@ class ShowTable extends Component {
 
                 <div>{this.showError()}</div>
 
-                {tableData}
-                <br/>
+                <div>
+                    <Link to={editUrl}>edit</Link>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <Link to={newStageUrl}>new stage</Link>
+                </div>
+
                 {stages}
+
             </div>
-        );
+            );
     }
 
     renderStage(stage) {
-
+        var self = this;
         const tableId = stage.key.tableId;
         const stageId = stage.key.stageId;
 
         var newActivityUrl = "/tables/show/" + tableId + "/stages/show/" + stageId + "/activities/create";
+        var updateStageUrl = "/tables/show/" + tableId + "/stages/edit/" + stageId;
 
-        var activities = [];
-        if(stage.activities){
-            activities = stage.activities.map(act => (
-                <span className="badge badge-light" 
-                        style={{marginLeft: '10px'}} 
-                        key={act.key.activityId}>{act.name}</span>));
-        }
-
+        var activities = stage.activities.map(act => self.renderActivity(act));
+        
         return (
             <div key={stage.title}>
                 <h3>{stage.title}</h3>
-                <div><Link to={newActivityUrl}>new activity</Link></div>
+                <div>
+                    <Link to={newActivityUrl}>new activity</Link>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <Link to={updateStageUrl}>update</Link>
+                </div>
                 <h4>
                     {activities}
                 </h4>
                 <br/><br/>
             </div>);
     }
+
+    renderActivity(activity) {
+        return (
+            <span className="badge badge-light" 
+                style={{marginLeft: '10px'}} 
+                key={activity.key.activityId}>{activity.name}</span>
+        );
+    }
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return {};
 };
 
 const mapDispatchToProps = (dispatch) => {

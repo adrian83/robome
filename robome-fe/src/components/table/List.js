@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import Title from '../tiles/Title';
@@ -9,10 +8,6 @@ import securedGet from '../../web/ajax';
 
 
 class ListTables extends Component {
-
-    static propTypes = {
-        jwtToken: PropTypes.string
-    };
 
     constructor(props) { 
         super(props);
@@ -23,10 +18,9 @@ class ListTables extends Component {
     componentDidMount() {
 
         const self = this;
-        const jwtToken = this.props.jwtToken;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
-        securedGet(backendHost + "/tables", jwtToken)
+        securedGet(backendHost + "/tables")
             .then(response => response.json())
             .then(data => self.setState({tables: data}));
     }
@@ -38,6 +32,7 @@ class ListTables extends Component {
                 <th scope="row">{no++}</th>
                 <td><Link to={tableUrl}>{title}</Link></td>
                 <td>{description}</td>
+                <td>delete &nbsp;&nbsp;&nbsp; edit</td>
             </tr>);
     }
 
@@ -64,6 +59,7 @@ class ListTables extends Component {
                                 <th scope="col">#</th>
                                 <th scope="col">Title</th>
                                 <th scope="col">Description</th>
+                                <th scope="col">Operations</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -78,7 +74,7 @@ class ListTables extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return {};
 };
 
 const mapDispatchToProps = (dispatch) => {

@@ -23,13 +23,12 @@ import UpdateActivity from './../activity/Update';
 class Switch extends Component {
 
     static propTypes = {
-        jwtToken: PropTypes.string
+        authenticated: PropTypes.bool
     };
 
     render() {
 
-        const jwtToken = this.props.jwtToken;
-        const authenticated = jwtToken !== null && jwtToken !== "";
+        const authenticated = this.props.authenticated;
         
         var renderListTables = authenticated ? () => <ListTables/> : () => <Redirect to='/login' />; 
 
@@ -56,7 +55,7 @@ class Switch extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return { authenticated: state.authenticated };
 };
 
 const mapDispatchToProps = (dispatch) => {

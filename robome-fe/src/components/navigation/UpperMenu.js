@@ -6,13 +6,12 @@ import { Link } from 'react-router-dom';
 class UpperMenu extends Component {
 
     static propTypes = {
-        jwtToken: PropTypes.string
+        authenticated: PropTypes.bool
     };
 
     render() {
 
-        const jwtToken = this.props.jwtToken;
-        const authenticated = jwtToken !== null && jwtToken !== "";
+        const authenticated = this.props.authenticated;
         
         var highlitedLink = authenticated ? <Link className="btn btn-outline-primary" to="/logout/">Logout</Link> : <Link className="btn btn-outline-primary" to="/login/">Login</Link>; 
 
@@ -37,7 +36,7 @@ class UpperMenu extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { jwtToken: state.jwtToken };
+    return { authenticated: state.authenticated };
 };
 
 const mapDispatchToProps = (dispatch) => {
