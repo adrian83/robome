@@ -24,10 +24,13 @@ import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
+import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
+import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 
@@ -40,6 +43,7 @@ public class StageController extends AbstractController {
   public static final String STAGES = "stages";
 
   private static final NewStageValidator CREATE_VALIDATOR = new NewStageValidator();
+  private static final UpdatedStageValidator UPDATE_VALIDATOR = new UpdatedStageValidator();
 
   private StageService stageService;
   private Routes routes;
@@ -63,7 +67,8 @@ public class StageController extends AbstractController {
         get(routes.prefixVarPrefixVar(TABLES, STAGES, getStageByIdAction)),
         options(routes.prefixVarPrefixSlash(TABLES, STAGES, (tableId) -> handleOptionsRequest())),
         options(routes.prefixVarPrefixVar(TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
-        post(routes.prefixVarPrefixFormSlash(TABLES, STAGES, NewStage.class, persistStageAction)));
+        post(routes.prefixVarPrefixFormSlash(TABLES, STAGES, NewStage.class, persistStageAction)),
+        put(routes.prefixVarPrefixVarFormSlash(TABLES, STAGES, UpdatedStage.class, updateTableStageAction)));
   }
 
   private Function<String, Route> getTableStagesAction =
@@ -75,6 +80,9 @@ public class StageController extends AbstractController {
   private BiFunction<String, Class<NewStage>, Route> persistStageAction =
       (var tableId, var clazz) -> jwtSecured(tableId, clazz, this::persistStage);
 
+  private TriFunction<String, String, Class<UpdatedStage>, Route> updateTableStageAction = 
+		  (var tableId, var stageId, var clazz) -> jwtSecured(tableId, stageId, clazz, this::updateStage);
+      
   private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
     LOGGER.info("New list stages request, tableId: {}", tableIdStr);
@@ -125,6 +133,26 @@ public class StageController extends AbstractController {
     return completeWithFuture(responseF);
   }
 
+  private Route updateStage(
+	      CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId, UpdatedStage updatedStage) {
+
+	    LOGGER.info("New update stage request, tableId: {}, stageId: {}, newStage: {}", tableId, stageId, updatedStage);
+	    
+	    var responseF =
+	            maybeUserF
+	                .thenApply(Authentication::userExists)
+	                .thenApply(Authorization::canWriteStages)
+	                .thenApply(user -> new UserAndForm<UpdatedStage>(user, updatedStage, UPDATE_VALIDATOR))
+	                .thenApply(UserAndForm::validate)
+	                .thenCompose(
+	                    uaf -> stageService.updateStage(uaf.getUser(), fromStrings(tableId, stageId), uaf.getForm()))
+	                .thenApply(responseProducer::jsonFromObject)
+	                .exceptionally(exceptionHandler::handleException);
+
+	        return completeWithFuture(responseF);
+  }
+	    
+  
   private Route handleOptionsRequestWithId() {
     return complete(responseProducer.response200(GET, DELETE, PUT));
   }

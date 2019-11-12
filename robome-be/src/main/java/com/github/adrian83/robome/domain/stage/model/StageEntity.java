@@ -35,6 +35,11 @@ public class StageEntity {
     this(new StageKey(tableKey), userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
   }
 
+  public static StageEntity newStage(StageKey key, UUID userId, String title) {
+	    return new StageEntity(
+	        key, userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+	  }
+  
   public StageKey getKey() {
     return key;
   }

@@ -36,7 +36,10 @@ public class StageRepository {
       "SELECT * FROM robome.stages WHERE table_id = ? AND stage_id = ? AND user_id = ? ALLOW FILTERING";
   private static final String SELECT_STAGES_BY_TABLE_ID_STMT =
       "SELECT * FROM robome.stages WHERE table_id = ? AND user_id = ? ALLOW FILTERING";
+  private static final String UPDATE_STMT =
+	      "UPDATE robome.stages SET title = ?, state = ?, modified_at = ? WHERE table_id = ? AND stage_id = ? AND user_id = ?";
 
+  
   private Session session;
 
   @Inject
@@ -64,6 +67,21 @@ public class StageRepository {
     return CassandraSink.create(1, preparedStatement, statementBinder, session);
   }
 
+  public Sink<StageEntity, CompletionStage<Done>> updateStage(StageEntity stage) {
+
+	    PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
+	    BiFunction<StageEntity, PreparedStatement, BoundStatement> boundStmt =
+	        (stg, stmt) ->
+	            stmt.bind(
+	            		stg.getTitle(),
+	            		stg.getState().name(),
+	                TimeUtils.toDate(stg.getModifiedAt()),
+	                stg.getKey().getTableId(),
+	                stg.getKey().getStageId(),
+	                stg.getUserId());
+	    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+	  }
+  
   public Source<StageEntity, NotUsed> getTableStages(UUID userID, UUID tableUuid) {
     var preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
     var bound = preparedStatement.bind(tableUuid, userID);

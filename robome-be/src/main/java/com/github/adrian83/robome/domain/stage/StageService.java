@@ -10,6 +10,7 @@ import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.stage.model.StageEntity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
+import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
@@ -51,6 +52,16 @@ public class StageService {
     var sink = stageRepository.saveStage().mapMaterializedValue(doneF -> doneF.thenApply(done -> toStage(entity)));
     return Source.lazily(() -> Source.single(entity)).runWith(sink, actorMaterializer);
   }
+  
+  public CompletionStage<Stage> updateStage(User user, StageKey key, UpdatedStage updatedStage) {
+
+	    StageEntity entity = StageEntity.newStage(key, user.getId(), updatedStage.getTitle());
+
+	    Sink<StageEntity, CompletionStage<Stage>> sink =
+	        stageRepository.updateStage(entity).mapMaterializedValue(doneF -> doneF.thenApply(done -> toStage(entity)));
+
+	    return Source.lazily(() -> Source.single(entity)).runWith(sink, actorMaterializer);
+	  }
   
   private Stage toStage(StageEntity entity) {
 	  return new Stage(entity.getKey(),

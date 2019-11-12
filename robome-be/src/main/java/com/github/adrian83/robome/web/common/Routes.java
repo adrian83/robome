@@ -121,6 +121,19 @@ public class Routes extends AllDirectives {
 	}
 	
 	// -----
+	private <T> Supplier<Route> prefixVarPrefixVarForm(String prefix1, String prefix2, Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
+		Function<String, BiFunction<String, Class<T>, Route>> func = (String var1) -> (String var2, Class<T> clz) -> action.apply(var1, var2, clz);
+		Function<String, Route> gg = (String var1) -> prefixVarForm(prefix2, clazz, func.apply(var1)).get();
+		return prefixVar(prefix1, gg);
+	}
+	
+	public <T> Supplier<Route> prefixVarPrefixVarFormSlash(String prefix1, String prefix2, Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
+		TriFunction<String, String, Class<T>, Route> wrapedAction = (String var1, String var2, Class<T> clz) -> pathEndOrSingleSlash(() -> action.apply(var1, var2, clz));
+		return prefixVarPrefixVarForm(prefix1, prefix2, clazz, wrapedAction);
+	}
+	
+	
+	// -----
 	public <T> Supplier<Route> prefixVarPrefixVarPrefixFormSlash(String prefix1, String prefix2, String prefix3, Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
 		Function<String, BiFunction<String, Class<T>, Route>> func = (String var1) -> (String var2, Class<T> clz) -> pathEndOrSingleSlash(() -> action.apply(var1, var2, clz));
 		Function<String, Route> ggg = (String var1) -> prefixVarPrefixFormSlash(prefix2, prefix3, clazz, func.apply(var1)).get();
