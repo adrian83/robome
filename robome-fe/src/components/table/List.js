@@ -1,13 +1,18 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import Title from '../tiles/Title';
 
-import securedGet from '../../web/ajax';
+import securedGet, { securedDelete } from '../../web/ajax';
 
 
 class ListTables extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -19,20 +24,48 @@ class ListTables extends Component {
 
         const self = this;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const authToken = this.props.authToken;
 
-        securedGet(backendHost + "/tables")
+        securedGet(backendHost + "/tables", authToken)
             .then(response => response.json())
             .then(data => self.setState({tables: data}));
     }
 
+
+
+    delete(id) {
+        const self = this;
+
+        return function(event) {
+            
+            const backendHost = process.env.REACT_APP_BACKEND_HOST;
+            const authToken = self.props.authToken;
+
+            securedDelete(backendHost + "/tables/" + id, authToken)
+                .then(function(response){
+                    var filtered = self.state.tables.filter(function(table, index, arr){
+                        return table.key.tableId != id;
+                    });
+                    self.setState({tables: filtered})
+                })
+                .catch(error => self.setState({error: error}));
+
+            event.preventDefault();
+        }
+    }
+
     renderTableRow(no, id, title, description) {
         var tableUrl = "/tables/show/" + id;
+        var editTableUrl = "/tables/edit/" + id;
         return (
             <tr key={id}>
                 <th scope="row">{no++}</th>
                 <td><Link to={tableUrl}>{title}</Link></td>
                 <td>{description}</td>
-                <td>delete &nbsp;&nbsp;&nbsp; edit</td>
+                <td>
+                    <Link to={editTableUrl} >edit</Link>&nbsp;&nbsp;&nbsp;
+                    <Link to="" onClick={this.delete(id)}>delete</Link>
+                </td>
             </tr>);
     }
 
@@ -74,7 +107,7 @@ class ListTables extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return {};
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

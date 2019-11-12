@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 
 import Error from '../error/Error';
 import Title from '../tiles/Title';
@@ -7,6 +8,10 @@ import Title from '../tiles/Title';
 import securedGet, { securedPut } from '../../web/ajax';
 
 class UpdateTable extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -52,10 +57,11 @@ class UpdateTable extends Component {
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId
         const updateUrl = backendHost + "/tables/" + tableId;
+        const authToken = this.props.authToken;
 
         const tab = {title: self.state.table.title, description: self.state.table.description};
         
-        securedPut(updateUrl, tab)
+        securedPut(updateUrl, authToken, tab)
             .then(response => response.json())
             .then(data => self.setState({table: data}));
 
@@ -67,8 +73,9 @@ class UpdateTable extends Component {
         const self = this;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
+        const authToken = this.props.authToken;
         
-        securedGet(backendHost + "/tables/" + tableId)
+        securedGet(backendHost + "/tables/" + tableId, authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}));
     }
@@ -124,7 +131,7 @@ class UpdateTable extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return {};
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

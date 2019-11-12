@@ -7,7 +7,7 @@ import { Redirect } from 'react-router-dom';
 class Logout extends Component {
 
     static propTypes = {
-        authenticated: PropTypes.bool,
+        authToken: PropTypes.string,
         onLogout: PropTypes.func
     };
 
@@ -22,7 +22,7 @@ class Logout extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { authenticated: state.authenticated };
+    return { authToken: state.authToken };
 };
 
 const mapDispatchToProps = (dispatch) => {

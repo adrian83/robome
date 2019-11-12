@@ -1,10 +1,15 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import securedGet, { securedPut } from '../../web/ajax';
 
 class UpdateActivity extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -27,10 +32,11 @@ class UpdateActivity extends Component {
         const backendHost = process.env.REACT_APP_BACKEND_HOST
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
+        const authToken = this.props.authToken;
 
         const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
         
-        securedPut(updateUrl, self.state.activity)
+        securedPut(updateUrl, authToken, self.state.activity)
             .then(response => response.json())
             .then(data => self.setState({activity: data}));
 
@@ -45,10 +51,11 @@ class UpdateActivity extends Component {
         const stageId = this.props.match.params.stageId;
         const activityId = this.props.match.params.activityId;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const authToken = this.props.authToken;
         
         const getActivityUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
 
-        securedGet(getActivityUrl)
+        securedGet(getActivityUrl, authToken)
             .then(response => response.json())
             .then(data => self.setState({activity: data}));
     }
@@ -92,7 +99,7 @@ class UpdateActivity extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { };
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

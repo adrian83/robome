@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import TableLink from '../navigation/TableLink';
 import Error from '../error/Error';
@@ -10,6 +11,10 @@ import { securedPost } from '../../web/ajax';
 
 
 class CreateStage extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -32,6 +37,7 @@ class CreateStage extends Component {
         const self = this;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
+        const authToken = this.props.authToken;
 
         const editUrl = backendHost + "/tables/" + tableId + "/stages" 
 
@@ -39,7 +45,7 @@ class CreateStage extends Component {
             name: this.state.name
         };
 
-        securedPost(editUrl, form)
+        securedPost(editUrl, authToken, form)
             .then(response => response.json())
             .then(data => self.setState({key: data.key}))
             .catch(error => self.setState({error: error}));
@@ -102,7 +108,7 @@ class CreateStage extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { authenticated: state.authenticated };
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

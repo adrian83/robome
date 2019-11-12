@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 
 import TableLink from '../navigation/TableLink';
 import Error from '../error/Error';
@@ -9,6 +10,10 @@ import securedGet, { securedPut } from '../../web/ajax';
 
 
 class UpdateStage extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -33,12 +38,13 @@ class UpdateStage extends Component {
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
+        const authToken = this.props.authToken;
 
         const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
         
         const stage = {title: self.state.stage.title};
 
-        securedPut(updateUrl, stage)
+        securedPut(updateUrl, authToken, stage)
             .then(response => response.json())
             .then(data => self.setState({stage: data}));
 
@@ -64,10 +70,11 @@ class UpdateStage extends Component {
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
+        const authToken = this.props.authToken;
         
         const getStageUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
 
-        securedGet(getStageUrl)
+        securedGet(getStageUrl, authToken)
             .then(response => response.json())
             .then(data => self.setState({stage: data}));
     }
@@ -120,7 +127,7 @@ class UpdateStage extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return {};
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

@@ -6,13 +6,12 @@ import { Redirect } from 'react-router-dom';
 import Error from '../error/Error';
 import Title from '../tiles/Title';
 
-
-import { login } from '../../web/ajax';
+import { unsecuredPost } from '../../web/ajax';
 
 class Login extends Component {
 
     static propTypes = {
-        authenticated: PropTypes.bool,
+        authToken: PropTypes.string,
         onLogin: PropTypes.func
     };
 
@@ -47,17 +46,13 @@ class Login extends Component {
             password: this.state.password
         }
 
-        login(backendHost + "/auth/login", form)
-            .then(request => self.props.onLogin(true))
+        unsecuredPost(backendHost + "/auth/login", form)
+            .then(function(response){
+                var authToken = response.headers.get('Authorization');
+                console.log(authToken);
+                self.props.onLogin(authToken);
+            })
             .catch(error => self.setState({error: error}));
-
-        // unsecuredPost(backendHost + "/auth/login", form)
-        //     .then(function(response){
-        //         var authToken = response.headers.get('Authorization');
-        //         console.log(authToken);
-        //         self.props.onLogin(authToken);
-        //     })
-        //     .catch(error => self.setState({error: error}));
 
         event.preventDefault();
     }
@@ -77,7 +72,7 @@ class Login extends Component {
 
     render() {
 
-        if (this.props.authenticated) {
+        if (this.props.authToken) {
             return <Redirect to='/' />
         }
 
@@ -126,12 +121,12 @@ class Login extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { authenticated: state.authenticated };
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onLogin: (authenticated) => dispatch({ type: 'STORE_JWT_TOKEN', authenticated: authenticated })
+        onLogin: (token) => dispatch({ type: 'STORE_JWT_TOKEN', authToken: token })
     }
 };
 

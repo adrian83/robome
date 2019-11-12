@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import Error from '../error/Error';
 import Title from '../tiles/Title';
@@ -9,6 +10,10 @@ import securedGet from '../../web/ajax';
 
 
 class ShowTable extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -23,10 +28,11 @@ class ShowTable extends Component {
         const self = this;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
+        const authToken = this.props.authToken;
 
         const fetchTableUrl = backendHost + "/tables/" + tableId;
 
-        securedGet(fetchTableUrl)
+        securedGet(fetchTableUrl, authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .catch(error => self.setState({error: error}));
@@ -119,7 +125,7 @@ class ShowTable extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return {};
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

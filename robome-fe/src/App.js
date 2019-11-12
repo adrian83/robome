@@ -22,7 +22,7 @@ const persistConfig = {
 
 const persistedReducer = persistReducer(persistConfig, Reducer)
 
-const store = createStore(persistedReducer, { authenticated: false });
+const store = createStore(persistedReducer, { authToken: null });
 const persistor = persistStore(store)
 
 class App extends Component {

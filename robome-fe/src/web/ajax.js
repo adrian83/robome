@@ -1,5 +1,5 @@
 
-var authToken = null;
+
 
 class ResponseError extends Error {
     constructor(status, body, ...params) {
@@ -28,7 +28,7 @@ function headers() {
     }
 }
 
-function headersWithAuthToken() {
+function headersWithAuthToken(authToken) {
     var hds = headers();
     hds["Authorization"] = authToken;
     return hds;
@@ -58,39 +58,33 @@ function handleBadRequestResponse(responseWithBody){
     throw new ResponseError(responseWithBody.response.status, responseWithBody.body);
 }
 
-export function login(url, data) {
-
+export function securedPost(url, authToken, data) {
     return fetch(url, {
         method: 'POST',
         mode: 'cors',
         body: JSON.stringify(data),
-        headers: headers()
-    })
-    .then(handleServerSideError)
-    .then(handleBadRequestResponse)
-    .then(function(response){
-        var token = response.headers.get('Authorization');
-        authToken = token;
-    });
-}
-
-export function securedPost(url, data) {
-    return fetch(url, {
-        method: 'POST',
-        mode: 'cors',
-        body: JSON.stringify(data),
-        headers: headersWithAuthToken()
+        headers: headersWithAuthToken(authToken)
     })
     .then(handleServerSideError)
     .then(handleBadRequestResponse);
 }
 
-export function securedPut(url, data) {
+export function securedDelete(url, authToken) {
+    return fetch(url, {
+        method: 'DELETE',
+        mode: 'cors',
+        headers: headersWithAuthToken(authToken)
+    })
+    .then(handleServerSideError)
+    .then(handleBadRequestResponse);
+}
+
+export function securedPut(url, authToken, data) {
     return fetch(url, {
         method: 'PUT',
         mode: 'cors',
         body: JSON.stringify(data),
-        headers: headersWithAuthToken()
+        headers: headersWithAuthToken(authToken)
     })
     .then(handleServerSideError)
     .then(handleBadRequestResponse);
@@ -107,11 +101,11 @@ export function unsecuredPost(url, data) {
     .then(handleBadRequestResponse);
 }
 
-export default function securedGet(url) {
+export default function securedGet(url, authToken) {
     return fetch(url, {
         method: 'GET',
         mode: 'cors',
-        headers: headersWithAuthToken()
+        headers: headersWithAuthToken(authToken)
     })
     .then(handleServerSideError)
     .then(handleBadRequestResponse);

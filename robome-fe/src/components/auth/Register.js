@@ -38,7 +38,7 @@ class Register extends Component {
 
         const self = this;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
-        console.log("--------", process.env);
+
         var form = {
             email: this.state.email,
             password: this.state.password1,

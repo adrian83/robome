@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Redirect, Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import { securedPost } from '../../web/ajax';
 import Error from '../error/Error';
@@ -8,6 +9,9 @@ import Error from '../error/Error';
 
 class CreateActivity extends Component {
 
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     constructor(props) { 
         super(props);
@@ -38,10 +42,11 @@ class CreateActivity extends Component {
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
         const backendHost = process.env.REACT_APP_BACKEND_HOST;
+        const authToken = this.props.authToken;
 
         const editUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities";
 
-        securedPost(editUrl, this.state.activity)
+        securedPost(editUrl, authToken, this.state.activity)
         .then(response => response.json())
         .then(data => self.setState({key: data.key}))
         .catch(error => self.setState({error: error}));
@@ -105,7 +110,7 @@ class CreateActivity extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return {};
+    return {authToken: state.authToken};
 };
 
 const mapDispatchToProps = (dispatch) => {

@@ -6,12 +6,12 @@ import { Link } from 'react-router-dom';
 class UpperMenu extends Component {
 
     static propTypes = {
-        authenticated: PropTypes.bool
+        authToken: PropTypes.string
     };
 
     render() {
 
-        const authenticated = this.props.authenticated;
+        const authenticated = this.props.authToken;
         
         var highlitedLink = authenticated ? <Link className="btn btn-outline-primary" to="/logout/">Logout</Link> : <Link className="btn btn-outline-primary" to="/login/">Login</Link>; 
 
@@ -36,7 +36,7 @@ class UpperMenu extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { authenticated: state.authenticated };
+    return { authToken: state.authToken };
 };
 
 const mapDispatchToProps = (dispatch) => {

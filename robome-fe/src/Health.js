@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import Title from './components/tiles/Title';
 
@@ -6,6 +7,10 @@ import { unsecuredGet } from './web/ajax';
 
 
 class Health extends Component {
+
+    static propTypes = {
+        authToken: PropTypes.string
+    };
 
     componentDidMount() {
         const self = this;
