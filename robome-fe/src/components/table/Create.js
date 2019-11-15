@@ -39,7 +39,6 @@ class CreateTable extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const authToken = this.props.authToken;
 
         const form = {
@@ -47,7 +46,7 @@ class CreateTable extends Component {
             description: this.state.description
         }
 
-        securedPost(backendHost + "/tables", authToken, form)
+        securedPost("/tables", authToken, form)
             .then(response => response.json())
             .then(data => self.setState({key: data.key}));
 

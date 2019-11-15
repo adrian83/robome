@@ -41,10 +41,9 @@ class CreateActivity extends Component {
         const self = this;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const authToken = this.props.authToken;
 
-        const editUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities";
+        const editUrl = "/tables/" + tableId + "/stages/" + stageId + "/activities";
 
         securedPost(editUrl, authToken, this.state.activity)
         .then(response => response.json())

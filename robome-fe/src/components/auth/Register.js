@@ -37,14 +37,13 @@ class Register extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
         var form = {
             email: this.state.email,
             password: this.state.password1,
             repeatedPassword: this.state.password2
         }
-        unsecuredPost(backendHost + "/auth/register", form)
+        unsecuredPost("/auth/register", form)
             .catch(error => self.setState({error: error}));
 
         event.preventDefault();

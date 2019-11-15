@@ -28,6 +28,10 @@ function headers() {
     }
 }
 
+function buildUrl(path){
+    return process.env.REACT_APP_BACKEND_HOST + path;
+}
+
 function headersWithAuthToken(authToken) {
     var hds = headers();
     hds["Authorization"] = authToken;
@@ -59,7 +63,7 @@ function handleBadRequestResponse(responseWithBody){
 }
 
 export function securedPost(url, authToken, data) {
-    return fetch(url, {
+    return fetch(buildUrl(url), {
         method: 'POST',
         mode: 'cors',
         body: JSON.stringify(data),
@@ -70,7 +74,7 @@ export function securedPost(url, authToken, data) {
 }
 
 export function securedDelete(url, authToken) {
-    return fetch(url, {
+    return fetch(buildUrl(url), {
         method: 'DELETE',
         mode: 'cors',
         headers: headersWithAuthToken(authToken)
@@ -80,7 +84,7 @@ export function securedDelete(url, authToken) {
 }
 
 export function securedPut(url, authToken, data) {
-    return fetch(url, {
+    return fetch(buildUrl(url), {
         method: 'PUT',
         mode: 'cors',
         body: JSON.stringify(data),
@@ -91,7 +95,7 @@ export function securedPut(url, authToken, data) {
 }
 
 export function unsecuredPost(url, data) {
-    return fetch(url, {
+    return fetch(buildUrl(url), {
         method: 'POST',
         mode: 'cors',
         body: JSON.stringify(data),
@@ -102,7 +106,7 @@ export function unsecuredPost(url, data) {
 }
 
 export default function securedGet(url, authToken) {
-    return fetch(url, {
+    return fetch(buildUrl(url), {
         method: 'GET',
         mode: 'cors',
         headers: headersWithAuthToken(authToken)
@@ -112,7 +116,7 @@ export default function securedGet(url, authToken) {
 }
 
 export function unsecuredGet(url) {
-    return fetch(url, {
+    return fetch(buildUrl(url), {
         method: 'GET',
         mode: 'cors',
         headers: headers()

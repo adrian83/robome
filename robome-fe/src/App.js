@@ -28,7 +28,7 @@ const persistor = persistStore(store)
 class App extends Component {
 
   render() {
-    console.log("--------", process.env.REACT_APP_BACKEND_HOST);
+
     return (
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>

@@ -29,14 +29,16 @@ class UpdateActivity extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
+        const activityId = this.props.match.params.activityId;
         const authToken = this.props.authToken;
 
-        const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
+        const updateUrl = "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
         
-        securedPut(updateUrl, authToken, self.state.activity)
+        var act = {name: self.state.activity.name};
+
+        securedPut(updateUrl, authToken, act)
             .then(response => response.json())
             .then(data => self.setState({activity: data}));
 
@@ -50,10 +52,9 @@ class UpdateActivity extends Component {
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
         const activityId = this.props.match.params.activityId;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const authToken = this.props.authToken;
         
-        const getActivityUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
+        const getActivityUrl = "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
 
         securedGet(getActivityUrl, authToken)
             .then(response => response.json())

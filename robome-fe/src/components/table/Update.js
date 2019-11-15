@@ -54,9 +54,8 @@ class UpdateTable extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId
-        const updateUrl = backendHost + "/tables/" + tableId;
+        const updateUrl = "/tables/" + tableId;
         const authToken = this.props.authToken;
 
         const tab = {title: self.state.table.title, description: self.state.table.description};
@@ -71,11 +70,10 @@ class UpdateTable extends Component {
     componentDidMount() {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
         
-        securedGet(backendHost + "/tables/" + tableId, authToken)
+        securedGet("/tables/" + tableId, authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}));
     }

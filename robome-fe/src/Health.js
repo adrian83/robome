@@ -14,9 +14,8 @@ class Health extends Component {
 
     componentDidMount() {
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
 
-        unsecuredGet(backendHost + "/health")
+        unsecuredGet("/health")
             .then(response => response.json())
             .then(data => self.setState({status: data.status}));
     }

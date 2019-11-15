@@ -23,10 +23,9 @@ class ListTables extends Component {
     componentDidMount() {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const authToken = this.props.authToken;
 
-        securedGet(backendHost + "/tables", authToken)
+        securedGet("/tables", authToken)
             .then(response => response.json())
             .then(data => self.setState({tables: data}));
     }
@@ -38,10 +37,9 @@ class ListTables extends Component {
 
         return function(event) {
             
-            const backendHost = process.env.REACT_APP_BACKEND_HOST;
             const authToken = self.props.authToken;
 
-            securedDelete(backendHost + "/tables/" + id, authToken)
+            securedDelete("/tables/" + id, authToken)
                 .then(function(response){
                     var filtered = self.state.tables.filter(function(table, index, arr){
                         return table.key.tableId != id;

@@ -35,11 +35,10 @@ class CreateStage extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
 
-        const editUrl = backendHost + "/tables/" + tableId + "/stages" 
+        const editUrl = "/tables/" + tableId + "/stages" 
 
         var form = {
             name: this.state.name

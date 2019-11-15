@@ -35,12 +35,11 @@ class UpdateStage extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId;
         const authToken = this.props.authToken;
 
-        const updateUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
+        const updateUrl = "/tables/" + tableId + "/stages/" + stageId;
         
         const stage = {title: self.state.stage.title};
 
@@ -67,12 +66,11 @@ class UpdateStage extends Component {
     componentDidMount() {
 
         const self = this;
-        const backendHost = process.env.REACT_APP_BACKEND_HOST;
         const tableId = this.props.match.params.tableId;
         const stageId = this.props.match.params.stageId
         const authToken = this.props.authToken;
         
-        const getStageUrl = backendHost + "/tables/" + tableId + "/stages/" + stageId;
+        const getStageUrl = "/tables/" + tableId + "/stages/" + stageId;
 
         securedGet(getStageUrl, authToken)
             .then(response => response.json())
