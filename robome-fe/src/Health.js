@@ -22,7 +22,7 @@ class Health extends Component {
 
     render() {
         var status = (<div>Waiting...</div>);
-        if(this.state.status) {
+        if(this.state != null && this.state.status) {
             status = (<div>Status: {this.state.status}</div>);
         }
 

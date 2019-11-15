@@ -6,6 +6,7 @@ import Error from '../error/Error';
 import Title from '../tiles/Title';
 
 import securedGet, { securedPut } from '../../web/ajax';
+import { tableBeUrl } from '../../web/url';
 
 class UpdateTable extends Component {
 
@@ -16,24 +17,19 @@ class UpdateTable extends Component {
     constructor(props) { 
         super(props);
 
-        console.log(JSON.stringify(props))
-
-        this.state = {table: {}};
-
         this.handleSubmit = this.handleSubmit.bind(this);
-
         this.handleTitleChange = this.handleTitleChange.bind(this);
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     }
 
     handleTitleChange(event) {
-        var table = this.state.table;
+        var table = this.state.table ? this.state.table : {};
         table.title = event.target.value;
         this.setState({table: table});
     }
 
     handleDescriptionChange(event) {
-        var table = this.state.table;
+        var table = this.state.table ? this.state.table : {};
         table.description = event.target.value;
         this.setState({table: table});
     }
@@ -52,15 +48,16 @@ class UpdateTable extends Component {
     }
 
     handleSubmit(event) {
-
         const self = this;
         const tableId = this.props.match.params.tableId
-        const updateUrl = "/tables/" + tableId;
         const authToken = this.props.authToken;
 
-        const tab = {title: self.state.table.title, description: self.state.table.description};
+        const tab = {
+            title: self.state.table.title, 
+            description: self.state.table.description
+        };
         
-        securedPut(updateUrl, authToken, tab)
+        securedPut(tableBeUrl(tableId), authToken, tab)
             .then(response => response.json())
             .then(data => self.setState({table: data}));
 
@@ -68,21 +65,22 @@ class UpdateTable extends Component {
     }
 
     componentDidMount() {
-
         const self = this;
         const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
         
-        securedGet("/tables/" + tableId, authToken)
+        securedGet(tableBeUrl(tableId), authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}));
     }
 
     render() {
 
-        var content = (<div>waiting for data</div>);
-        if(this.state.table && this.state.table.title && this.state.table.description) {
-            content = (
+        if(!this.state || ! this.state.table){
+            return (<div>waiting for data</div>);
+        }
+
+        return (
             <div>
                 <Title title={this.state.table.title} description={this.state.table.description}></Title>
 
@@ -118,13 +116,7 @@ class UpdateTable extends Component {
                             className="btn btn-primary">Submit</button>
 
                 </form>
-
-            </div>
-            
-            );
-        }
-
-        return content;
+            </div>);
     }
 }
 

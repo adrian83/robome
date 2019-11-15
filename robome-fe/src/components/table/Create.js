@@ -7,6 +7,7 @@ import Error from '../error/Error';
 import Title from '../tiles/Title';
 
 import { securedPost } from '../../web/ajax';
+import { tablesBeUrl, editTableUrl } from '../../web/url';
 
 
 class CreateTable extends Component {
@@ -21,9 +22,7 @@ class CreateTable extends Component {
         this.state = {title: '', description: ''};
 
         this.hideError = this.hideError.bind(this);
-
         this.handleSubmit = this.handleSubmit.bind(this);
-
         this.handleTitleChange = this.handleTitleChange.bind(this);
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     }
@@ -46,7 +45,7 @@ class CreateTable extends Component {
             description: this.state.description
         }
 
-        securedPost("/tables", authToken, form)
+        securedPost(tablesBeUrl(), authToken, form)
             .then(response => response.json())
             .then(data => self.setState({key: data.key}));
 
@@ -69,7 +68,7 @@ class CreateTable extends Component {
     render() {
 
         if(this.state.key && this.state.key.tableId) {
-            var editUrl = "/tables/edit/" + this.state.key.tableId;
+            var editUrl = editTableUrl(this.state.key.tableId);
             return (<Redirect to={editUrl} />);
         }
 
@@ -82,9 +81,7 @@ class CreateTable extends Component {
                 <form onSubmit={this.handleSubmit}>
 
                     <div className="form-group">
-
                         <label htmlFor="titleInput">Title</label>
-
                         <input type="title" 
                                 className="form-control" 
                                 id="titleInput" 
@@ -94,9 +91,7 @@ class CreateTable extends Component {
                     </div>
 
                     <div className="form-group">
-
                         <label htmlFor="descriptionInput">Title</label>
-
                         <input type="description" 
                                 className="form-control" 
                                 id="descriptionInput" 
@@ -107,23 +102,14 @@ class CreateTable extends Component {
 
                     <button type="submit" 
                             className="btn btn-primary">Create</button>
-
                 </form>
             </div>
-
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
-};
-
-const mapDispatchToProps = (dispatch) => {
-    return {}
-};
-
+const mapStateToProps = (state) => {return {authToken: state.authToken};};
+const mapDispatchToProps = (dispatch) => {}
 CreateTable = connect(mapStateToProps, mapDispatchToProps)(CreateTable);
-
 
 export default CreateTable;

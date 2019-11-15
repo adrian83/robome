@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import Title from '../tiles/Title';
 
 import securedGet, { securedDelete } from '../../web/ajax';
-
+import { tablesBeUrl, tableBeUrl, editTableUrl, showTableUrl, createTableUrl } from '../../web/url';
 
 class ListTables extends Component {
 
@@ -16,34 +16,25 @@ class ListTables extends Component {
 
     constructor(props) { 
         super(props);
-
         this.state = {tables: []};
     }
 
     componentDidMount() {
-
         const self = this;
-        const authToken = this.props.authToken;
-
-        securedGet("/tables", authToken)
+        const authToken = self.props.authToken;
+        securedGet(tablesBeUrl(), authToken)
             .then(response => response.json())
             .then(data => self.setState({tables: data}));
     }
 
-
-
-    delete(id) {
+    delete(tableId) {
         const self = this;
 
         return function(event) {
-            
-            const authToken = self.props.authToken;
 
-            securedDelete("/tables/" + id, authToken)
+            securedDelete(tableBeUrl(tableId), self.props.authToken)
                 .then(function(response){
-                    var filtered = self.state.tables.filter(function(table, index, arr){
-                        return table.key.tableId != id;
-                    });
+                    var filtered = self.state.tables.filter((table, index, arr) => table.key.tableId != tableId);
                     self.setState({tables: filtered})
                 })
                 .catch(error => self.setState({error: error}));
@@ -52,37 +43,41 @@ class ListTables extends Component {
         }
     }
 
-    renderTableRow(no, id, title, description) {
-        var tableUrl = "/tables/show/" + id;
-        var editTableUrl = "/tables/edit/" + id;
+    renderTableRow(no, table) {
+        const tableId = table.key.tableId;
+        const title = table.title;
+        const description = table.description;
+
+        const showTabUrl = showTableUrl(tableId);
+        const editTabUrl = editTableUrl(tableId);
+
         return (
-            <tr key={id}>
+            <tr key={tableId}>
                 <th scope="row">{no++}</th>
-                <td><Link to={tableUrl}>{title}</Link></td>
+                <td><Link to={showTabUrl}>{title}</Link></td>
                 <td>{description}</td>
                 <td>
-                    <Link to={editTableUrl} >edit</Link>&nbsp;&nbsp;&nbsp;
-                    <Link to="" onClick={this.delete(id)}>delete</Link>
+                    <Link to={editTabUrl} >edit</Link>&nbsp;&nbsp;&nbsp;
+                    <Link to="" onClick={this.delete(tableId)}>delete</Link>
                 </td>
             </tr>);
     }
 
     render() {
-
-        var self = this;
+        const self = this;
+        const createTabUrl = createTableUrl();
 
         var no = 1
-        var rows = this.state.tables
-            .map(table => self.renderTableRow(no++, table.key.tableId, table.title, table.description));
+        var rows = this.state.tables.map(table => self.renderTableRow(no++, table));
 
         return (
             <div>
                 <Title title="List tables" description="list of all created tables"></Title>
 
                 <div>
-                    <Link to="/tables/create/">Create table</Link>
+                    <Link to={createTabUrl}>Create table</Link>
                 </div>
-                <br/>
+                <br/><br/>
                 <div>
                     <table className="table table-striped">
                         <thead>
@@ -98,21 +93,13 @@ class ListTables extends Component {
                         </tbody>
                     </table>
                 </div>
-
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
-};
-
-const mapDispatchToProps = (dispatch) => {
-    return {}
-};
-
+const mapStateToProps = (state) =>{return {authToken: state.authToken};}
+const mapDispatchToProps = (dispatch) => {}
 ListTables = connect(mapStateToProps, mapDispatchToProps)(ListTables);
-
 
 export default ListTables;
