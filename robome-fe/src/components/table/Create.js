@@ -47,7 +47,7 @@ class CreateTable extends Component {
 
         securedPost(tablesBeUrl(), authToken, form)
             .then(response => response.json())
-            .then(data => self.setState({key: data.key}));
+            .then(data => self.setState({table: data}));
 
         event.preventDefault();
     }
@@ -67,7 +67,7 @@ class CreateTable extends Component {
 
     render() {
 
-        if(this.state.key && this.state.key.tableId) {
+        if(this.state.table) {
             var editUrl = editTableUrl(this.state.key.tableId);
             return (<Redirect to={editUrl} />);
         }
