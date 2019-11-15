@@ -38,7 +38,7 @@ public class StageRepository {
       "SELECT * FROM robome.stages WHERE table_id = ? AND user_id = ? ALLOW FILTERING";
   private static final String UPDATE_STMT =
 	      "UPDATE robome.stages SET title = ?, state = ?, modified_at = ? WHERE table_id = ? AND stage_id = ? AND user_id = ?";
-
+private static final String DELETE_BY_ID_STMT = "DELETE FROM robome.stages WHERE table_id = ? AND stage_id = ? AND user_id = ?";
   
   private Session session;
 
@@ -79,6 +79,14 @@ public class StageRepository {
 	                stg.getKey().getTableId(),
 	                stg.getKey().getStageId(),
 	                stg.getUserId());
+	    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+	  }
+  
+  public Sink<StageKey, CompletionStage<Done>> deleteStage(StageKey stageKey, UUID userId) {
+
+	    PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
+	    BiFunction<StageKey, PreparedStatement, BoundStatement> boundStmt =
+	        (stgKey, stmt) -> stmt.bind(stgKey.getTableId(), stgKey.getStageId(), userId);
 	    return CassandraSink.create(1, preparedStatement, boundStmt, session);
 	  }
   

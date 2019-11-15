@@ -2,10 +2,10 @@ package com.github.adrian83.robome.domain.stage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.activity.ActivityService;
-import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.stage.model.StageEntity;
@@ -36,7 +36,7 @@ public class StageService {
   public CompletionStage<Optional<Stage>> getStage(User user, StageKey stageKey) {
     return stageRepository.getById(user.getId(), stageKey)
     		.map((maybeStage) -> maybeStage.map(this::toStage))
-    		.mapAsync(1, fetchActivities(user, stageKey))
+    		.mapAsync(1, fetchActivities2(user))
     		.runWith(Sink.head(), actorMaterializer);
   }
 
@@ -44,6 +44,7 @@ public class StageService {
     return stageRepository
         .getTableStages(user.getId(), id.getTableId())
         .map(this::toStage)
+        .mapAsync(1, fetchActivities(user))
         .runWith(Sink.seq(), actorMaterializer);
   }
 
@@ -63,6 +64,16 @@ public class StageService {
 	    return Source.lazily(() -> Source.single(entity)).runWith(sink, actorMaterializer);
 	  }
   
+  public CompletionStage<StageKey> deleteStage(User user, StageKey stageKey) {
+
+	    Sink<StageKey, CompletionStage<StageKey>> sink =
+	    		stageRepository
+	            .deleteStage(stageKey, user.getId())
+	            .mapMaterializedValue(doneF -> doneF.thenApply(done -> stageKey));
+
+	    return Source.lazily(() -> Source.single(stageKey)).runWith(sink, actorMaterializer);
+	  }
+  
   private Stage toStage(StageEntity entity) {
 	  return new Stage(entity.getKey(),
 			  entity.getUserId(),
@@ -72,8 +83,19 @@ public class StageService {
 			  entity.getModifiedAt());
   }
   
-  protected Function<Optional<Stage>, CompletionStage<Optional<Stage>>> fetchActivities(User user, StageKey stageKey){
-	  CompletionStage<List<Activity>> activitiesF = activityService.getStageActivities(user, stageKey);
-	  return (Optional<Stage> maybeStage) -> activitiesF.thenApply((activities) -> maybeStage.map((stage) -> stage.withActivities(activities)));
+  protected Function<Stage, CompletionStage<Stage>> fetchActivities(User user){
+	  return (Stage stage) -> activityService.getStageActivities(user, stage.getKey())
+			  .thenApply((activities) -> stage.withActivities(activities));
+  }
+  
+  
+  
+  protected Function<Optional<Stage>, CompletionStage<Optional<Stage>>> fetchActivities2(User user){
+	  return (Optional<Stage> maybeStage) -> maybeStage
+			  	.map((stage) -> activityService.getStageActivities(user, stage.getKey())
+						  .thenApply((activities) -> stage.withActivities(activities)).thenApply((resultStage) -> Optional.of(resultStage)))
+			  	.orElse(CompletableFuture.completedFuture(Optional.empty()));
+			  
+			  
   }
 }

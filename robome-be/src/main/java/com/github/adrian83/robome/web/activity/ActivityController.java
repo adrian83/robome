@@ -1,5 +1,6 @@
 package com.github.adrian83.robome.web.activity;
 
+import static com.github.adrian83.robome.domain.activity.model.ActivityKey.fromStrings;
 import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
 import static com.github.adrian83.robome.util.http.HttpMethod.GET;
 import static com.github.adrian83.robome.util.http.HttpMethod.POST;
@@ -23,8 +24,10 @@ import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.common.UserAndForm;
+import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
 import com.github.adrian83.robome.web.common.AbstractController;
@@ -39,6 +42,10 @@ public class ActivityController extends AbstractController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
+  private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
+  private static final Validator<NewActivity> UPDATE_VALIDATOR = new NewActivityValidator();
+  
+  //public static final String ACTIVITIES = "activities";
   public static final String ACTIVITIES = "activities";
 
   private ActivityService activityService;
@@ -65,24 +72,27 @@ public class ActivityController extends AbstractController {
       (String tableId, String stageId, Class<NewActivity> clazz) ->
           jwtSecured(tableId, stageId, clazz, this::persistActivity);
 
+          private TriFunction<String, String, String, Route> deleteActivityAction =
+        	      (String tableId, String stageId, String activityId) ->
+        	          jwtSecured(tableId, stageId, activityId, this::deleteActivity);
+        	       
+   private TetraFunction<String, String, String, Class<NewActivity>, Route> updateActivityAction =
+        	        	      (String tableId, String stageId, String activityId, Class<NewActivity> clazz) ->
+        	        	          jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);    	          
+        	          
+ 
+          
   private BiFunction<String, String, Route> getStageActivitiesAction =
       (String tableId, String stageId) -> jwtSecured(tableId, stageId, this::getStageActivities);
 
   public Route createRoute() {
     return route(
         get(routes.prefixVarPrefixVarPrefixVarSlash(TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
-        post(
-            routes.prefixVarPrefixVarPrefixFormSlash(
-                TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
-        options(
-            routes.prefixVarPrefixVarPrefixSlash(
-                TABLES, STAGES, ACTIVITIES, (tableId, stageId) -> handleOptionsRequest())),
-        options(
-            routes.prefixVarPrefixVarPrefixVarSlash(
-                TABLES,
-                STAGES,
-                ACTIVITIES,
-                (tableId, stageId, activityId) -> handleOptionsRequestWithId())),
+        put(routes.prefixVarPrefixVarPrefixVarFormSlash(TABLES, STAGES, ACTIVITIES, NewActivity.class, updateActivityAction)),
+        post(routes.prefixVarPrefixVarPrefixFormSlash(TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
+        options(routes.prefixVarPrefixVarPrefixSlash(TABLES, STAGES, ACTIVITIES, (tableId, stageId) -> handleOptionsRequest())),
+        options(routes.prefixVarPrefixVarPrefixVarSlash(TABLES, STAGES, ACTIVITIES, (tableId, stageId, activityId) -> handleOptionsRequestWithId())),
+        delete(routes.prefixVarPrefixVarPrefixVarSlash(TABLES, STAGES, ACTIVITIES, deleteActivityAction)),
         get(routes.prefixVarPrefixVarPrefixSlash(TABLES, STAGES, ACTIVITIES, getStageActivitiesAction)));
   }
 
@@ -105,6 +115,21 @@ public class ActivityController extends AbstractController {
     return completeWithFuture(responseF);
   }
 
+  private Route deleteActivity(CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId, String activityId) {
+
+	    LOGGER.info("New delete activity request, tableId: {}, stageId: {}, activityId: {}", tableId, stageId, activityId);
+	    
+	    var responseF =
+	            maybeUserF
+	                .thenApply(Authentication::userExists)
+	                .thenApply(Authorization::canWriteStages)
+	                .thenCompose(user -> activityService.deleteActivity(user, fromStrings(tableId, stageId, activityId)))
+	                .thenApply(responseProducer::jsonFromObject)
+	                .exceptionally(exceptionHandler::handleException);
+
+	        return completeWithFuture(responseF);
+}
+  
   private Route getActivityById(
       CompletionStage<Optional<User>> maybeUserF,
       String tableIdStr,
@@ -136,7 +161,7 @@ public class ActivityController extends AbstractController {
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
             .thenApply(
-                user -> new UserAndForm<NewActivity>(user, newActivity, new NewActivityValidator()))
+                user -> new UserAndForm<NewActivity>(user, newActivity, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
                 uaf ->
@@ -148,6 +173,32 @@ public class ActivityController extends AbstractController {
     return completeWithFuture(responseF);
   }
 
+  private Route updateActivity(
+	      CompletionStage<Optional<User>> maybeUserF,
+	      String tableId,
+	      String stageId,
+	      String activityId,
+	      NewActivity newActivity) {
+	  
+	  LOGGER.info("New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}", tableId, stageId, activityId, newActivity);
+
+	    CompletionStage<HttpResponse> responseF =
+	        maybeUserF
+	            .thenApply(Authentication::userExists)
+	            .thenApply(Authorization::canWriteStages)
+	            .thenApply(
+	                user -> new UserAndForm<NewActivity>(user, newActivity, UPDATE_VALIDATOR))
+	            .thenApply(UserAndForm::validate)
+	            .thenCompose( 
+	                uaf ->
+	                    activityService.updateActivity(
+	                        uaf.getUser(), ActivityKey.fromStrings(tableId, stageId, activityId), uaf.getForm()))
+	            .thenApply(responseProducer::jsonFromObject)
+	            .exceptionally(exceptionHandler::handleException);
+
+	    return completeWithFuture(responseF);
+	  }
+  
   private Route handleOptionsRequestWithId() {
     return complete(responseProducer.response200(GET, DELETE, PUT));
   }

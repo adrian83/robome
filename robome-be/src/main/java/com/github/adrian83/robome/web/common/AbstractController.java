@@ -10,6 +10,7 @@ import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.util.function.PentaFunction;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.util.http.Header;
@@ -72,6 +73,20 @@ public class AbstractController extends AllDirectives {
     return optionalHeaderValueByName(
         Header.AUTHORIZATION.getText(),
         jwtToken -> secured(jwtToken, (userData) -> logic.apply(userData, param1, param2, param3)));
+  }
+  
+  protected <T, P, R, S> Route jwtSecured(T param1, P param2, R param3, Class<S> clazz,
+		  PentaFunction<CompletionStage<Optional<User>>, T, P, R, S, Route> logic) {
+	    return optionalHeaderValueByName(
+	            Header.AUTHORIZATION.getText(),
+	            jwtToken ->
+	                jwtAuthorizer.authorized(
+	                    jwtToken,
+	                    userData ->
+	                        entity(
+	                            Jackson.unmarshaller(clazz),
+	                            form -> logic.apply(userData, param1, param2, param3, form))));
+  
   }
 
   protected <T> Route jwtSecured(

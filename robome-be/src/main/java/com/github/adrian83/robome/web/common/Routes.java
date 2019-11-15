@@ -6,12 +6,18 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
 public class Routes extends AllDirectives {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(Routes.class);
 
 	private Supplier<Route> prefix(String prefix, Route route) {
 		return () -> pathPrefix(prefix, () -> route);
@@ -97,15 +103,10 @@ public class Routes extends AllDirectives {
 	}
 
 	// -----
-	private Supplier<Route> prefixVarPrefixVarPrefixVar(String prefix1, String prefix2, String prefix3, TriFunction<String, String, String, Route> action) {
-		Function<String, BiFunction<String, String, Route>> funcWithSlash = (String var1) -> (String var2, String var3) -> action.apply(var1, var2, var3);
-		Function<String, Route> jj = (String var3) ->  prefixVarPrefixVar(prefix1, prefix2, funcWithSlash.apply(var3)).get();
-		return prefixVarSlash(prefix3, jj);
-	}
-	
 	public Supplier<Route> prefixVarPrefixVarPrefixVarSlash(String prefix1, String prefix2, String prefix3, TriFunction<String, String, String, Route> action) {
-		TriFunction<String, String, String, Route> wrapedAction = (String prf1, String prf2, String prf3) -> pathEndOrSingleSlash(() -> action.apply(prf1, prf2, prf3));
-		return prefixVarPrefixVarPrefixVar(prefix1,  prefix2,  prefix3, wrapedAction);
+		Function<String, BiFunction<String, String, Route>> funcWithSlash = (String var1) -> (String var2, String var3) -> action.apply(var1, var2, var3);
+		Function<String, Route> jj = (String var1) ->  prefixVarPrefixVarSlash(prefix2, prefix3, funcWithSlash.apply(var1)).get();
+		return prefixVar(prefix1, jj);
 	}
 	
 	// -----
@@ -132,7 +133,6 @@ public class Routes extends AllDirectives {
 		return prefixVarPrefixVarForm(prefix1, prefix2, clazz, wrapedAction);
 	}
 	
-	
 	// -----
 	public <T> Supplier<Route> prefixVarPrefixVarPrefixFormSlash(String prefix1, String prefix2, String prefix3, Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
 		Function<String, BiFunction<String, Class<T>, Route>> func = (String var1) -> (String var2, Class<T> clz) -> pathEndOrSingleSlash(() -> action.apply(var1, var2, clz));
@@ -144,6 +144,13 @@ public class Routes extends AllDirectives {
 		Function<String, Function<String, Route>> func = (String var1) -> (String var2) -> pathEndOrSingleSlash(() -> action.apply(var1, var2));
 		Function<String, Route> ggg = (String var2) -> prefixVarPrefix(prefix2, prefix3, func.apply(var2)).get();
 		return prefixVar(prefix1, ggg);
+	}
+	
+	public <T> Supplier<Route> prefixVarPrefixVarPrefixVarFormSlash(String prefix1, String prefix2, String prefix3, Class<T> clazz, TetraFunction<String, String, String, Class<T>, Route> action){
+		LOGGER.warn("prefixVarPrefixVarPrefixVarFormSlash");
+		Function<String, TriFunction<String, String,Class<T>, Route>> f = (String var1) -> (String var2, String var3, Class<T> clz) -> action.apply(var1, var2, var3, clz);
+		Function<String, Route> ff = (String var1) -> prefixVarPrefixVarFormSlash(prefix2, prefix3, clazz, f.apply(var1)).get();
+		return prefixVar(prefix1, ff);
 	}
 	
 }

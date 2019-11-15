@@ -40,6 +40,16 @@ public class ActivityEntity {
         TimeUtils.utcNow(),
         TimeUtils.utcNow());
   }
+  
+  public static ActivityEntity newActivity(ActivityKey activityKey, UUID userId, String name) {
+	    return new ActivityEntity(
+	    		activityKey,
+	        userId,
+	        name,
+	        ActivityState.ACTIVE,
+	        TimeUtils.utcNow(),
+	        TimeUtils.utcNow());
+	  }
 
   public ActivityKey getKey() {
     return key;

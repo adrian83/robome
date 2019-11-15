@@ -28,8 +28,8 @@ public class ActivityService {
     this.actorMaterializer = actorMaterializer;
   }
 
-  public CompletionStage<Optional<Activity>> getActivity(User user, ActivityKey activityId) {
-    return activityRepository.getById(activityId)
+  public CompletionStage<Optional<Activity>> getActivity(User user, ActivityKey activityKey) {
+    return activityRepository.getById(activityKey, user)
     		.map((maybeActivity) -> maybeActivity.map(this::toActivity))
     		.runWith(Sink.head(), actorMaterializer);
   }
@@ -41,6 +41,26 @@ public class ActivityService {
         .runWith(Sink.seq(), actorMaterializer);
   }
 
+  public CompletionStage<ActivityKey> deleteActivity(User user, ActivityKey activityKey) {
+
+	    Sink<ActivityKey, CompletionStage<ActivityKey>> sink =
+	    		activityRepository
+	            .deleteActivity(activityKey, user.getId())
+	            .mapMaterializedValue(doneF -> doneF.thenApply(done -> activityKey));
+
+	    return Source.lazily(() -> Source.single(activityKey)).runWith(sink, actorMaterializer);
+	  }
+  
+  public CompletionStage<Activity> updateActivity(User user, ActivityKey key, NewActivity updatedActivity) {
+
+	    ActivityEntity entity = ActivityEntity.newActivity(key, user.getId(), updatedActivity.getName());
+
+	    Sink<ActivityEntity, CompletionStage<Activity>> sink =
+	    		activityRepository.updateActivity(entity).mapMaterializedValue(doneF -> doneF.thenApply(done -> toActivity(entity)));
+
+	    return Source.lazily(() -> Source.single(entity)).runWith(sink, actorMaterializer);
+	  }
+  
   public CompletionStage<Activity> saveActivity(User user, StageKey stageKey, NewActivity newActivity) {
 
     ActivityEntity entity = new ActivityEntity(stageKey, user.getId(), newActivity.getName());

@@ -64,11 +64,13 @@ public class StageController extends AbstractController {
   public Route createRoute() {
     return route(
         get(routes.prefixVarPrefixSlash(TABLES, STAGES, getTableStagesAction)),
-        get(routes.prefixVarPrefixVar(TABLES, STAGES, getStageByIdAction)),
+        get(routes.prefixVarPrefixVarSlash(TABLES, STAGES, getStageByIdAction)),
         options(routes.prefixVarPrefixSlash(TABLES, STAGES, (tableId) -> handleOptionsRequest())),
-        options(routes.prefixVarPrefixVar(TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
+        options(routes.prefixVarPrefixVarSlash(TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
         post(routes.prefixVarPrefixFormSlash(TABLES, STAGES, NewStage.class, persistStageAction)),
+        delete(routes.prefixVarPrefixVarSlash(TABLES, STAGES,deleteStageAction)),
         put(routes.prefixVarPrefixVarFormSlash(TABLES, STAGES, UpdatedStage.class, updateTableStageAction)));
+    
   }
 
   private Function<String, Route> getTableStagesAction =
@@ -82,6 +84,10 @@ public class StageController extends AbstractController {
 
   private TriFunction<String, String, Class<UpdatedStage>, Route> updateTableStageAction = 
 		  (var tableId, var stageId, var clazz) -> jwtSecured(tableId, stageId, clazz, this::updateStage);
+		  
+		  private BiFunction<String, String, Route> deleteStageAction = 
+				  (var tableId, var stageId) -> jwtSecured(tableId, stageId, this::deleteStage);
+		  
       
   private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
@@ -152,6 +158,20 @@ public class StageController extends AbstractController {
 	        return completeWithFuture(responseF);
   }
 	    
+  private Route deleteStage(CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId) {
+
+	    LOGGER.info("New delete stage request, tableId: {}, stageId: {}", tableId, stageId);
+	    
+	    var responseF =
+	            maybeUserF
+	                .thenApply(Authentication::userExists)
+	                .thenApply(Authorization::canWriteStages)
+	                .thenCompose(user -> stageService.deleteStage(user, fromStrings(tableId, stageId)))
+	                .thenApply(responseProducer::jsonFromObject)
+	                .exceptionally(exceptionHandler::handleException);
+
+	        return completeWithFuture(responseF);
+  }
   
   private Route handleOptionsRequestWithId() {
     return complete(responseProducer.response200(GET, DELETE, PUT));
