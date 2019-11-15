@@ -1,5 +1,8 @@
 package com.github.adrian83.robome.web.health;
 
+import static com.github.adrian83.robome.util.http.HttpMethod.GET;
+import static com.github.adrian83.robome.util.http.HttpMethod.POST;
+
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
@@ -29,10 +32,17 @@ public class HealthController extends AbstractController {
   }
 
   public Route createRoute() {
-    return route(get(routes.prefixSlash(HEALTH, createAppStatus())));
+    return route(
+    		get(routes.prefixSlash(HEALTH, createAppStatus())),
+    		options(routes.prefixSlash(HEALTH, handleOptionsRequest()))
+    		);
   }
 
   private Route createAppStatus() {
     return complete(responseProducer.jsonFromObject(new AppStatus("OK")));
   }
+  
+  private Route handleOptionsRequest() {
+	    return complete(responseProducer.response200(GET, POST));
+	  }
 }
