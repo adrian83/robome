@@ -47,3 +47,6 @@
 /robome-be/nbdist/
 /robome-be/.nb-gradle/
 /robome-be/target/
+
+### VS CODE ###
+/.DS_Store
