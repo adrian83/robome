@@ -1,14 +1,17 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 
-import Error from '../error/Error';
+import Error from '../notification/Error';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import { unsecuredPost } from '../../web/ajax';
+import { loginBeUrl } from '../../web/url';
 
-class Login extends Component {
+
+class Login extends Base {
 
     static propTypes = {
         authToken: PropTypes.string,
@@ -21,10 +24,8 @@ class Login extends Component {
         this.state = {email: '', password: ''};
 
         this.handleSubmit = this.handleSubmit.bind(this);
-
         this.handleEmailChange = this.handleEmailChange.bind(this);
         this.handlePasswordChange = this.handlePasswordChange.bind(this);
-
         this.hideError = this.hideError.bind(this);
     }
 
@@ -45,28 +46,19 @@ class Login extends Component {
             password: this.state.password
         }
 
-        unsecuredPost("/auth/login", form)
+        unsecuredPost(loginBeUrl(), form)
             .then(function(response){
                 var authToken = response.headers.get('Authorization');
-                console.log(authToken);
-                self.props.onLogin(authToken);
+                if(authToken) {
+                    console.log(authToken);
+                    self.props.onLogin(authToken);
+                } else {
+                    throw "User not authenticated";
+                }
             })
-            .catch(error => self.setState({error: error}));
+            .catch(error => self.registerError(error));
 
         event.preventDefault();
-    }
-
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     render() {
@@ -79,7 +71,7 @@ class Login extends Component {
             <div>
                 <Title title="Login" description="login"></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
 
                 <form onSubmit={this.handleSubmit}>
 

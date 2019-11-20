@@ -1,11 +1,17 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-import securedGet, { securedPut } from '../../web/ajax';
+import TableLink from '../navigation/TableLink';
+import Error from '../notification/Error';
+import Title from '../tiles/Title';
+import Base from '../Base';
 
-class UpdateActivity extends Component {
+import securedGet, { securedPut } from '../../web/ajax';
+import { activityBeUrl } from '../../web/url';
+
+
+class UpdateActivity extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -13,8 +19,6 @@ class UpdateActivity extends Component {
 
     constructor(props) { 
         super(props);
-
-        this.state = {activity: {}};
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
@@ -29,73 +33,74 @@ class UpdateActivity extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId
-        const activityId = this.props.match.params.activityId;
         const authToken = this.props.authToken;
 
-        const updateUrl = "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
+        const updateActUrl = activityBeUrl(
+            this.props.match.params.tableId, 
+            this.props.match.params.stageId, 
+            this.props.match.params.activityId);
         
         var act = {name: self.state.activity.name};
 
-        securedPut(updateUrl, authToken, act)
+        securedPut(updateActUrl, authToken, act)
             .then(response => response.json())
-            .then(data => self.setState({activity: data}));
+            .then(data => self.setState({activity: data}))
+            .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
 
-
     componentDidMount() {
 
         const self = this;
-        const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId;
-        const activityId = this.props.match.params.activityId;
         const authToken = this.props.authToken;
         
-        const getActivityUrl = "/tables/" + tableId + "/stages/" + stageId + "/activities/" + activityId;
+        const getActUrl = activityBeUrl(
+            this.props.match.params.tableId,
+            this.props.match.params.stageId,
+            this.props.match.params.activityId);
 
-        securedGet(getActivityUrl, authToken)
+        securedGet(getActUrl, authToken)
             .then(response => response.json())
-            .then(data => self.setState({activity: data}));
+            .then(data => self.setState({activity: data}))
+            .catch(error => self.registerError(error));
     }
 
 
     render() {
 
-        var tableId = this.props.match.params.tableId
-        var showTableUrl = "/tables/show/" + tableId;
-
-        var content = (<div>waiting for data</div>);
-        if(this.state.activity && this.state.activity.name) {
-            content = (
-                <div>
-                    <div>
-                        <Link to={showTableUrl}>return to table</Link>
-                    </div>
-                    <form onSubmit={this.handleSubmit}>
-
-                        <div className="form-group">
-
-                            <label htmlFor="nameInput">Name</label>
-
-                            <input type="name" 
-                                    className="form-control" 
-                                    id="nameInput" 
-                                    placeholder="Enter name" 
-                                    value={this.state.activity.name}
-                                    onChange={this.handleNameChange} />
-                        </div>
-
-                        <button type="submit" 
-                                className="btn btn-primary">Submit</button>
-
-                    </form>
-                </div>);
+        if(!this.state || ! this.state.activity){
+            return (<div>waiting for data</div>);
         }
 
-        return content;
+        return (
+            <div>
+                <Title title={this.state.activity.name} description=""></Title>
+
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
+
+                <div>
+                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                </div>
+
+                <form onSubmit={this.handleSubmit}>
+
+                    <div className="form-group">
+
+                        <label htmlFor="nameInput">Name</label>
+
+                        <input type="name" 
+                                className="form-control" 
+                                id="nameInput" 
+                                placeholder="Enter name" 
+                                value={this.state.activity.name}
+                                onChange={this.handleNameChange} />
+                    </div>
+
+                    <button type="submit" 
+                            className="btn btn-primary">Submit</button>
+                </form>
+            </div>);
     }
 }
 
@@ -108,6 +113,5 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 UpdateActivity = connect(mapStateToProps, mapDispatchToProps)(UpdateActivity);
-
 
 export default UpdateActivity;

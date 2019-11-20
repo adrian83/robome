@@ -1,16 +1,18 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import TableLink from '../navigation/TableLink';
-import Error from '../error/Error';
+import Error from '../notification/Error';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import { securedPost } from '../../web/ajax';
+import { stagesBeUrl, editStageUrl } from '../../web/url';
 
 
-class CreateStage extends Component {
+class CreateStage extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -23,7 +25,6 @@ class CreateStage extends Component {
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
-
         this.hideError = this.hideError.bind(this);
     }
 
@@ -31,52 +32,39 @@ class CreateStage extends Component {
         this.setState({name: event.target.value});
     }
 
-
     handleSubmit(event) {
 
         const self = this;
-        const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
-
-        const editUrl = "/tables/" + tableId + "/stages" 
+        const editStgUrl = stagesBeUrl(this.props.match.params.tableId);
 
         var form = {
             name: this.state.name
         };
 
-        securedPost(editUrl, authToken, form)
+        securedPost(editStgUrl, authToken, form)
             .then(response => response.json())
             .then(data => self.setState({key: data.key}))
-            .catch(error => self.setState({error: error}));
+            .catch(error => self.registerError(error));
             
         event.preventDefault();
     }
 
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
-    }
-
     render() {
 
-        if(this.state.key && this.state.key.tableId && this.state.key.stageId) {
-            var editUrl = "/tables/show/" + this.state.key.tableId + "/stages/edit/" + this.state.key.stageId;
-            return (<Redirect to={editUrl} />);
+        if(this.state && this.state.key) {
+            var editStgUrl = editStageUrl(
+                this.state.key.tableId, 
+                this.state.key.stageId);
+
+            return (<Redirect to={editStgUrl} />);
         }
 
         return (
             <div>
                 <Title title="Create new stage" description="Fill basic data"></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
 
                 <div>
                     <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
@@ -98,10 +86,8 @@ class CreateStage extends Component {
 
                     <button type="submit" 
                             className="btn btn-primary">Submit</button>
-
                 </form>
             </div>
-
         );
     }
 }

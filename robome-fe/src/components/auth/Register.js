@@ -1,12 +1,13 @@
-import React, { Component } from 'react';
+import React from 'react';
 
-import Error from '../error/Error';
+import Error from '../notification/Error';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import { unsecuredPost } from '../../web/ajax';
+import { registerBeUrl } from '../../web/url';
 
-
-class Register extends Component {
+class Register extends Base {
 
     constructor(props) {
         super(props);
@@ -43,23 +44,11 @@ class Register extends Component {
             password: this.state.password1,
             repeatedPassword: this.state.password2
         }
-        unsecuredPost("/auth/register", form)
+
+        unsecuredPost(registerBeUrl(), form)
             .catch(error => self.setState({error: error}));
 
         event.preventDefault();
-    }
-
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     render() {
@@ -67,7 +56,7 @@ class Register extends Component {
             <div>
                 <Title title="Register" description="create account in robome"></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
 
                 <form onSubmit={this.handleSubmit}>
 

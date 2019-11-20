@@ -1,43 +1,46 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
+import Error from '../notification/Error';
+import Info from '../notification/Info';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import securedGet, { securedDelete } from '../../web/ajax';
 import { tablesBeUrl, tableBeUrl, editTableUrl, showTableUrl, createTableUrl } from '../../web/url';
 
-class ListTables extends Component {
+class ListTables extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
     };
 
-    constructor(props) { 
-        super(props);
-        this.state = {tables: []};
-    }
-
     componentDidMount() {
+
         const self = this;
         const authToken = self.props.authToken;
+
         securedGet(tablesBeUrl(), authToken)
             .then(response => response.json())
-            .then(data => self.setState({tables: data}));
+            .then(data => self.setState({tables: data}))
+            .catch(error => self.registerError(error));
     }
 
-    delete(tableId) {
+    delete(table) {
         const self = this;
+        const deleteTabUrl = tableBeUrl(table.key.tableId)
 
         return function(event) {
 
-            securedDelete(tableBeUrl(tableId), self.props.authToken)
+            securedDelete(deleteTabUrl, self.props.authToken)
                 .then(function(response){
-                    var filtered = self.state.tables.filter((table, index, arr) => table.key.tableId != tableId);
+                    var filtered = self.state.tables.filter((tab, index, arr) => tab.key.tableId !== table.key.tableId);
                     self.setState({tables: filtered})
                 })
-                .catch(error => self.setState({error: error}));
+                .then(data => self.registerInfo(`Table '${table.title}' removed`))
+                .catch(error => self.registerError(error));
 
             event.preventDefault();
         }
@@ -58,7 +61,7 @@ class ListTables extends Component {
                 <td>{description}</td>
                 <td>
                     <Link to={editTabUrl} >edit</Link>&nbsp;&nbsp;&nbsp;
-                    <Link to="" onClick={this.delete(tableId)}>delete</Link>
+                    <Link to="" onClick={this.delete(table)}>delete</Link>
                 </td>
             </tr>);
     }
@@ -68,11 +71,15 @@ class ListTables extends Component {
         const createTabUrl = createTableUrl();
 
         var no = 1
-        var rows = this.state.tables.map(table => self.renderTableRow(no++, table));
+        const tables = (this.state && this.state.tables) ? this.state.tables : [];
+        var rows = tables.map(table => self.renderTableRow(no++, table));
 
         return (
             <div>
                 <Title title="List tables" description="list of all created tables"></Title>
+
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <div>
                     <Link to={createTabUrl}>Create table</Link>
@@ -98,8 +105,14 @@ class ListTables extends Component {
     }
 }
 
-const mapStateToProps = (state) =>{return {authToken: state.authToken};}
-const mapDispatchToProps = (dispatch) => {}
+const mapStateToProps = (state) =>{
+    return {authToken: state.authToken};
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {};
+};
+
 ListTables = connect(mapStateToProps, mapDispatchToProps)(ListTables);
 
 export default ListTables;

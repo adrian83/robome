@@ -1,14 +1,16 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import Error from '../error/Error';
+import Error from '../notification/Error';
+import Info from '../notification/Info';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import securedGet, { securedPut } from '../../web/ajax';
 import { tableBeUrl } from '../../web/url';
 
-class UpdateTable extends Component {
+class UpdateTable extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -34,19 +36,6 @@ class UpdateTable extends Component {
         this.setState({table: table});
     }
 
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
-    }
-
     handleSubmit(event) {
         const self = this;
         const tableId = this.props.match.params.tableId
@@ -59,7 +48,9 @@ class UpdateTable extends Component {
         
         securedPut(tableBeUrl(tableId), authToken, tab)
             .then(response => response.json())
-            .then(data => self.setState({table: data}));
+            .then(data => self.setState({table: data}))
+            .then(data => self.registerInfo("Table updated"))
+            .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
@@ -71,7 +62,8 @@ class UpdateTable extends Component {
         
         securedGet(tableBeUrl(tableId), authToken)
             .then(response => response.json())
-            .then(data => self.setState({table: data}));
+            .then(data => self.setState({table: data}))
+            .catch(error => self.registerError(error));
     }
 
     render() {
@@ -84,7 +76,8 @@ class UpdateTable extends Component {
             <div>
                 <Title title={this.state.table.title} description={this.state.table.description}></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <form onSubmit={this.handleSubmit}>
 
@@ -129,6 +122,5 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 UpdateTable = connect(mapStateToProps, mapDispatchToProps)(UpdateTable);
-
 
 export default UpdateTable;

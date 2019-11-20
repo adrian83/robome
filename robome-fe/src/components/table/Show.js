@@ -1,16 +1,18 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-import Error from '../error/Error';
+import Error from '../notification/Error';
+import Info from '../notification/Info';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import securedGet, { securedDelete } from '../../web/ajax';
 import { editActivityUrl, createActivityUrl, editStageUrl, tableBeUrl, editTableUrl, 
     createStageUrl, stageBeUrl, activityBeUrl } from '../../web/url';
 
-class ShowTable extends Component {
+class ShowTable extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -29,20 +31,7 @@ class ShowTable extends Component {
         securedGet(tableBeUrl(tableId), authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
-            .catch(error => self.setState({error: error}));
-    }
-
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
+            .catch(error => self.registerError(error));
     }
 
     render() {
@@ -70,7 +59,10 @@ class ShowTable extends Component {
         return (
             <div>
                 <Title title={this.state.table.title} description={this.state.table.description} ></Title>
-                <div>{this.showError()}</div>
+                
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
+                
                 <div>
                     <Link to={editTabUrl}>edit</Link>&nbsp;&nbsp;&nbsp;&nbsp;
                     <Link to={newStgUrl}>new stage</Link>
@@ -89,11 +81,11 @@ class ShowTable extends Component {
         return function(event) {
             securedDelete(stageBeUrl(stageKey.tableId, stageKey.stageId), authToken)
                 .then(function(response){
-                    var filtered = table.stages.filter((stage, index, arr) => stage.key.stageId != stageKey.stageId);
+                    var filtered = table.stages.filter((stage, index, arr) => stage.key.stageId !== stageKey.stageId);
                     table.stages = filtered;
                     self.setState({table: table});
                 })
-                .catch(error => self.setState({error: error}));
+                .catch(error => self.registerError(error));
 
             event.preventDefault();
         }
@@ -110,12 +102,12 @@ class ShowTable extends Component {
             securedDelete(delStgUrl, authToken)
                 .then(function(response){
                     table.stages.forEach(function(stage, index){
-                        var filtered = stage.activities.filter((activity, index, arr) => activity.key.activityId != activityKey.activityId);
+                        var filtered = stage.activities.filter((activity, index, arr) => activity.key.activityId !== activityKey.activityId);
                         stage.activities = filtered;
                     })
                     self.setState({table: table});
                 })
-                .catch(error => self.setState({error: error}));
+                .catch(error => self.registerError(error));
 
             event.preventDefault();
         }
@@ -165,8 +157,14 @@ class ShowTable extends Component {
     }
 }
 
-const mapStateToProps = (state) => {return {authToken: state.authToken};};
-const mapDispatchToProps = (dispatch) => {}
+const mapStateToProps = (state) =>{
+    return {authToken: state.authToken};
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {};
+};
+
 ShowTable = connect(mapStateToProps, mapDispatchToProps)(ShowTable);
 
 export default ShowTable;

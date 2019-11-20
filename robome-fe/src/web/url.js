@@ -12,8 +12,24 @@ export function stageBeUrl(tableId, stageId) {
     return `/tables/${tableId}/stages/${stageId}`;
 }
 
+export function stagesBeUrl(tableId) {
+    return `/tables/${tableId}/stages`;
+}
+
 export function activityBeUrl(tableId, stageId, activityId) {
     return `/tables/${tableId}/stages/${stageId}/activities/${activityId}`;
+}
+
+export function activitiesBeUrl(tableId, stageId) {
+    return `/tables/${tableId}/stages/${stageId}/activities`;
+}
+
+export function loginBeUrl() { 
+    return `/auth/login`;
+}
+
+export function registerBeUrl() {
+    return `/auth/register`;
 }
 
 export function editTableUrl(tableId) {
@@ -26,6 +42,10 @@ export function showTableUrl(tableId) {
 
 export function createTableUrl() {
     return `/tables/create/`;
+}
+
+export function listTablesUrl() {
+    return `/tables/list/`;
 }
 
 export function createStageUrl(tableId) {
@@ -42,4 +62,20 @@ export function editStageUrl(tableId, stageId) {
 
 export function editActivityUrl(tableId, stageId, activityId) {
     return `/tables/show/${tableId}/stages/show/${stageId}/activities/edit/${activityId}`;
+}
+
+export function loginUrl() {
+    return `/login/`;
+}
+
+export function logoutUrl() {
+    return `/logout/`;
+}
+
+export function registerUrl() {
+    return `/register/`;
+}
+
+export function healthUrl() {
+    return `/health/`;
 }

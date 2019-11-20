@@ -20,6 +20,12 @@ import UpdateStage from './../stage/Update';
 import CreateActivity from './../activity/Create';
 import UpdateActivity from './../activity/Update';
 
+
+import { listTablesUrl, loginUrl, logoutUrl, registerUrl, 
+    healthUrl, createTableUrl, createActivityUrl,
+    editActivityUrl, createStageUrl, editStageUrl, 
+    editTableUrl, showTableUrl } from '../../web/url';
+
 class Switch extends Component {
 
     static propTypes = {
@@ -29,24 +35,23 @@ class Switch extends Component {
     render() {
 
         const authenticated = this.props.authToken;
-        
-        var renderListTables = authenticated ? () => <ListTables/> : () => <Redirect to='/login' />; 
+        const renderListTables = authenticated ? () => <ListTables/> : () => <Redirect to='/login' />; 
 
         return (
             <RSwitch>
                 <Route exact path="/" component={Home} />
-                <Route path="/login" component={() => <Login/>} />
-                <Route path="/logout" component={() => <Logout/>} />
-                <Route path="/register" component={() => <Register/>} />
-                <Route path="/health" component={() => <Health/>} />
-                <Route path="/tables/list" component={ renderListTables } />
-                <Route path="/tables/create" component={() => <CreateTable/>} />
-                <Route path="/tables/show/:tableId/stages/show/:stageId/activities/create" render={(props) => <CreateActivity {...props}/>} />
-                <Route path="/tables/show/:tableId/stages/show/:stageId/activities/edit/:activityId" render={(props) => <UpdateActivity {...props}/>} />
-                <Route path="/tables/show/:tableId/stages/create" render={(props) => <CreateStage {...props}/>} />
-                <Route path="/tables/show/:tableId/stages/edit/:stageId" render={(props) => <UpdateStage {...props}/>} />
-                <Route path="/tables/show/:tableId" render={(props) =>  <ShowTable {...props}/>} />
-                <Route path="/tables/edit/:tableId" render={(props) =>  <UpdateTable {...props}/>} />
+                <Route path={loginUrl()} component={() => <Login/>} />
+                <Route path={logoutUrl()} component={() => <Logout/>} />
+                <Route path={registerUrl()} component={() => <Register/>} />
+                <Route path={healthUrl()} component={() => <Health/>} />
+                <Route path={listTablesUrl()} component={ renderListTables } />
+                <Route path={createTableUrl()} component={() => <CreateTable/>} />
+                <Route path={createActivityUrl(":tableId", ":stageId")} render={(props) => <CreateActivity {...props}/>} />
+                <Route path={editActivityUrl(":tableId", ":stageId", ":activityId")} render={(props) => <UpdateActivity {...props}/>} />
+                <Route path={createStageUrl(":tableId")} render={(props) => <CreateStage {...props}/>} />
+                <Route path={editStageUrl(":tableId", ":stageId")} render={(props) => <UpdateStage {...props}/>} />
+                <Route path={showTableUrl(":tableId")} render={(props) =>  <ShowTable {...props}/>} />
+                <Route path={editTableUrl(":tableId")} render={(props) =>  <UpdateTable {...props}/>} />
                 
                 <Redirect to="/" />
             </RSwitch>
@@ -63,6 +68,5 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 Switch = connect(mapStateToProps, mapDispatchToProps)(Switch);
-
 
 export default Switch;

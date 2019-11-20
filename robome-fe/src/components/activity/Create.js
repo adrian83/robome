@@ -1,13 +1,18 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
-import { Redirect, Link } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
+import TableLink from '../navigation/TableLink';
+import Error from '../notification/Error';
+import Title from '../tiles/Title';
+import Base from '../Base';
+
 import { securedPost } from '../../web/ajax';
-import Error from '../error/Error';
+import { activitiesBeUrl, editActivityUrl } from '../../web/url';
 
 
-class CreateActivity extends Component {
+class CreateActivity extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -17,13 +22,11 @@ class CreateActivity extends Component {
         super(props);
 
         this.state = {
-            activity: {name: ""},
-            error: {}
+            activity: {name: ""}
         };
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
-
         this.hideError = this.hideError.bind(this);
     }
 
@@ -33,56 +36,42 @@ class CreateActivity extends Component {
         this.setState({activity: activity});
     }
 
-
     handleSubmit(event) {
-
-        event.preventDefault();
-
         const self = this;
-        const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId;
         const authToken = this.props.authToken;
 
-        const editUrl = "/tables/" + tableId + "/stages/" + stageId + "/activities";
+        const editUrl = activitiesBeUrl(
+            this.props.match.params.tableId, 
+            this.props.match.params.stageId);
 
         securedPost(editUrl, authToken, this.state.activity)
-        .then(response => response.json())
-        .then(data => self.setState({key: data.key}))
-        .catch(error => self.setState({error: error}));
-    }
+            .then(response => response.json())
+            .then(data => self.setState({key: data.key}))
+            .catch(error => self.registerError(error));
 
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
         event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     render() {
 
-        if(this.state.key && this.state.key.tableId && this.state.key.stageId && this.state.key.activityId) {
-            var editUrl = "/tables/show/" + this.state.key.tableId + "/stages/show/" + this.state.key.stageId + "/activities/edit/" + this.state.key.activityId;
-            return (<Redirect to={editUrl} />);
+        if(this.state && this.state.key) {
+            var editActUrl = editActivityUrl(
+                this.state.key.tableId, 
+                this.state.key.stageId, 
+                this.state.key.activityId);
+
+            return (<Redirect to={editActUrl} />);
         }
-
-        var tableId = this.props.match.params.tableId;
-        var showTableUrl = "/tables/show/" + tableId;
-
-
 
         return (
             <div>
-                <div>
-                    <Link to={showTableUrl}>return to table</Link>
-                </div>
+                <Title title="Create new activity" description="Fill basic data"></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                
+                <div>
+                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                </div>
 
                 <form onSubmit={this.handleSubmit}>
 
@@ -117,6 +106,5 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 CreateActivity = connect(mapStateToProps, mapDispatchToProps)(CreateActivity);
-
 
 export default CreateActivity;

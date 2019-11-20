@@ -1,10 +1,12 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 
+import Base from '../Base';
 
-class Logout extends Component {
+
+class Logout extends Base {
 
     static propTypes = {
         authToken: PropTypes.string,
@@ -32,6 +34,5 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 Logout = connect(mapStateToProps, mapDispatchToProps)(Logout);
-
 
 export default Logout;

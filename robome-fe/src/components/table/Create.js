@@ -1,16 +1,18 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-import Error from '../error/Error';
+import Error from '../notification/Error';
+import Info from '../notification/Info';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import { securedPost } from '../../web/ajax';
 import { tablesBeUrl, editTableUrl } from '../../web/url';
 
 
-class CreateTable extends Component {
+class CreateTable extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -19,7 +21,10 @@ class CreateTable extends Component {
     constructor(props) { 
         super(props);
 
-        this.state = {title: '', description: ''};
+        this.state =  {
+            title: '', 
+            description: ''
+        };
 
         this.hideError = this.hideError.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -47,28 +52,19 @@ class CreateTable extends Component {
 
         securedPost(tablesBeUrl(), authToken, form)
             .then(response => response.json())
-            .then(data => self.setState({table: data}));
+            .then(data => self.setState({table: data}))
+            .then(data => self.registerInfo("Table added"))
+            .catch(error => self.registerError(error));
 
         event.preventDefault();
-    }
-
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     render() {
 
-        if(this.state.table) {
-            var editUrl = editTableUrl(this.state.key.tableId);
+        if(this.state && this.state.table) {
+            var editUrl = editTableUrl(
+                this.state.table.key.tableId);
+
             return (<Redirect to={editUrl} />);
         }
 
@@ -76,7 +72,8 @@ class CreateTable extends Component {
             <div>
                 <Title title="Create table" description="create table"></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <form onSubmit={this.handleSubmit}>
 
@@ -108,8 +105,14 @@ class CreateTable extends Component {
     }
 }
 
-const mapStateToProps = (state) => {return {authToken: state.authToken};};
-const mapDispatchToProps = (dispatch) => {}
+const mapStateToProps = (state) => {
+    return {authToken: state.authToken};
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {};
+};
+
 CreateTable = connect(mapStateToProps, mapDispatchToProps)(CreateTable);
 
 export default CreateTable;

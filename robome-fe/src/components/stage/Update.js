@@ -1,15 +1,16 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import TableLink from '../navigation/TableLink';
-import Error from '../error/Error';
+import Error from '../notification/Error';
 import Title from '../tiles/Title';
+import Base from '../Base';
 
 import securedGet, { securedPut } from '../../web/ajax';
+import { stageBeUrl } from '../../web/url';
 
-
-class UpdateStage extends Component {
+class UpdateStage extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
@@ -18,11 +19,8 @@ class UpdateStage extends Component {
     constructor(props) { 
         super(props);
 
-        this.state = {stage: {}};
-
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
-
         this.hideError = this.hideError.bind(this);
     }
 
@@ -35,62 +33,50 @@ class UpdateStage extends Component {
     handleSubmit(event) {
 
         const self = this;
-        const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId;
         const authToken = this.props.authToken;
 
-        const updateUrl = "/tables/" + tableId + "/stages/" + stageId;
+        const updateStgUrl = stageBeUrl(
+            this.props.match.params.tableId,
+            this.props.match.params.stageId); 
         
-        const stage = {title: self.state.stage.title};
+        const stage = {
+            title: self.state.stage.title
+        };
 
-        securedPut(updateUrl, authToken, stage)
+        securedPut(updateStgUrl, authToken, stage)
             .then(response => response.json())
-            .then(data => self.setState({stage: data}));
+            .then(data => self.setState({stage: data}))
+            .catch(error => self.registerError(error));
 
         event.preventDefault();
-    }
-
-    isErrorPresent(){
-        return this.state.error && this.state.error !== {};
-    }
-
-    hideError(event){
-        this.setState({error: null});
-        event.preventDefault();
-    }
-
-    showError(){
-        return this.isErrorPresent() ? (<Error error={this.state.error} onClose={this.hideError}></Error>) : "";
     }
 
     componentDidMount() {
 
         const self = this;
-        const tableId = this.props.match.params.tableId;
-        const stageId = this.props.match.params.stageId
         const authToken = this.props.authToken;
         
-        const getStageUrl = "/tables/" + tableId + "/stages/" + stageId;
+        const getStgUrl = stageBeUrl(
+            this.props.match.params.tableId,
+            this.props.match.params.stageId);
 
-        securedGet(getStageUrl, authToken)
+        securedGet(getStgUrl, authToken)
             .then(response => response.json())
-            .then(data => self.setState({stage: data}));
-    }
-
-    dataAvailable() {
-        return this.state.stage.key;
+            .then(data => self.setState({stage: data}))
+            .catch(error => self.registerError(error));
     }
 
     render() {
-        return this.dataAvailable() ? this.renderPage() : this.renderDummyPage();
-    }
 
-    renderPage() {
+        if(!this.state || ! this.state.stage){
+            return (<div>waiting for data</div>);
+        }
+
         return (
             <div>
                 <Title title={this.state.stage.title} description=""></Title>
 
-                <div>{this.showError()}</div>
+                <Error errors={this.errors()} hideError={this.hideError} ></Error>
 
                 <div>
                     <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
@@ -112,16 +98,9 @@ class UpdateStage extends Component {
 
                     <button type="submit" 
                             className="btn btn-primary">Submit</button>
-
                 </form>
             </div>);
     }
-
-    renderDummyPage() {
-        return (<div>waiting for data</div>);
-    }
-
-
 }
 
 const mapStateToProps = (state) => {
@@ -129,10 +108,9 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = (dispatch) => {
-    return {}
+    return {};
 };
 
 UpdateStage = connect(mapStateToProps, mapDispatchToProps)(UpdateStage);
-
 
 export default UpdateStage;
