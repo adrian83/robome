@@ -24,7 +24,6 @@ import com.github.adrian83.robome.web.auth.validation.RegisterValidator;
 import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.common.Routes;
 import com.google.inject.Inject;
-import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.Route;
@@ -47,11 +46,10 @@ public class AuthController extends AbstractController {
   public AuthController(
       UserService userService,
       JwtAuthorizer jwtAuthorizer,
-      Config config,
       ExceptionHandler exceptionHandler,
       Response responseProducer,
       Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, config, responseProducer);
+    super(jwtAuthorizer, exceptionHandler, responseProducer);
     this.userService = userService;
     this.routes = routes;
   }
@@ -79,7 +77,7 @@ public class AuthController extends AbstractController {
             .thenApply(form -> Validation.validate(form, LOGIN_VALIDATOR))
             .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
             .thenApply(maybeUser -> userWithPasswordExists(maybeUser, login.getPassword()))
-            .thenApply(jwtAuthorizer::createAuthorizationToken)
+            .thenApply(jwtAuthorizer::createJWTToken)
             .thenApply(token -> responseProducer.response200(jwt(token)))
             .exceptionally(exceptionHandler::handleException);
 

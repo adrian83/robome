@@ -27,20 +27,19 @@ public final class Authentication {
   }
 
   public static String hidePassword(String password) {
-	  if(password == null) {
-		  return "";
-	  } 
-	  
-	  var len = password.length();
-	  
-	  if(len < 3) {
-		  return "**";
-	  } else {
-		  var begining = password.substring(0, 1);
-		  var end = password.substring(len-2, len-1);
-		  var stars = new String(new char[len-2]).replace("\0", "*");
-		  return begining + stars + end;
-	  }
+    if (password == null) {
+      return "";
+    }
+
+    var len = password.length();
+
+    if (len < 3) {
+      return "**";
+    } else {
+      var begining = password.substring(0, 1);
+      var end = password.substring(len - 2, len - 1);
+      var stars = new String(new char[len - 2]).replace("\0", "*");
+      return begining + stars + end;
+    }
   }
-  
 }

@@ -14,7 +14,6 @@ import com.github.adrian83.robome.util.function.PentaFunction;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.util.http.Header;
-import com.typesafe.config.Config;
 
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.headers.RawHeader;
@@ -29,16 +28,13 @@ public class AbstractController extends AllDirectives {
   protected ExceptionHandler exceptionHandler;
   protected Response responseProducer;
 
-  protected Config config;
 
   protected AbstractController(
       JwtAuthorizer jwtAuthorizer,
       ExceptionHandler exceptionHandler,
-      Config config,
       Response responseProducer) {
     this.jwtAuthorizer = jwtAuthorizer;
     this.exceptionHandler = exceptionHandler;
-    this.config = config;
     this.responseProducer = responseProducer;
   }
 

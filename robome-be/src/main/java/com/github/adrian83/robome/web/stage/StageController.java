@@ -8,14 +8,7 @@ import static com.github.adrian83.robome.util.http.HttpMethod.POST;
 import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import akka.http.javadsl.server.Route;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
@@ -32,9 +25,12 @@ import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
 import com.google.inject.Inject;
-import com.typesafe.config.Config;
-
-import akka.http.javadsl.server.Route;
+import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StageController extends AbstractController {
 
@@ -52,11 +48,10 @@ public class StageController extends AbstractController {
   public StageController(
       StageService stageService,
       JwtAuthorizer jwtAuthorizer,
-      Config config,
       Response responseProducer,
       ExceptionHandler exceptionHandler,
       Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, config, responseProducer);
+    super(jwtAuthorizer, exceptionHandler, responseProducer);
     this.stageService = stageService;
     this.routes = routes;
   }
@@ -66,11 +61,14 @@ public class StageController extends AbstractController {
         get(routes.prefixVarPrefixSlash(TABLES, STAGES, getTableStagesAction)),
         get(routes.prefixVarPrefixVarSlash(TABLES, STAGES, getStageByIdAction)),
         options(routes.prefixVarPrefixSlash(TABLES, STAGES, (tableId) -> handleOptionsRequest())),
-        options(routes.prefixVarPrefixVarSlash(TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
+        options(
+            routes.prefixVarPrefixVarSlash(
+                TABLES, STAGES, (tableId, stageId) -> handleOptionsRequestWithId())),
         post(routes.prefixVarPrefixFormSlash(TABLES, STAGES, NewStage.class, persistStageAction)),
-        delete(routes.prefixVarPrefixVarSlash(TABLES, STAGES,deleteStageAction)),
-        put(routes.prefixVarPrefixVarFormSlash(TABLES, STAGES, UpdatedStage.class, updateTableStageAction)));
-    
+        delete(routes.prefixVarPrefixVarSlash(TABLES, STAGES, deleteStageAction)),
+        put(
+            routes.prefixVarPrefixVarFormSlash(
+                TABLES, STAGES, UpdatedStage.class, updateTableStageAction)));
   }
 
   private Function<String, Route> getTableStagesAction =
@@ -82,13 +80,13 @@ public class StageController extends AbstractController {
   private BiFunction<String, Class<NewStage>, Route> persistStageAction =
       (var tableId, var clazz) -> jwtSecured(tableId, clazz, this::persistStage);
 
-  private TriFunction<String, String, Class<UpdatedStage>, Route> updateTableStageAction = 
-		  (var tableId, var stageId, var clazz) -> jwtSecured(tableId, stageId, clazz, this::updateStage);
-		  
-		  private BiFunction<String, String, Route> deleteStageAction = 
-				  (var tableId, var stageId) -> jwtSecured(tableId, stageId, this::deleteStage);
-		  
-      
+  private TriFunction<String, String, Class<UpdatedStage>, Route> updateTableStageAction =
+      (var tableId, var stageId, var clazz) ->
+          jwtSecured(tableId, stageId, clazz, this::updateStage);
+
+  private BiFunction<String, String, Route> deleteStageAction =
+      (var tableId, var stageId) -> jwtSecured(tableId, stageId, this::deleteStage);
+
   private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
     LOGGER.info("New list stages request, tableId: {}", tableIdStr);
@@ -140,39 +138,49 @@ public class StageController extends AbstractController {
   }
 
   private Route updateStage(
-	      CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId, UpdatedStage updatedStage) {
+      CompletionStage<Optional<User>> maybeUserF,
+      String tableId,
+      String stageId,
+      UpdatedStage updatedStage) {
 
-	    LOGGER.info("New update stage request, tableId: {}, stageId: {}, newStage: {}", tableId, stageId, updatedStage);
-	    
-	    var responseF =
-	            maybeUserF
-	                .thenApply(Authentication::userExists)
-	                .thenApply(Authorization::canWriteStages)
-	                .thenApply(user -> new UserAndForm<UpdatedStage>(user, updatedStage, UPDATE_VALIDATOR))
-	                .thenApply(UserAndForm::validate)
-	                .thenCompose(
-	                    uaf -> stageService.updateStage(uaf.getUser(), fromStrings(tableId, stageId), uaf.getForm()))
-	                .thenApply(responseProducer::jsonFromObject)
-	                .exceptionally(exceptionHandler::handleException);
+    LOGGER.info(
+        "New update stage request, tableId: {}, stageId: {}, newStage: {}",
+        tableId,
+        stageId,
+        updatedStage);
 
-	        return completeWithFuture(responseF);
+    var responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canWriteStages)
+            .thenApply(user -> new UserAndForm<UpdatedStage>(user, updatedStage, UPDATE_VALIDATOR))
+            .thenApply(UserAndForm::validate)
+            .thenCompose(
+                uaf ->
+                    stageService.updateStage(
+                        uaf.getUser(), fromStrings(tableId, stageId), uaf.getForm()))
+            .thenApply(responseProducer::jsonFromObject)
+            .exceptionally(exceptionHandler::handleException);
+
+    return completeWithFuture(responseF);
   }
-	    
-  private Route deleteStage(CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId) {
 
-	    LOGGER.info("New delete stage request, tableId: {}, stageId: {}", tableId, stageId);
-	    
-	    var responseF =
-	            maybeUserF
-	                .thenApply(Authentication::userExists)
-	                .thenApply(Authorization::canWriteStages)
-	                .thenCompose(user -> stageService.deleteStage(user, fromStrings(tableId, stageId)))
-	                .thenApply(responseProducer::jsonFromObject)
-	                .exceptionally(exceptionHandler::handleException);
+  private Route deleteStage(
+      CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId) {
 
-	        return completeWithFuture(responseF);
+    LOGGER.info("New delete stage request, tableId: {}, stageId: {}", tableId, stageId);
+
+    var responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(Authorization::canWriteStages)
+            .thenCompose(user -> stageService.deleteStage(user, fromStrings(tableId, stageId)))
+            .thenApply(responseProducer::jsonFromObject)
+            .exceptionally(exceptionHandler::handleException);
+
+    return completeWithFuture(responseF);
   }
-  
+
   private Route handleOptionsRequestWithId() {
     return complete(responseProducer.response200(GET, DELETE, PUT));
   }

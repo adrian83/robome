@@ -10,7 +10,6 @@ import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.health.model.AppStatus;
 import com.google.inject.Inject;
-import com.typesafe.config.Config;
 
 import akka.http.javadsl.server.Route;
 
@@ -23,11 +22,10 @@ public class HealthController extends AbstractController {
   @Inject
   public HealthController(
       JwtAuthorizer jwtAuthorizer,
-      Config config,
       ExceptionHandler exceptionHandler,
       Response response,
       Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, config, response);
+    super(jwtAuthorizer, exceptionHandler, response);
     this.routes = routes;
   }
 

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
+import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpHeader;
@@ -38,6 +39,8 @@ public class ExceptionHandler {
 			return responseFactory.response400(((ValidationException) ex).getErrors());
 		} else if (ex instanceof InvalidSignInDataException) {
 			return responseFactory.response400(List.of(new ValidationError("email", "login.invalid", "Invalida email or password")));
+		} else if (ex instanceof UserNotFoundException) {
+			return responseFactory.response401();
 		}
 		return responseFactory.response500(ex.getMessage());
 	}

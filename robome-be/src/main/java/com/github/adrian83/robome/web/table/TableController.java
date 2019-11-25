@@ -29,7 +29,6 @@ import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.table.validation.NewTableValidator;
 import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
 import com.google.inject.Inject;
-import com.typesafe.config.Config;
 
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.Route;
@@ -50,11 +49,10 @@ public class TableController extends AbstractController {
   public TableController(
       TableService tableService,
       JwtAuthorizer jwtAuthorizer,
-      Config config,
       ExceptionHandler exceptionHandler,
       Response response,
        Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, config, response);
+    super(jwtAuthorizer, exceptionHandler, response);
     this.tableService = tableService;
     this.routes = routes;
   }
