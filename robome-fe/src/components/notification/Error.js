@@ -37,6 +37,7 @@ class Error extends Component {
 
         var self = this;
         if(this.props && this.props.errors) {
+            console.log("render errors", this.props.errors);
             var errors = this.props.errors.map(function(error){ 
                 console.log("render error", error);
 
@@ -48,6 +49,9 @@ class Error extends Component {
                     } else if(error.status === 400) {
                         var msgs = error.body.map(v => v.message);
                         return self.renderError(error.id, "Invalida data", msgs);
+                    
+                    }  else if(error.status === 401) {
+                        return self.renderError(error.id, error.body);
                     }
 
                     return self.renderError(error.id, error.body);

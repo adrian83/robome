@@ -12,14 +12,10 @@ class Base extends Component {
     }
 
     registerError(err) {
-
-        var errs = this.state.errors;
-        if(errs){
-            errs.push(err);
-            this.setState({errors: errs});
-        } else {
-            this.setState({errors: [err]});
-        }
+        var errs = this.state && this.state.errors ? this.state.errors : [];
+        console.log("errs", errs);
+        errs.push(err);
+        this.setState({errors: errs});
         console.log("base state", this.state);
     }
 

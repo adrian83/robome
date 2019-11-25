@@ -46,7 +46,7 @@ class Register extends Base {
         }
 
         unsecuredPost(registerBeUrl(), form)
-            .catch(error => self.setState({error: error}));
+        .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
