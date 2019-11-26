@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
-import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.activity.ActivityService;
@@ -30,14 +29,15 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
-import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.common.Routes;
+import com.github.adrian83.robome.web.common.Security;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
+import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class ActivityController extends AbstractController {
+public class ActivityController extends AllDirectives {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
@@ -47,38 +47,44 @@ public class ActivityController extends AbstractController {
   public static final String ACTIVITIES = "activities";
 
   private ActivityService activityService;
+  private ExceptionHandler exceptionHandler;
+  private Security security;
   private Routes routes;
+  private Response response;
 
   @Inject
   public ActivityController(
-      JwtAuthorizer jwtAuthorizer,
       ActivityService activityService,
       ExceptionHandler exceptionHandler,
-      Response responseProducer,
-      Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, responseProducer);
+      Response response,
+      Routes routes,
+      Security security) {
     this.activityService = activityService;
+    this.exceptionHandler = exceptionHandler;
+    this.security = security;
     this.routes = routes;
+    this.response = response;
   }
 
   private TriFunction<String, String, String, Route> getActivityByIdAction =
       (String tableId, String stageId, String activityId) ->
-          jwtSecured(tableId, stageId, activityId, this::getActivityById);
+          security.jwtSecured(tableId, stageId, activityId, this::getActivityById);
 
   private TriFunction<String, String, Class<NewActivity>, Route> persistActivityAction =
       (String tableId, String stageId, Class<NewActivity> clazz) ->
-          jwtSecured(tableId, stageId, clazz, this::persistActivity);
+          security.jwtSecured(tableId, stageId, clazz, this::persistActivity);
 
   private TriFunction<String, String, String, Route> deleteActivityAction =
       (String tableId, String stageId, String activityId) ->
-          jwtSecured(tableId, stageId, activityId, this::deleteActivity);
+          security.jwtSecured(tableId, stageId, activityId, this::deleteActivity);
 
   private TetraFunction<String, String, String, Class<NewActivity>, Route> updateActivityAction =
       (String tableId, String stageId, String activityId, Class<NewActivity> clazz) ->
-          jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
+          security.jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
 
   private BiFunction<String, String, Route> getStageActivitiesAction =
-      (String tableId, String stageId) -> jwtSecured(tableId, stageId, this::getStageActivities);
+      (String tableId, String stageId) ->
+          security.jwtSecured(tableId, stageId, this::getStageActivities);
 
   public Route createRoute() {
     return route(
@@ -121,7 +127,7 @@ public class ActivityController extends AbstractController {
                 user ->
                     activityService.getStageActivities(
                         user, StageKey.fromStrings(tableIdStr, stageIdStr)))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -146,7 +152,7 @@ public class ActivityController extends AbstractController {
             .thenCompose(
                 user ->
                     activityService.deleteActivity(user, fromStrings(tableId, stageId, activityId)))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -166,7 +172,7 @@ public class ActivityController extends AbstractController {
                 user ->
                     activityService.getActivity(
                         user, ActivityKey.fromStrings(tableIdStr, stageIdStr, activityIdStr)))
-            .thenApply(responseProducer::jsonFromOptional)
+            .thenApply(response::jsonFromOptional)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -188,7 +194,7 @@ public class ActivityController extends AbstractController {
                 uaf ->
                     activityService.saveActivity(
                         uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -220,17 +226,17 @@ public class ActivityController extends AbstractController {
                         uaf.getUser(),
                         ActivityKey.fromStrings(tableId, stageId, activityId),
                         uaf.getForm()))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
   private Route handleOptionsRequestWithId() {
-    return complete(responseProducer.response200(GET, DELETE, PUT));
+    return complete(response.response200(GET, DELETE, PUT));
   }
 
   private Route handleOptionsRequest() {
-    return complete(responseProducer.response200(GET, POST));
+    return complete(response.response200(GET, POST));
   }
 }

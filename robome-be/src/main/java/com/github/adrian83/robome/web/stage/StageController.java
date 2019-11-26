@@ -8,10 +8,10 @@ import static com.github.adrian83.robome.util.http.HttpMethod.POST;
 import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
+import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
-import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.common.web.ExceptionHandler;
 import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
@@ -20,8 +20,8 @@ import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TriFunction;
-import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.common.Routes;
+import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
 import com.google.inject.Inject;
@@ -32,7 +32,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StageController extends AbstractController {
+public class StageController extends AllDirectives {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StageController.class);
 
@@ -42,18 +42,23 @@ public class StageController extends AbstractController {
   private static final UpdatedStageValidator UPDATE_VALIDATOR = new UpdatedStageValidator();
 
   private StageService stageService;
+  private ExceptionHandler exceptionHandler;
+  private Response response;
+  private Security security;
   private Routes routes;
 
   @Inject
   public StageController(
       StageService stageService,
-      JwtAuthorizer jwtAuthorizer,
-      Response responseProducer,
+      Response response,
       ExceptionHandler exceptionHandler,
-      Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, responseProducer);
+      Routes routes,
+      Security security) {
     this.stageService = stageService;
+    this.exceptionHandler = exceptionHandler;
+    this.response = response;
     this.routes = routes;
+    this.security = security;
   }
 
   public Route createRoute() {
@@ -72,20 +77,20 @@ public class StageController extends AbstractController {
   }
 
   private Function<String, Route> getTableStagesAction =
-      (var tableId) -> jwtSecured(tableId, this::getTableStages);
+      (var tableId) -> security.jwtSecured(tableId, this::getTableStages);
 
   private BiFunction<String, String, Route> getStageByIdAction =
-      (var tableId, var stageId) -> jwtSecured(tableId, stageId, this::getStageById);
+      (var tableId, var stageId) -> security.jwtSecured(tableId, stageId, this::getStageById);
 
   private BiFunction<String, Class<NewStage>, Route> persistStageAction =
-      (var tableId, var clazz) -> jwtSecured(tableId, clazz, this::persistStage);
+      (var tableId, var clazz) -> security.jwtSecured(tableId, clazz, this::persistStage);
 
   private TriFunction<String, String, Class<UpdatedStage>, Route> updateTableStageAction =
       (var tableId, var stageId, var clazz) ->
-          jwtSecured(tableId, stageId, clazz, this::updateStage);
+          security.jwtSecured(tableId, stageId, clazz, this::updateStage);
 
   private BiFunction<String, String, Route> deleteStageAction =
-      (var tableId, var stageId) -> jwtSecured(tableId, stageId, this::deleteStage);
+      (var tableId, var stageId) -> security.jwtSecured(tableId, stageId, this::deleteStage);
 
   private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
 
@@ -96,7 +101,7 @@ public class StageController extends AbstractController {
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadStages)
             .thenCompose(user -> stageService.getTableStages(user, fromString(tableIdStr)))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -112,7 +117,7 @@ public class StageController extends AbstractController {
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadStages)
             .thenCompose(user -> stageService.getStage(user, fromStrings(tableIdStr, stageIdStr)))
-            .thenApply(responseProducer::jsonFromOptional)
+            .thenApply(response::jsonFromOptional)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -131,7 +136,7 @@ public class StageController extends AbstractController {
             .thenApply(UserAndForm::validate)
             .thenCompose(
                 uaf -> stageService.saveStage(uaf.getUser(), fromString(tableId), uaf.getForm()))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -159,7 +164,7 @@ public class StageController extends AbstractController {
                 uaf ->
                     stageService.updateStage(
                         uaf.getUser(), fromStrings(tableId, stageId), uaf.getForm()))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -175,17 +180,17 @@ public class StageController extends AbstractController {
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
             .thenCompose(user -> stageService.deleteStage(user, fromStrings(tableId, stageId)))
-            .thenApply(responseProducer::jsonFromObject)
+            .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
   }
 
   private Route handleOptionsRequestWithId() {
-    return complete(responseProducer.response200(GET, DELETE, PUT));
+    return complete(response.response200(GET, DELETE, PUT));
   }
 
   private Route handleOptionsRequest() {
-    return complete(responseProducer.response200(GET, POST));
+    return complete(response.response200(GET, POST));
   }
 }

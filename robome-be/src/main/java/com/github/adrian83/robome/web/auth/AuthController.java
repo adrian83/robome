@@ -21,14 +21,15 @@ import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.auth.validation.LoginValidator;
 import com.github.adrian83.robome.web.auth.validation.RegisterValidator;
-import com.github.adrian83.robome.web.common.AbstractController;
 import com.github.adrian83.robome.web.common.Routes;
+import com.github.adrian83.robome.web.common.Security;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
+import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class AuthController extends AbstractController {
+public class AuthController extends AllDirectives {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
@@ -40,6 +41,10 @@ public class AuthController extends AbstractController {
   private static final RegisterValidator REGISTER_VALIDATOR = new RegisterValidator();
 
   private UserService userService;
+  private ExceptionHandler exceptionHandler;
+  private JwtAuthorizer jwtAuthorizer;
+  private Response response;
+  private Security security;
   private Routes routes;
 
   @Inject
@@ -47,10 +52,14 @@ public class AuthController extends AbstractController {
       UserService userService,
       JwtAuthorizer jwtAuthorizer,
       ExceptionHandler exceptionHandler,
-      Response responseProducer,
-      Routes routes) {
-    super(jwtAuthorizer, exceptionHandler, responseProducer);
+      Response response,
+      Routes routes, 
+      Security security) {
+	  this.jwtAuthorizer = jwtAuthorizer;
     this.userService = userService;
+    this.exceptionHandler= exceptionHandler;
+    this.security = security;
+    this.response = response;
     this.routes = routes;
   }
 
@@ -63,10 +72,10 @@ public class AuthController extends AbstractController {
   }
 
   Function<Class<Register>, Route> registerAction =
-      (Class<Register> clazz) -> unsecured(clazz, this::registerUser);
+      (Class<Register> clazz) -> security.unsecured(clazz, this::registerUser);
 
   Function<Class<Login>, Route> loginAction =
-      (Class<Login> clazz) -> unsecured(clazz, this::loginUser);
+      (Class<Login> clazz) -> security.unsecured(clazz, this::loginUser);
 
   private Route loginUser(Login login) {
 
@@ -78,7 +87,7 @@ public class AuthController extends AbstractController {
             .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
             .thenApply(maybeUser -> userWithPasswordExists(maybeUser, login.getPassword()))
             .thenApply(jwtAuthorizer::createJWTToken)
-            .thenApply(token -> responseProducer.response200(jwt(token)))
+            .thenApply(token -> response.response200(security.jwt(token)))
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -93,7 +102,7 @@ public class AuthController extends AbstractController {
             .thenApply(form -> Validation.validate(form, REGISTER_VALIDATOR))
             .thenApply(this::toUser)
             .thenCompose(userService::saveUser)
-            .thenApply(done -> responseProducer.response201())
+            .thenApply(done -> response.response201())
             .exceptionally(exceptionHandler::handleException);
 
     return completeWithFuture(responseF);
@@ -104,10 +113,10 @@ public class AuthController extends AbstractController {
   }
 
   private Route handleRegisterOptionsRequest() {
-    return complete(responseProducer.response200(POST));
+    return complete(response.response200(POST));
   }
 
   private Route handleLoginOptionsRequest() {
-    return complete(responseProducer.response200(POST));
+    return complete(response.response200(POST));
   }
 }
