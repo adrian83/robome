@@ -53,7 +53,7 @@ class CreateTable extends Base {
         securedPost(tablesBeUrl(), authToken, form)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
-            .then(data => self.registerInfo("Table added"))
+            //.then(data => self.registerInfo("Table added"))
             .catch(error => self.registerError(error));
 
         event.preventDefault();
