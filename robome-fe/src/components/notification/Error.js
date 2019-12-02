@@ -56,7 +56,7 @@ class Error extends Component {
 
                     return self.renderError(error.id, error.body);
                 }
-                return self.renderError("abc", error);
+                return self.renderError("abc", "---");
             });
             return(<div>{errors}</div>);
         }
