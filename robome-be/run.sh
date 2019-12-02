@@ -21,8 +21,8 @@ run-docker() {
 
 run-cass() {
 	set -e
-		docker run -p 9043:9042 -v $PWD/infra/cassandra:/var/lib/cassandra -d cassandra:latest
-		echo "Cassandra is listening on port 9043. Data is stored inside 'infra/cassandra' directory"
+		docker run -p 9042:9042 -v $PWD/infra/cassandra:/var/lib/cassandra -d cassandra:latest
+		echo "Cassandra is listening on port 9042. Data is stored inside 'infra/cassandra' directory"
 	set +e
 }
 
@@ -38,7 +38,7 @@ run-cass-init() {
 
 		echo $3
 	
-		#cqlsh 127.0.0.1 9043 -f src/main/resources/cassandra.cql
+		#cqlsh 127.0.0.1 9042 -f src/main/resources/cassandra.cql
 		docker cp src/main/resources/cassandra.cql $3:/file.cql
 		docker exec $3 cqlsh -f /file.cql
    
