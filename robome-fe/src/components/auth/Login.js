@@ -53,7 +53,7 @@ class Login extends Base {
                     console.log(authToken);
                     self.props.onLogin(authToken);
                 } else {
-                    throw "User not authenticated";
+                    throw "User is not authenticated";
                 }
             })
             .catch(error => self.registerError(error));
