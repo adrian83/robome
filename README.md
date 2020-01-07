@@ -1,22 +1,26 @@
 # ROBOME
-Simple CRUD app written in java.
+Simple CRUD application written with: Java (Akka Streams, Akka Http) and JavaScript (React). Apache Cassandra is used as main data storage.
 
 ### Running
 
-#### Backend
-1. Make sure docker is running `sudo systemctl start docker`
-2. Go to robome-be directory `cd robome-be`
-3. StartCassadra docker image `./run.sh run-cass`
-4. Copy name of the Cassandra container `docker ps`
-5. Create tables in Cassandra database `./run.sh run-cass-init <cassandra-container-name>`
-6. Build application `mvn clean install`
-7. Run applicaton `java -jar ./target/robome-1.0-SNAPSHOT.jar`
-8. Open browser and type `http://localhost:6060/health`
+#### Prerequisites
+1. Running with Docker Compose
+- Docker Compose
+2. Running locally
+- Docker
+- Java 11
+- Npm
 
-#### Frontend
-1. Go to robome-fe directory `cd robome-fe`
-2. Run application `npm start`
-3. Open browser and type `http://localhost:3000/`
+#### Running with Docker Compose
+1. Run `docker-compose up`
+2. Navigate in browser to `localhost:3000`
+
+#### Running locally 
+1. Start Infrastructure (Apache Cassandra): `make deps`
+2. Start backend: `make be-all`
+3. Start frontend `make fe-all`
+4. Navigate in browser to `localhost:3000`
+
 
 ### Misc
 
