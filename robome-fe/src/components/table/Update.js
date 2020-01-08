@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import TableLink from '../navigation/TableLink';
 import Error from '../notification/Error';
 import Info from '../notification/Info';
 import Title from '../tiles/Title';
@@ -78,6 +79,10 @@ class UpdateTable extends Base {
 
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
                 <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
+
+                <div>
+                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                </div>
 
                 <form onSubmit={this.handleSubmit}>
 
