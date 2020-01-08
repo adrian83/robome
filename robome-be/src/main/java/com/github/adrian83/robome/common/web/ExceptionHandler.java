@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
+import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpHeader;
@@ -41,6 +42,8 @@ public class ExceptionHandler {
 			return responseFactory.response400(List.of(new ValidationError("email", "login.invalid", "Invalida email or password")));
 		} else if (ex instanceof UserNotFoundException) {
 			return responseFactory.response401();
+		} else if (ex instanceof EmailAlreadyInUseException) {
+			return responseFactory.response400(List.of(new ValidationError("email", "register.invalid", "Email already in use")));
 		}
 		return responseFactory.response500(ex.getMessage());
 	}
