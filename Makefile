@@ -38,6 +38,6 @@ be-build:
 	
 be-run: 
 	echo "running backend"
-	java -jar robome-be/target/robome-1.0-SNAPSHOT-allinone.jar 
+	java -jar robome-be/target/robome-1.0.0-allinone.jar 
 
 be-all: be-test be-build be-run

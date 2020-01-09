@@ -7,4 +7,4 @@ sleep 60
 
 
 # APPLICATION
-java -jar -Dconfig.file=./src/main/resources/compose.conf target/robome-1.0-SNAPSHOT-allinone.jar 
+java -jar -Dconfig.file=./src/main/resources/compose.conf target/robome-1.0.0-allinone.jar 
