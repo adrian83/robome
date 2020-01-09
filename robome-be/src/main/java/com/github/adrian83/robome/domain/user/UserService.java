@@ -12,7 +12,7 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.Done;
-import akka.stream.ActorMaterializer;
+import akka.actor.ActorSystem;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 
@@ -20,12 +20,12 @@ public class UserService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
 	private UserRepository userRepository;
-	private ActorMaterializer actorMaterializer;
+	private ActorSystem actorSystem;
 	
 	@Inject
-	public UserService(UserRepository repository, ActorMaterializer actorMaterializer) {
+	public UserService(UserRepository repository, ActorSystem actorSystem) {
 		this.userRepository = repository;
-		this.actorMaterializer = actorMaterializer;
+		this.actorSystem = actorSystem;
 	}
 	
 	public CompletionStage<Done> saveUser(User newUser) {
@@ -35,14 +35,14 @@ public class UserService {
 
 		CompletableFuture<User> userFuture = CompletableFuture.completedFuture(newUser);
 		
-		userRepository.getByEmail(newUser.getEmail()).runWith(Sink.head(), actorMaterializer)
+		userRepository.getByEmail(newUser.getEmail()).runWith(Sink.head(), actorSystem)
 		.thenApply((maybeUser) -> maybeUser
 				.map((user) -> userFuture.completeExceptionally(new EmailAlreadyInUseException("Email already in use"))));
 		
-		var userSource = Source.fromCompletionStage(userFuture);
+		var userSource = Source.lazyCompletionStage(() -> userFuture);
 		
 		Sink<User, CompletionStage<Done>> sink = userRepository.saveUser();
-		return userSource.runWith(sink, actorMaterializer);
+		return userSource.runWith(sink, actorSystem);
 	}
 	
 	public CompletionStage<Optional<User>> findUserByEmail(String email) {
@@ -50,6 +50,6 @@ public class UserService {
 		LOGGER.info("Looking for a user with email: {}", email);
 		
 		return userRepository.getByEmail(email)
-				.runWith(Sink.head(), actorMaterializer);
+				.runWith(Sink.head(), actorSystem);
 	}
 }

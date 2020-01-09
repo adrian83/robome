@@ -15,7 +15,6 @@ import akka.actor.ActorSystem;
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.marshalling.Marshaller;
-import akka.stream.ActorMaterializer;
 
 public class RobomeModule extends AbstractModule {
 
@@ -36,7 +35,6 @@ public class RobomeModule extends AbstractModule {
     initializeConfig();
     initializeConnectHttp();
     initializeActorSystem();
-    initializeActorMaterializer();
     initializeCassandraSession();
     initializeObjectMapper();
     initializeMarshaller();
@@ -55,10 +53,6 @@ public class RobomeModule extends AbstractModule {
 
   private void initializeActorSystem() {
     this.bind(ActorSystem.class).toInstance(system);
-  }
-
-  private void initializeActorMaterializer() {
-    this.bind(ActorMaterializer.class).toInstance(ActorMaterializer.create(system));
   }
 
   private void initializeCassandraSession() {
