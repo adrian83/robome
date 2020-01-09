@@ -2,10 +2,7 @@ package com.github.adrian83.robome.web.stage;
 
 import static com.github.adrian83.robome.domain.stage.model.StageKey.fromStrings;
 import static com.github.adrian83.robome.domain.table.model.TableKey.fromString;
-import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
-import static com.github.adrian83.robome.util.http.HttpMethod.GET;
-import static com.github.adrian83.robome.util.http.HttpMethod.POST;
-import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
+import static com.github.adrian83.robome.util.http.HttpMethod.*;
 import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import akka.http.javadsl.server.AllDirectives;

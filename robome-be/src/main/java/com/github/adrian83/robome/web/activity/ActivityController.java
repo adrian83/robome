@@ -1,10 +1,6 @@
 package com.github.adrian83.robome.web.activity;
 
-import static com.github.adrian83.robome.domain.activity.model.ActivityKey.fromStrings;
-import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
-import static com.github.adrian83.robome.util.http.HttpMethod.GET;
-import static com.github.adrian83.robome.util.http.HttpMethod.POST;
-import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
+import static com.github.adrian83.robome.util.http.HttpMethod.*;
 import static com.github.adrian83.robome.web.stage.StageController.STAGES;
 import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
@@ -151,7 +147,7 @@ public class ActivityController extends AllDirectives {
             .thenApply(Authorization::canWriteStages)
             .thenCompose(
                 user ->
-                    activityService.deleteActivity(user, fromStrings(tableId, stageId, activityId)))
+                    activityService.deleteActivity(user, ActivityKey.fromStrings(tableId, stageId, activityId)))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
