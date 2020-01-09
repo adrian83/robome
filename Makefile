@@ -40,4 +40,8 @@ be-run:
 	echo "running backend"
 	java -jar robome-be/target/robome-1.0.0-allinone.jar 
 
+be-check:
+	echo "checking backend with pmd"
+	cd robome-be && mvn pmd:check
+
 be-all: be-test be-build be-run
