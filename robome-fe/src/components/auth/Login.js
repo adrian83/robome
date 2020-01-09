@@ -7,7 +7,7 @@ import Error from '../notification/Error';
 import Title from '../tiles/Title';
 import Base from '../Base';
 
-import { unsecuredPost } from '../../web/ajax';
+import { unsecuredPost, ResponseError } from '../../web/ajax';
 import { loginBeUrl } from '../../web/url';
 
 
@@ -53,7 +53,7 @@ class Login extends Base {
                     console.log(authToken);
                     self.props.onLogin(authToken);
                 } else {
-                    throw "User is not authenticated";
+                    throw new ResponseError(401, "User is not authenticated");
                 }
             })
             .catch(error => self.registerError(error));

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Error from '../notification/Error';
+import Info from '../notification/Info';
 import Title from '../tiles/Title';
 import Base from '../Base';
 
@@ -46,6 +47,7 @@ class Register extends Base {
         }
 
         unsecuredPost(registerBeUrl(), form)
+        .then(data => self.registerInfo("Registration completed. Please go to 'Login' page"))
         .catch(error => self.registerError(error));
 
         event.preventDefault();
@@ -57,6 +59,7 @@ class Register extends Base {
                 <Title title="Register" description="create account in robome"></Title>
 
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <form onSubmit={this.handleSubmit}>
 
