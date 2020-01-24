@@ -6,6 +6,9 @@ import PropTypes from 'prop-types';
 import Error from '../notification/Error';
 import Info from '../notification/Info';
 import Title from '../tiles/Title';
+import EditLink from '../tiles/EditLink';
+import DeleteLink from '../tiles/DeleteLink';
+import CreateLink from '../tiles/CreateLink';
 import Base from '../Base';
 
 import securedGet, { securedDelete } from '../../web/ajax';
@@ -46,7 +49,7 @@ class ListTables extends Base {
         }
     }
 
-    renderTableRow(no, table) {
+    renderTableRow(table) {
         const tableId = table.key.tableId;
         const title = table.title;
         const description = table.description;
@@ -56,12 +59,11 @@ class ListTables extends Base {
 
         return (
             <tr key={tableId}>
-                <th scope="row">{no++}</th>
                 <td><Link to={showTabUrl}>{title}</Link></td>
                 <td>{description}</td>
                 <td>
-                    <Link to={editTabUrl} >edit</Link>&nbsp;&nbsp;&nbsp;
-                    <Link to="" onClick={this.delete(table)}>delete</Link>
+                    <EditLink to={editTabUrl}></EditLink>
+                    <DeleteLink to="" onClick={this.delete(table)}></DeleteLink>
                 </td>
             </tr>);
     }
@@ -70,9 +72,8 @@ class ListTables extends Base {
         const self = this;
         const createTabUrl = createTableUrl();
 
-        var no = 1
         const tables = (this.state && this.state.tables) ? this.state.tables : [];
-        var rows = tables.map(table => self.renderTableRow(no++, table));
+        var rows = tables.map(table => self.renderTableRow(table));
 
         return (
             <div>
@@ -82,14 +83,13 @@ class ListTables extends Base {
                 <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <div>
-                    <Link to={createTabUrl}>Create table</Link>
+                    <CreateLink text="create table" to={createTabUrl}></CreateLink>
                 </div>
                 <br/><br/>
                 <div>
                     <table className="table table-striped">
                         <thead>
                             <tr>
-                                <th scope="col">#</th>
                                 <th scope="col">Title</th>
                                 <th scope="col">Description</th>
                                 <th scope="col">Operations</th>

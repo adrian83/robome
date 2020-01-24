@@ -2,13 +2,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import TableLink from '../navigation/TableLink';
 import Error from '../notification/Error';
+import BackLink from '../tiles/BackLink';
 import Title from '../tiles/Title';
 import Base from '../Base';
 
 import securedGet, { securedPut } from '../../web/ajax';
-import { stageBeUrl } from '../../web/url';
+import { stageBeUrl, showTableUrl } from '../../web/url';
 
 class UpdateStage extends Base {
 
@@ -72,6 +72,8 @@ class UpdateStage extends Base {
             return (<div>waiting for data</div>);
         }
 
+        const showTabUrl = showTableUrl(this.props.match.params.tableId);
+
         return (
             <div>
                 <Title title={this.state.stage.title} description=""></Title>
@@ -79,8 +81,10 @@ class UpdateStage extends Base {
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
 
                 <div>
-                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                    <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
+
+                <br/>
 
                 <form onSubmit={this.handleSubmit}>
 

@@ -88,7 +88,7 @@ class CreateTable extends Base {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="descriptionInput">Title</label>
+                        <label htmlFor="descriptionInput">Description</label>
                         <input type="description" 
                                 className="form-control" 
                                 id="descriptionInput" 

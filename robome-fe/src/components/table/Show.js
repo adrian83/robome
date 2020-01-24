@@ -6,6 +6,9 @@ import PropTypes from 'prop-types';
 import Error from '../notification/Error';
 import Info from '../notification/Info';
 import Title from '../tiles/Title';
+import EditLink from '../tiles/EditLink';
+import DeleteLink from '../tiles/DeleteLink';
+import CreateLink from '../tiles/CreateLink';
 import Base from '../Base';
 
 import securedGet, { securedDelete } from '../../web/ajax';
@@ -64,8 +67,8 @@ class ShowTable extends Base {
                 <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
                 
                 <div>
-                    <Link to={editTabUrl}>edit</Link>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <Link to={newStgUrl}>new stage</Link>
+                    <EditLink to={editTabUrl} text="edit table"></EditLink>
+                    <CreateLink to={newStgUrl} text="new stage"></CreateLink>
                 </div>
                 <br/><br/>
                 {stages}
@@ -124,16 +127,23 @@ class ShowTable extends Base {
         
         return (
             <div key={stage.title}>
-                <h3>{stage.title}</h3>
-                <div>
-                    <Link to={newActivityUrl}>new activity</Link>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <Link to={updateStageUrl}>update</Link>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <Link to="" onClick={this.deleteStage(stage.key)}>delete</Link>
+                <div class="border border-primary rounded">
+                    <br/>
+
+                    <h3>{stage.title}</h3>
+
+                    <div>
+                        <CreateLink to={newActivityUrl} text="new activity"></CreateLink>
+                        <EditLink to={updateStageUrl} text="update stage"></EditLink>
+                        <DeleteLink onClick={this.deleteStage(stage.key)} text="delete stage"></DeleteLink>
+                    </div>
+                    <br/>
                 </div>
+
                 <br/>
-                <h4>
-                    {activities}
-                </h4>
+
+                <h4>{activities}</h4>
+
                 <br/><br/>
             </div>);
     }
@@ -148,9 +158,11 @@ class ShowTable extends Base {
                 key={actKey.activityId}>
                 
                 <div>
-                    {activity.name}&nbsp;&nbsp;
-                    <Link to={updateActUrl}>[e]</Link>&nbsp;&nbsp;
-                    <Link to="" onClick={this.deleteActivity(actKey)}>[x]</Link>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    {activity.name}
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <EditLink to={updateActUrl}></EditLink>
+                    <DeleteLink onClick={this.deleteActivity(actKey)}></DeleteLink>
                 </div>
             </span>
         );

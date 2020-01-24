@@ -3,13 +3,13 @@ import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-import TableLink from '../navigation/TableLink';
 import Error from '../notification/Error';
+import BackLink from '../tiles/BackLink';
 import Title from '../tiles/Title';
 import Base from '../Base';
 
 import { securedPost } from '../../web/ajax';
-import { activitiesBeUrl, editActivityUrl } from '../../web/url';
+import { activitiesBeUrl, editActivityUrl, showTableUrl } from '../../web/url';
 
 
 class CreateActivity extends Base {
@@ -63,6 +63,8 @@ class CreateActivity extends Base {
             return (<Redirect to={editActUrl} />);
         }
 
+        const showTabUrl = showTableUrl(this.props.match.params.tableId);
+
         return (
             <div>
                 <Title title="Create new activity" description="Fill basic data"></Title>
@@ -70,8 +72,10 @@ class CreateActivity extends Base {
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
                 
                 <div>
-                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                    <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
+
+                <br/>
 
                 <form onSubmit={this.handleSubmit}>
 

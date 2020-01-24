@@ -2,13 +2,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-import TableLink from '../navigation/TableLink';
 import Error from '../notification/Error';
+import BackLink from '../tiles/BackLink';
 import Title from '../tiles/Title';
 import Base from '../Base';
 
 import securedGet, { securedPut } from '../../web/ajax';
-import { activityBeUrl } from '../../web/url';
+import { activityBeUrl, showTableUrl } from '../../web/url';
 
 
 class UpdateActivity extends Base {
@@ -73,6 +73,8 @@ class UpdateActivity extends Base {
             return (<div>waiting for data</div>);
         }
 
+        const showTabUrl = showTableUrl(this.props.match.params.tableId);
+
         return (
             <div>
                 <Title title={this.state.activity.name} description=""></Title>
@@ -80,7 +82,7 @@ class UpdateActivity extends Base {
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
 
                 <div>
-                    <TableLink text="show table" tableId={this.props.match.params.tableId}></TableLink>
+                    <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
 
                 <form onSubmit={this.handleSubmit}>
