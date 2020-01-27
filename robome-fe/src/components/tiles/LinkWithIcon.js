@@ -5,10 +5,10 @@ class LinkWithIcon extends Component {
 
     render() {
         return (
-            <span>
+            <span style={{marginLeft: '10px', marginRight: '10px'}} >
                 <Link to={this.props.to} 
                         onClick={this.props.onClick}>
-                    <i class={this.props.icon}>&nbsp;&nbsp;{this.props.text}&nbsp;&nbsp;</i>
+                    <i class={this.props.icon}>{this.props.text}</i>
                 </Link>
             </span>);
     }
