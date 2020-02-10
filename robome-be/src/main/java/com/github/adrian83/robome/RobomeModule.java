@@ -6,6 +6,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.AbstractModule;
 import com.typesafe.config.Config;
@@ -79,6 +80,7 @@ public class RobomeModule extends AbstractModule {
     var mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     mapper.registerModule(new JavaTimeModule());
+    mapper.registerModule(new Jdk8Module());
     return mapper;
   }
 }
