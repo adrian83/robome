@@ -1,14 +1,15 @@
 package com.github.adrian83.robome.web.auth.validation;
 
+import static com.github.adrian83.robome.web.common.Validation.check;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.common.web.ValidationError;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.web.auth.model.Login;
+import com.github.adrian83.robome.web.common.ValidationError;
 import com.google.common.base.Strings;
 
 public class LoginValidator implements Validator<Login> {
@@ -29,8 +30,8 @@ public class LoginValidator implements Validator<Login> {
   @Override
   public List<ValidationError> validate(Login form) {
     return Stream.of(
-            Validation.check(form.getEmail(), EMPTY_EMAIL, Strings::isNullOrEmpty),
-            Validation.check(form.getPassword(), EMPTY_PASSWORD, Strings::isNullOrEmpty))
+            check(form.getEmail(), EMPTY_EMAIL, Strings::isNullOrEmpty),
+            check(form.getPassword(), EMPTY_PASSWORD, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());

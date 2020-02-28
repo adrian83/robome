@@ -1,14 +1,15 @@
 package com.github.adrian83.robome.web.activity.validation;
 
+import static com.github.adrian83.robome.web.common.Validation.check;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.common.web.ValidationError;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.common.Validator;
+import com.github.adrian83.robome.web.common.ValidationError;
 import com.google.common.base.Strings;
 
 public class NewActivityValidator implements Validator<NewActivity> {
@@ -22,7 +23,7 @@ public class NewActivityValidator implements Validator<NewActivity> {
 
   @Override
   public List<ValidationError> validate(NewActivity form) {
-    return Stream.of(Validation.check(form.getName(), EMPTY_NAME, Strings::isNullOrEmpty))
+    return Stream.of(check(form.getName(), EMPTY_NAME, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());

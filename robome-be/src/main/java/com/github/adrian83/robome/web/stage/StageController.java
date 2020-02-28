@@ -9,14 +9,14 @@ import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
-import com.github.adrian83.robome.common.web.ExceptionHandler;
-import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TriFunction;
+import com.github.adrian83.robome.web.common.ExceptionHandler;
+import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
@@ -90,7 +90,6 @@ public class StageController extends AllDirectives {
       (var tableId, var stageId) -> security.jwtSecured(tableId, stageId, this::deleteStage);
 
   private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
-
     LOGGER.info("New list stages request, tableId: {}", tableIdStr);
 
     var responseF =
@@ -106,7 +105,6 @@ public class StageController extends AllDirectives {
 
   private Route getStageById(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
-
     LOGGER.info("New get stage by id request, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
     var responseF =
@@ -122,7 +120,6 @@ public class StageController extends AllDirectives {
 
   private Route persistStage(
       CompletionStage<Optional<User>> maybeUserF, String tableId, NewStage newStage) {
-
     LOGGER.info("New persist stage request, tableId: {}, newStage: {}", tableId, newStage);
 
     var responseF =
@@ -169,7 +166,6 @@ public class StageController extends AllDirectives {
 
   private Route deleteStage(
       CompletionStage<Optional<User>> maybeUserF, String tableId, String stageId) {
-
     LOGGER.info("New delete stage request, tableId: {}, stageId: {}", tableId, stageId);
 
     var responseF =

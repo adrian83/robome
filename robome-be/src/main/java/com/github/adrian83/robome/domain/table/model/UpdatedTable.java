@@ -25,5 +25,4 @@ public class UpdatedTable {
   public String getDescription() {
     return description;
   }
-
 }

@@ -1,11 +1,13 @@
 package com.github.adrian83.robome.domain.stage.model;
 
+import static java.util.UUID.randomUUID;
+
 import java.util.UUID;
 
 import com.github.adrian83.robome.domain.table.model.TableKey;
 
 public class StageKey extends TableKey {
-	
+
   private UUID stageId;
 
   public static StageKey fromStrings(String tableIdStr, String stageIdStr) {
@@ -13,7 +15,7 @@ public class StageKey extends TableKey {
   }
 
   public StageKey(TableKey tableKey) {
-    this(tableKey.getTableId(), UUID.randomUUID());
+    this(tableKey.getTableId(), randomUUID());
   }
 
   public StageKey(UUID tableId, UUID stageId) {

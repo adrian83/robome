@@ -43,10 +43,8 @@ public class TableService {
   }
 
   public CompletionStage<Table> saveTable(User user, NewTable newTable) {
-
     TableEntity entity =
         new TableEntity(user.getId(), newTable.getTitle(), newTable.getDescription());
-
     Sink<TableEntity, CompletionStage<Table>> sink =
         tableRepository
             .saveTable()
@@ -71,7 +69,6 @@ public class TableService {
   }
 
   public CompletionStage<List<Table>> getTables(User user) {
-
     return tableRepository
         .getUserTables(user.getId())
         .map(this::toTable)

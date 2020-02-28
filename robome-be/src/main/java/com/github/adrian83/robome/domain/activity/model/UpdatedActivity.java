@@ -1,7 +1,5 @@
 package com.github.adrian83.robome.domain.activity.model;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

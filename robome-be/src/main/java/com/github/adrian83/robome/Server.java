@@ -27,47 +27,54 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class Server {
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
-	@SafeVarargs
-	private static Route createRoutes(Supplier<Route>... controllers) {
-		return Arrays.stream(controllers).reduce((r1, r2) -> () -> r1.get().orElse(r2.get())).get().get();
-	}
+  private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
-	public static void main(String[] args) throws Exception {
-		
-		LOGGER.info("starting server");
+  @SafeVarargs
+  private static Route createRoutes(Supplier<Route>... controllers) {
+    return Arrays.stream(controllers)
+        .reduce((r1, r2) -> () -> r1.get().orElse(r2.get()))
+        .get()
+        .get();
+  }
 
-		Injector injector = Guice.createInjector(new RobomeModule());
+  public static void main(String[] args) throws Exception {
 
-		TableController tableController = injector.getInstance(TableController.class);
-		StageController stageController = injector.getInstance(StageController.class);
-		ActivityController activityController = injector.getInstance(ActivityController.class);
-		AuthController authController = injector.getInstance(AuthController.class);
-		HealthController healthController = injector.getInstance(HealthController.class);
+    LOGGER.info("starting server");
 
-		Route route = createRoutes(
-				() -> tableController.createRoute(), 
-				() -> stageController.createRoute(),
-				() -> activityController.createRoute(),
-				() -> authController.createRoute(),
-				() -> healthController.createRoute()
-				);
+    Injector injector = Guice.createInjector(new RobomeModule());
 
-		ActorSystem system = injector.getInstance(ActorSystem.class);
-		Materializer materializer = Materializer.createMaterializer(system);
+    TableController tableController = injector.getInstance(TableController.class);
+    StageController stageController = injector.getInstance(StageController.class);
+    ActivityController activityController = injector.getInstance(ActivityController.class);
+    AuthController authController = injector.getInstance(AuthController.class);
+    HealthController healthController = injector.getInstance(HealthController.class);
 
-		final Http http = Http.get(system);
-		ConnectHttp connect = injector.getInstance(ConnectHttp.class);
+    Route route =
+        createRoutes(
+            () -> tableController.createRoute(),
+            () -> stageController.createRoute(),
+            () -> activityController.createRoute(),
+            () -> authController.createRoute(),
+            () -> healthController.createRoute());
 
-		final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = route.flow(system, materializer);
-		final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow, connect, materializer);
+    ActorSystem system = injector.getInstance(ActorSystem.class);
+    Materializer materializer = Materializer.createMaterializer(system);
 
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			binding.thenCompose(ServerBinding::unbind).thenAccept(unbound -> system.terminate());
-		}));
+    final Http http = Http.get(system);
+    ConnectHttp connect = injector.getInstance(ConnectHttp.class);
 
-	}
+    final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = route.flow(system, materializer);
+    final CompletionStage<ServerBinding> binding =
+        http.bindAndHandle(routeFlow, connect, materializer);
 
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  binding
+                      .thenCompose(ServerBinding::unbind)
+                      .thenAccept(unbound -> system.terminate());
+                }));
+  }
 }

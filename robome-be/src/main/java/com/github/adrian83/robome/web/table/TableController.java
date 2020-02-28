@@ -15,14 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
-import com.github.adrian83.robome.common.web.ExceptionHandler;
-import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.TableService;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.web.common.ExceptionHandler;
+import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.table.validation.NewTableValidator;
@@ -36,7 +36,7 @@ import akka.http.javadsl.server.Route;
 public class TableController extends AllDirectives {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
-	
+
   public static final String TABLES = "tables";
 
   private static final UpdatedTableValidator UPDATE_VALIDATOR = new UpdatedTableValidator();
@@ -53,10 +53,10 @@ public class TableController extends AllDirectives {
       TableService tableService,
       ExceptionHandler exceptionHandler,
       Response response,
-       Routes routes, 
-       Security security) {
+      Routes routes,
+      Security security) {
     this.tableService = tableService;
-    this.exceptionHandler= exceptionHandler;
+    this.exceptionHandler = exceptionHandler;
     this.response = response;
     this.routes = routes;
     this.security = security;
@@ -64,7 +64,7 @@ public class TableController extends AllDirectives {
 
   public Route createRoute() {
     return route(
-    	put(routes.prefixVarFormSlash(TABLES, UpdatedTable.class, updateTableAction)),
+        put(routes.prefixVarFormSlash(TABLES, UpdatedTable.class, updateTableAction)),
         options(routes.prefixSlash(TABLES, handleOptionsRequest())),
         post(routes.prefixFormSlash(TABLES, NewTable.class, createTableAction)),
         get(routes.prefixSlash(TABLES, security.jwtSecured(this::getTables))),
@@ -73,7 +73,8 @@ public class TableController extends AllDirectives {
         delete(routes.prefixVarSlash(TABLES, deleteTableAction)));
   }
 
-  Function<String, Route> getTableAction = (var tableId) -> security.jwtSecured(tableId, this::getTableById);
+  Function<String, Route> getTableAction =
+      (var tableId) -> security.jwtSecured(tableId, this::getTableById);
 
   Function<String, Route> deleteTableAction =
       (var tableId) -> security.jwtSecured(tableId, this::deleteTable);
@@ -85,8 +86,7 @@ public class TableController extends AllDirectives {
       (var clazz) -> security.jwtSecured(clazz, this::persistTable);
 
   private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
-	  
-	  LOGGER.info("New list table request");
+    LOGGER.info("New list table request");
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -100,8 +100,7 @@ public class TableController extends AllDirectives {
   }
 
   private Route getTableById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
-	  
-	  LOGGER.info("New find table request, tableId: {}", tableIdStr);
+    LOGGER.info("New find table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -115,8 +114,7 @@ public class TableController extends AllDirectives {
   }
 
   private Route deleteTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
-	  
-	  LOGGER.info("New delete table request, tableId: {}", tableIdStr);
+    LOGGER.info("New delete table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -131,9 +129,8 @@ public class TableController extends AllDirectives {
 
   private Route updateTable(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, UpdatedTable updatedTable) {
+    LOGGER.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
 
-	  LOGGER.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
-	  
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
@@ -151,9 +148,8 @@ public class TableController extends AllDirectives {
   }
 
   private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
+    LOGGER.info("New persist table request, table: {}", newTable);
 
-	  LOGGER.info("New persist table request, table: {}", newTable);
-	  
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)

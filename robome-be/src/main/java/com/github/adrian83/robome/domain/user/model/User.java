@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.domain.user.model;
 
-import static com.github.adrian83.robome.common.time.TimeUtils.utcNow;
+import static com.github.adrian83.robome.common.Time.utcNow;
 import static java.util.UUID.randomUUID;
 
 import java.time.LocalDateTime;
@@ -62,8 +62,18 @@ public class User {
 
   @Override
   public String toString() {
-	return "User [id=" + id + ", email=" + email + ", passwordHash=" + passwordHash + ", createdAt=" + createdAt
-			+ ", modifiedAt=" + modifiedAt + ", roles=" + roles + "]";
+    return "User [id="
+        + id
+        + ", email="
+        + email
+        + ", passwordHash="
+        + passwordHash
+        + ", createdAt="
+        + createdAt
+        + ", modifiedAt="
+        + modifiedAt
+        + ", roles="
+        + roles
+        + "]";
   }
-  
 }

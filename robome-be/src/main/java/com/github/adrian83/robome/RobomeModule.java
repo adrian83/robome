@@ -30,7 +30,7 @@ public class RobomeModule extends AbstractModule {
   private final ActorSystem system = ActorSystem.create(ACTOR_SYSTEM_NAME);
 
   private Config config;
-  
+
   @Override
   protected void configure() {
     initializeConfig();
@@ -42,8 +42,8 @@ public class RobomeModule extends AbstractModule {
   }
 
   private void initializeConfig() {
-	ConfigFactory.invalidateCaches();
-	config = ConfigFactory.load();
+    ConfigFactory.invalidateCaches();
+    config = ConfigFactory.load();
     this.bind(Config.class).toInstance(config);
   }
 

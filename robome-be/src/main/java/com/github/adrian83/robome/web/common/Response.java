@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.common.web;
+package com.github.adrian83.robome.web.common;
 
 import static com.github.adrian83.robome.util.http.Header.AUTHORIZATION;
 import static com.github.adrian83.robome.util.http.Header.CONTENT_TYPE;
@@ -43,14 +43,14 @@ public class Response {
   public HttpResponse jsonFromObject(Object obj) {
     return HttpResponse.create()
         .withStatus(StatusCodes.OK)
-        .withEntity(ContentTypes.APPLICATION_JSON, toBytes(obj))
+        .withEntity(ContentTypes.APPLICATION_JSON, toJsonString(obj))
         .addHeaders(corsHeaders());
   }
 
   public HttpResponse response400(List<ValidationError> validationErrors) {
     return HttpResponse.create()
         .withStatus(StatusCodes.BAD_REQUEST)
-        .withEntity(ContentTypes.APPLICATION_JSON, toBytes(validationErrors))
+        .withEntity(ContentTypes.APPLICATION_JSON, toJsonString(validationErrors))
         .addHeaders(corsHeaders());
   }
 
@@ -85,7 +85,7 @@ public class Response {
   public HttpResponse response500(String msg) {
 	return HttpResponse.create()
 	    .withStatus(StatusCodes.INTERNAL_SERVER_ERROR)
-	    .withEntity(ContentTypes.TEXT_PLAIN_UTF8, toBytes(msg))
+	    .withEntity(ContentTypes.TEXT_PLAIN_UTF8, toJsonString(msg))
 	    .addHeaders(corsHeaders());
   }
   
@@ -111,7 +111,7 @@ public class Response {
     return Arrays.asList(headers);
   }
 
-  protected String toBytes(Object object) {
+  protected String toJsonString(Object object) {
     try {
       return objectMapper.writeValueAsString(object);
     } catch (JsonProcessingException e) {

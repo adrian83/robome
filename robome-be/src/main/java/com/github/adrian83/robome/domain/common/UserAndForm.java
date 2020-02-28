@@ -1,7 +1,7 @@
 package com.github.adrian83.robome.domain.common;
 
-import com.github.adrian83.robome.common.web.Validation;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.web.common.Validation;
 
 public class UserAndForm<T> {
 

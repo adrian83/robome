@@ -1,5 +1,9 @@
 package com.github.adrian83.robome.domain.table;
 
+import static com.github.adrian83.robome.common.Time.toDate;
+import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
+import static com.github.adrian83.robome.domain.table.model.TableState.valueOf;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -12,10 +16,8 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
-import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
-import com.github.adrian83.robome.domain.table.model.TableState;
 import com.google.inject.Inject;
 
 import akka.Done;
@@ -40,6 +42,14 @@ public class TableRepository {
   private static final String UPDATE_STMT =
       "UPDATE robome.tables SET title = ?, description = ?, state = ?, modified_at = ? WHERE table_id = ? AND user_id = ?";
 
+  private static final String TABLE_ID_COL = "table_id";
+  private static final String USER_ID_COL = "user_id";
+  private static final String TITLE_COL = "title";
+  private static final String DESCRIPTION_COL = "description";
+  private static final String STATE_COL = "state";
+  private static final String CREATED_AT_COL = "created_at";
+  private static final String MODIFIED_AT_COL = "modified_at";
+
   private Session session;
 
   @Inject
@@ -48,13 +58,11 @@ public class TableRepository {
   }
 
   public Sink<TableEntity, CompletionStage<Done>> saveTable() {
-
     PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
     return CassandraSink.create(1, preparedStatement, this::createInserBoundStatement, session);
   }
 
   public Sink<TableKey, CompletionStage<Done>> deleteTable(TableKey tableId, UUID userId) {
-
     PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
     BiFunction<TableKey, PreparedStatement, BoundStatement> boundStmt =
         (tabId, stmt) -> stmt.bind(tabId.getTableId(), userId);
@@ -62,7 +70,6 @@ public class TableRepository {
   }
 
   public Sink<TableEntity, CompletionStage<Done>> updateTable(TableEntity table) {
-
     PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
     BiFunction<TableEntity, PreparedStatement, BoundStatement> boundStmt =
         (tab, stmt) ->
@@ -70,15 +77,14 @@ public class TableRepository {
                 tab.getTitle(),
                 tab.getDescription(),
                 tab.getState().name(),
-                TimeUtils.toDate(tab.getModifiedAt()),
+                toDate(tab.getModifiedAt()),
                 table.getKey().getTableId(),
                 table.getUserId());
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 
   public Source<Optional<TableEntity>, NotUsed> getById(UUID userId, UUID tableId) {
-    PreparedStatement preparedStatement = session.prepare(SELECT_BY_ID_STMT);
-    BoundStatement bound = preparedStatement.bind(userId, tableId);
+    BoundStatement bound = session.prepare(SELECT_BY_ID_STMT).bind(userId, tableId);
     ResultSet result = session.execute(bound);
     return Source.single(result)
         .map(ResultSet::one)
@@ -97,27 +103,26 @@ public class TableRepository {
     return CassandraSource.create(bound, session).map(this::fromRow);
   }
 
-  private BoundStatement createInserBoundStatement(TableEntity table, PreparedStatement preparedStmt) {
-
+  private BoundStatement createInserBoundStatement(
+      TableEntity table, PreparedStatement preparedStmt) {
     return preparedStmt.bind(
         table.getKey().getTableId(),
         table.getUserId(),
         table.getTitle(),
         table.getDescription(),
         table.getState().name(),
-        TimeUtils.toDate(table.getCreatedAt()),
-        TimeUtils.toDate(table.getModifiedAt()));
+        toDate(table.getCreatedAt()),
+        toDate(table.getModifiedAt()));
   }
 
   private TableEntity fromRow(Row row) {
-
     return new TableEntity(
-        new TableKey(row.get("table_id", UUID.class)),
-        row.getUUID("user_id"),
-        row.getString("title"),
-        row.getString("description"),
-        TableState.valueOf(row.getString("state")),
-        TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
-        TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
+        new TableKey(row.get(TABLE_ID_COL, UUID.class)),
+        row.getUUID(USER_ID_COL),
+        row.getString(TITLE_COL),
+        row.getString(DESCRIPTION_COL),
+        valueOf(row.getString(STATE_COL)),
+        toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
+        toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
   }
 }

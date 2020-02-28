@@ -1,5 +1,9 @@
 package com.github.adrian83.robome.auth;
 
+import static com.github.adrian83.robome.common.Strings.fromBegining;
+import static com.github.adrian83.robome.common.Strings.fromEnd;
+import static java.util.Optional.ofNullable;
+
 import java.util.Optional;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -9,6 +13,8 @@ import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.github.adrian83.robome.domain.user.model.User;
 
 public final class Authentication {
+
+  private static final int MIN_PASSWORD_LENGTH = 3;
 
   private Authentication() {}
 
@@ -27,19 +33,14 @@ public final class Authentication {
   }
 
   public static String hidePassword(String password) {
-    if (password == null) {
-      return "";
-    }
 
-    var len = password.length();
-
-    if (len < 3) {
-      return "**";
-    } else {
-      var begining = password.substring(0, 1);
-      var end = password.substring(len - 2, len - 1);
-      var stars = new String(new char[len - 2]).replace("\0", "*");
-      return begining + stars + end;
-    }
+    return ofNullable(
+            password != null && password.length() > MIN_PASSWORD_LENGTH ? password.length() : null)
+        .map(
+            (len) -> {
+              var stars = new String(new char[len - 2]).replace("\0", "*");
+              return fromBegining(password, 1) + stars + fromEnd(password, 1);
+            })
+        .orElse("**");
   }
 }

@@ -3,7 +3,7 @@ package com.github.adrian83.robome.domain.table.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.github.adrian83.robome.common.time.TimeUtils;
+import com.github.adrian83.robome.common.Time;
 
 public class TableEntity {
 
@@ -22,8 +22,8 @@ public class TableEntity {
         title,
         description,
         TableState.ACTIVE,
-        TimeUtils.utcNow(),
-        TimeUtils.utcNow());
+        Time.utcNow(),
+        Time.utcNow());
   }
 
   public TableEntity(
@@ -46,7 +46,7 @@ public class TableEntity {
 
   public static TableEntity newTable(TableKey id, UUID userId, String title, String description) {
     return new TableEntity(
-        id, userId, title, description, TableState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+        id, userId, title, description, TableState.ACTIVE, Time.utcNow(), Time.utcNow());
   }
 
   public static TableEntity updatedTable(
@@ -56,7 +56,7 @@ public class TableEntity {
       String description,
       TableState state,
       LocalDateTime createdAt) {
-    return new TableEntity(id, userId, title, description, state, createdAt, TimeUtils.utcNow());
+    return new TableEntity(id, userId, title, description, state, createdAt, Time.utcNow());
   }
 
   public TableKey getKey() {
@@ -86,5 +86,4 @@ public class TableEntity {
   public LocalDateTime getModifiedAt() {
     return modifiedAt;
   }
-
 }

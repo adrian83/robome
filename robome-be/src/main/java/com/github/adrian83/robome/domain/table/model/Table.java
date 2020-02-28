@@ -18,7 +18,6 @@ public class Table {
   private LocalDateTime modifiedAt;
   private List<Stage> stages;
 
-
   public Table(
       TableKey key,
       UUID userId,
@@ -37,18 +36,19 @@ public class Table {
     this.modifiedAt = modifiedAt;
     this.stages = new ArrayList<Stage>();
   }
-  
+
   public Table withStages(List<Stage> stages) {
-	  Table table = new Table(
-		      this.key,
-		      this.userId,
-		      this.title,
-		      this.description,
-		      this.state,
-		      this.createdAt,
-		      this.modifiedAt);
-	  table.stages = stages;
-	  return table;
+    Table table =
+        new Table(
+            this.key,
+            this.userId,
+            this.title,
+            this.description,
+            this.state,
+            this.createdAt,
+            this.modifiedAt);
+    table.stages = stages;
+    return table;
   }
 
   public TableKey getKey() {
@@ -79,8 +79,7 @@ public class Table {
     return modifiedAt;
   }
 
-public List<Stage> getStages() {
-	return stages;
-}
-  
+  public List<Stage> getStages() {
+    return stages;
+  }
 }

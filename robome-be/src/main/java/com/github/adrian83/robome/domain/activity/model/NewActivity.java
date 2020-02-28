@@ -1,7 +1,5 @@
 package com.github.adrian83.robome.domain.activity.model;
 
-
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -20,5 +18,4 @@ public class NewActivity {
   public String getName() {
     return name;
   }
-
 }

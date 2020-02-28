@@ -1,5 +1,7 @@
 package com.github.adrian83.robome.domain.table.model;
 
+import static java.util.UUID.randomUUID;
+
 import java.util.UUID;
 
 public class TableKey {
@@ -12,7 +14,7 @@ public class TableKey {
   }
 
   public TableKey() {
-    this(UUID.randomUUID());
+    this(randomUUID());
   }
 
   public static TableKey fromString(String uuidStr) {

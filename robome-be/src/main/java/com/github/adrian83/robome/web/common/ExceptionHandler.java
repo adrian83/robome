@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.common.web;
+package com.github.adrian83.robome.web.common;
 
 import java.util.Arrays;
 import java.util.List;
@@ -7,8 +7,6 @@ import java.util.concurrent.CompletionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
@@ -18,46 +16,39 @@ import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
 
 public class ExceptionHandler {
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHandler.class);
 
-	private ObjectMapper objectMapper;
-	private Response responseFactory;
+  private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHandler.class);
 
-	@Inject
-	public ExceptionHandler(ObjectMapper objectMapper, Response responseFactory) {
-		this.objectMapper = objectMapper;
-		this.responseFactory = responseFactory;
-	}
+  private static final ValidationError INVALID_EMAIL_OR_PASS_ERROR =
+      new ValidationError("email", "login.invalid", "Invalida email or password");
+  private static final ValidationError EMAIL_IN_USE_ERROR =
+      new ValidationError("email", "register.invalid", "Email already in use");
 
-	public HttpResponse handleException(Throwable ex) {
-		
-		LOGGER.error("Handling exception: {}", ex);
-		
-		if(ex instanceof CompletionException) {
-			return handleException(ex.getCause());
-		} else if (ex instanceof ValidationException) {
-			return responseFactory.response400(((ValidationException) ex).getErrors());
-		} else if (ex instanceof InvalidSignInDataException) {
-			return responseFactory.response400(List.of(new ValidationError("email", "login.invalid", "Invalida email or password")));
-		} else if (ex instanceof UserNotFoundException) {
-			return responseFactory.response401();
-		} else if (ex instanceof EmailAlreadyInUseException) {
-			return responseFactory.response400(List.of(new ValidationError("email", "register.invalid", "Email already in use")));
-		}
-		return responseFactory.response500(ex.getMessage());
-	}
+  private Response responseFactory;
 
-	protected String toBytes(Object object) {
-		try {
-			return objectMapper.writeValueAsString(object);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-	}
+  @Inject
+  public ExceptionHandler(Response responseFactory) {
+    this.responseFactory = responseFactory;
+  }
 
-	protected List<HttpHeader> headers(HttpHeader... headers) {
-		return Arrays.asList(headers);
-	}
+  public HttpResponse handleException(Throwable ex) {
+    LOGGER.error("Handling exception: {}", ex);
 
+    if (ex instanceof CompletionException) {
+      return handleException(ex.getCause());
+    } else if (ex instanceof ValidationException) {
+      return responseFactory.response400(((ValidationException) ex).getErrors());
+    } else if (ex instanceof InvalidSignInDataException) {
+      return responseFactory.response400(List.of(INVALID_EMAIL_OR_PASS_ERROR));
+    } else if (ex instanceof UserNotFoundException) {
+      return responseFactory.response401();
+    } else if (ex instanceof EmailAlreadyInUseException) {
+      return responseFactory.response400(List.of(EMAIL_IN_USE_ERROR));
+    }
+    return responseFactory.response500(ex.getMessage());
+  }
+
+  protected List<HttpHeader> headers(HttpHeader... headers) {
+    return Arrays.asList(headers);
+  }
 }
