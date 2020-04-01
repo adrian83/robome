@@ -3,7 +3,7 @@ package com.github.adrian83.robome.web.health;
 import static com.github.adrian83.robome.util.http.HttpMethod.GET;
 import static com.github.adrian83.robome.util.http.HttpMethod.POST;
 
-import com.github.adrian83.robome.common.web.Response;
+import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.health.model.AppStatus;
 import com.google.inject.Inject;
@@ -14,6 +14,7 @@ import akka.http.javadsl.server.Route;
 public class HealthController extends AllDirectives {
 
   public static final String HEALTH = "health";
+  public static final String OK = "OK";
 
   private Response response;
   private Routes routes;
@@ -31,7 +32,7 @@ public class HealthController extends AllDirectives {
   }
 
   private Route createAppStatus() {
-    return complete(response.jsonFromObject(new AppStatus("OK")));
+    return complete(response.jsonFromObject(new AppStatus(OK)));
   }
 
   private Route handleOptionsRequest() {

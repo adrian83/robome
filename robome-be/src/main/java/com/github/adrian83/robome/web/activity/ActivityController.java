@@ -13,11 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
-import com.github.adrian83.robome.common.web.ExceptionHandler;
-import com.github.adrian83.robome.common.web.Response;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
+import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -25,6 +24,9 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.TetraFunction;
 import com.github.adrian83.robome.util.function.TriFunction;
 import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
+import com.github.adrian83.robome.web.activity.validation.UpdatedActivityValidator;
+import com.github.adrian83.robome.web.common.ExceptionHandler;
+import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
 import com.google.inject.Inject;
@@ -38,7 +40,7 @@ public class ActivityController extends AllDirectives {
   private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
   private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
-  private static final Validator<NewActivity> UPDATE_VALIDATOR = new NewActivityValidator();
+  private static final Validator<UpdatedActivity> UPDATE_VALIDATOR = new UpdatedActivityValidator();
 
   public static final String ACTIVITIES = "activities";
 
@@ -74,9 +76,10 @@ public class ActivityController extends AllDirectives {
       (String tableId, String stageId, String activityId) ->
           security.jwtSecured(tableId, stageId, activityId, this::deleteActivity);
 
-  private TetraFunction<String, String, String, Class<NewActivity>, Route> updateActivityAction =
-      (String tableId, String stageId, String activityId, Class<NewActivity> clazz) ->
-          security.jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
+  private TetraFunction<String, String, String, Class<UpdatedActivity>, Route>
+      updateActivityAction =
+          (String tableId, String stageId, String activityId, Class<UpdatedActivity> clazz) ->
+              security.jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
 
   private BiFunction<String, String, Route> getStageActivitiesAction =
       (String tableId, String stageId) ->
@@ -89,7 +92,7 @@ public class ActivityController extends AllDirectives {
                 TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
         put(
             routes.prefixVarPrefixVarPrefixVarFormSlash(
-                TABLES, STAGES, ACTIVITIES, NewActivity.class, updateActivityAction)),
+                TABLES, STAGES, ACTIVITIES, UpdatedActivity.class, updateActivityAction)),
         post(
             routes.prefixVarPrefixVarPrefixFormSlash(
                 TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
@@ -112,7 +115,6 @@ public class ActivityController extends AllDirectives {
 
   private Route getStageActivities(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
-
     LOGGER.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
     CompletionStage<HttpResponse> responseF =
@@ -134,7 +136,6 @@ public class ActivityController extends AllDirectives {
       String tableId,
       String stageId,
       String activityId) {
-
     LOGGER.info(
         "New delete activity request, tableId: {}, stageId: {}, activityId: {}",
         tableId,
@@ -147,7 +148,8 @@ public class ActivityController extends AllDirectives {
             .thenApply(Authorization::canWriteStages)
             .thenCompose(
                 user ->
-                    activityService.deleteActivity(user, ActivityKey.fromStrings(tableId, stageId, activityId)))
+                    activityService.deleteActivity(
+                        user, ActivityKey.fromStrings(tableId, stageId, activityId)))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handleException);
 
@@ -201,20 +203,21 @@ public class ActivityController extends AllDirectives {
       String tableId,
       String stageId,
       String activityId,
-      NewActivity newActivity) {
-
+      UpdatedActivity updatedActivity) {
+	  
     LOGGER.info(
         "New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}",
         tableId,
         stageId,
         activityId,
-        newActivity);
+        updatedActivity);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, UPDATE_VALIDATOR))
+            .thenApply(
+                user -> new UserAndForm<UpdatedActivity>(user, updatedActivity, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
                 uaf ->

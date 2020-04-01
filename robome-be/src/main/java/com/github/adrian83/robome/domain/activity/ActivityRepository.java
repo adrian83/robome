@@ -1,5 +1,9 @@
 package com.github.adrian83.robome.domain.activity;
 
+import static com.github.adrian83.robome.common.Time.toDate;
+import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
+import static com.github.adrian83.robome.domain.activity.model.ActivityState.valueOf;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -11,10 +15,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.github.adrian83.robome.common.time.TimeUtils;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
-import com.github.adrian83.robome.domain.activity.model.ActivityState;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
@@ -34,10 +36,20 @@ public class ActivityRepository {
       "SELECT * FROM robome.activities WHERE user_id = ? AND table_id = ? AND stage_id = ? AND activity_id = ?";
   private static final String SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT =
       "SELECT * FROM robome.activities WHERE table_id = ? AND stage_id = ? AND user_id = ? ALLOW FILTERING";
-  private static final String DELETE_BY_ID_STMT = "DELETE FROM robome.activities WHERE table_id = ? AND stage_id = ? AND activity_id = ? AND user_id = ?";
+  private static final String DELETE_BY_ID_STMT =
+      "DELETE FROM robome.activities WHERE table_id = ? AND stage_id = ? AND activity_id = ? AND user_id = ?";
   private static final String UPDATE_STMT =
-	      "UPDATE robome.activities SET name = ?, state = ?, modified_at = ? WHERE table_id = ? AND stage_id = ? AND activity_id = ? AND user_id = ?";
-  
+      "UPDATE robome.activities SET name = ?, state = ?, modified_at = ? WHERE table_id = ? AND stage_id = ? AND activity_id = ? AND user_id = ?";
+
+  private static final String TABLE_ID_COL = "table_id";
+  private static final String STAGE_ID_COL = "stage_id";
+  private static final String ACTIVITY_ID_COL = "activity_id";
+  private static final String USER_ID_COL = "user_id";
+  private static final String NAME_COL = "name";
+  private static final String STATE_COL = "state";
+  private static final String CREATED_AT_COL = "created_at";
+  private static final String MODIFIED_AT_COL = "modified_at";
+
   private Session session;
 
   @Inject
@@ -58,77 +70,84 @@ public class ActivityRepository {
                 activity.getUserId(),
                 activity.getName(),
                 activity.getState().name(),
-                TimeUtils.toDate(activity.getCreatedAt()),
-                TimeUtils.toDate(activity.getModifiedAt()));
+                toDate(activity.getCreatedAt()),
+                toDate(activity.getModifiedAt()));
 
     return CassandraSink.create(1, preparedStatement, statementBinder, session);
   }
-  
+
   public Sink<ActivityEntity, CompletionStage<Done>> updateActivity(ActivityEntity activity) {
 
-	    PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
-	    BiFunction<ActivityEntity, PreparedStatement, BoundStatement> boundStmt =
-	        (act, stmt) ->
-	            stmt.bind(
-	            		act.getName(),
-	            		act.getState().name(),
-	                TimeUtils.toDate(act.getModifiedAt()),
-	                act.getKey().getTableId(),
-	                act.getKey().getStageId(),
-	                act.getKey().getActivityId(),
-	                act.getUserId());
-	    return CassandraSink.create(1, preparedStatement, boundStmt, session);
-	  }
+    PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
+    BiFunction<ActivityEntity, PreparedStatement, BoundStatement> boundStmt =
+        (act, stmt) ->
+            stmt.bind(
+                act.getName(),
+                act.getState().name(),
+                toDate(act.getModifiedAt()),
+                act.getKey().getTableId(),
+                act.getKey().getStageId(),
+                act.getKey().getActivityId(),
+                act.getUserId());
+    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+  }
 
-  public Sink<ActivityKey, CompletionStage<Done>> deleteActivity(ActivityKey activityId, UUID userId) {
-	    PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
-	    BiFunction<ActivityKey, PreparedStatement, BoundStatement> boundStmt =
-	        (actKey, stmt) -> stmt.bind(actKey.getTableId(), actKey.getStageId(), actKey.getActivityId(), userId);
-	    return CassandraSink.create(1, preparedStatement, boundStmt, session);
-	  }
-  
+  public Sink<ActivityKey, CompletionStage<Done>> deleteActivity(
+      ActivityKey activityId, UUID userId) {
+    PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
+    BiFunction<ActivityKey, PreparedStatement, BoundStatement> boundStmt =
+        (actKey, stmt) ->
+            stmt.bind(actKey.getTableId(), actKey.getStageId(), actKey.getActivityId(), userId);
+    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+  }
+
   public Source<ActivityEntity, NotUsed> getStageActivities(UUID userId, StageKey stageId) {
-	  
-    PreparedStatement preparedStatement =
-        session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
-    BoundStatement bound =
-        preparedStatement.bind(stageId.getTableId(), stageId.getStageId(), userId);
 
-    return Source.from(
-        session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList()));
+    BoundStatement bound =
+        session
+            .prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT)
+            .bind(stageId.getTableId(), stageId.getStageId(), userId);
+
+    var entities =
+        session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList());
+
+    return Source.from(entities);
   }
 
   public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityId, User user) {
-    PreparedStatement preparedStatement = session.prepare(SELECT_ACTIVITY_BY_ID_STMT);
+
     BoundStatement bound =
-        preparedStatement.bind(user.getId(), 
-            activityId.getTableId(), activityId.getStageId(), activityId.getActivityId());
+        session
+            .prepare(SELECT_ACTIVITY_BY_ID_STMT)
+            .bind(
+                user.getId(),
+                activityId.getTableId(),
+                activityId.getStageId(),
+                activityId.getActivityId());
 
     ResultSet r = session.execute(bound);
 
-    Row row = r.one();
-    if (row == null) {
-      return Source.single(Optional.empty());
-    }
-
-    ActivityEntity activity = fromRow(row);
-    return Source.single(Optional.of(activity));
+    return Optional.ofNullable(r.one())
+        .map((row) -> fromRow(row))
+        .map(Optional::of)
+        .map(Source::single)
+        .orElse(Source.single(Optional.empty()));
   }
 
   private ActivityEntity fromRow(Row row) {
 
     ActivityKey id =
         new ActivityKey(
-            row.get("table_id", UUID.class),
-            row.get("stage_id", UUID.class),
-            row.get("activity_id", UUID.class));
+            row.get(TABLE_ID_COL, UUID.class),
+            row.get(STAGE_ID_COL, UUID.class),
+            row.get(ACTIVITY_ID_COL, UUID.class));
 
     return new ActivityEntity(
         id,
-        row.get("user_id", UUID.class),
-        row.getString("name"),
-        ActivityState.valueOf(row.getString("state")),
-        TimeUtils.toUtcLocalDate(row.getTimestamp("created_at")),
-        TimeUtils.toUtcLocalDate(row.getTimestamp("modified_at")));
+        row.get(USER_ID_COL, UUID.class),
+        row.getString(NAME_COL),
+        valueOf(row.getString(STATE_COL)),
+        toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
+        toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
   }
 }

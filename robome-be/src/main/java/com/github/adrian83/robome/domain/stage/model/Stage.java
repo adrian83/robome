@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.github.adrian83.robome.common.time.TimeUtils;
+import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 
@@ -35,23 +35,18 @@ public class Stage {
     this.modifiedAt = modifiedAt;
     this.activities = new ArrayList<Activity>();
   }
-  
+
   public Stage(TableKey tableKey, UUID userId, String title) {
-    this(new StageKey(tableKey), userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+    this(new StageKey(tableKey), userId, title, StageState.ACTIVE, Time.utcNow(), Time.utcNow());
   }
 
   public Stage withActivities(List<Activity> activities) {
-	  Stage stage = new Stage(
-		      this.key,
-		      this.userId,
-		      this.title,
-		      this.state,
-		      this.createdAt,
-		      this.modifiedAt);
-	  stage.activities = activities;
-	  return stage;
+    Stage stage =
+        new Stage(this.key, this.userId, this.title, this.state, this.createdAt, this.modifiedAt);
+    stage.activities = activities;
+    return stage;
   }
-  
+
   public StageKey getKey() {
     return key;
   }
@@ -76,9 +71,7 @@ public class Stage {
     return modifiedAt;
   }
 
-public List<Activity> getActivities() {
-	return activities;
-}
-
-  
+  public List<Activity> getActivities() {
+    return activities;
+  }
 }

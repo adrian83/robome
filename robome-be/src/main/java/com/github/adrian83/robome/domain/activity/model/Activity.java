@@ -3,7 +3,7 @@ package com.github.adrian83.robome.domain.activity.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.github.adrian83.robome.common.time.TimeUtils;
+import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 
 public class Activity {
@@ -37,8 +37,8 @@ public class Activity {
         userId,
         name,
         ActivityState.ACTIVE,
-        TimeUtils.utcNow(),
-        TimeUtils.utcNow());
+        Time.utcNow(),
+        Time.utcNow());
   }
 
   public ActivityKey getKey() {
@@ -64,5 +64,4 @@ public class Activity {
   public LocalDateTime getModifiedAt() {
     return modifiedAt;
   }
-
 }

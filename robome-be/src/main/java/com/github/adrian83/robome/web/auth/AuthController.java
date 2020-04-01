@@ -12,17 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.common.web.ExceptionHandler;
-import com.github.adrian83.robome.common.web.Response;
-import com.github.adrian83.robome.common.web.Validation;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.auth.validation.LoginValidator;
 import com.github.adrian83.robome.web.auth.validation.RegisterValidator;
+import com.github.adrian83.robome.web.common.ExceptionHandler;
+import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
+import com.github.adrian83.robome.web.common.Validation;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
@@ -53,11 +53,11 @@ public class AuthController extends AllDirectives {
       JwtAuthorizer jwtAuthorizer,
       ExceptionHandler exceptionHandler,
       Response response,
-      Routes routes, 
+      Routes routes,
       Security security) {
-	  this.jwtAuthorizer = jwtAuthorizer;
+    this.jwtAuthorizer = jwtAuthorizer;
     this.userService = userService;
-    this.exceptionHandler= exceptionHandler;
+    this.exceptionHandler = exceptionHandler;
     this.security = security;
     this.response = response;
     this.routes = routes;

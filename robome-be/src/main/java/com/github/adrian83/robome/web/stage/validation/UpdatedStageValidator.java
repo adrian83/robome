@@ -1,10 +1,12 @@
 package com.github.adrian83.robome.web.stage.validation;
 
-import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.common.web.ValidationError;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
+import com.github.adrian83.robome.web.common.ValidationError;
 import com.google.common.base.Strings;
+
+import static com.github.adrian83.robome.web.common.Validation.check;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,7 +23,7 @@ public class UpdatedStageValidator implements Validator<UpdatedStage> {
 
   @Override
   public List<ValidationError> validate(UpdatedStage form) {
-    return Stream.of(Validation.check(form.getTitle(), EMPTY_NAME, Strings::isNullOrEmpty))
+    return Stream.of(check(form.getTitle(), EMPTY_NAME, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());

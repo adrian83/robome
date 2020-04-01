@@ -38,7 +38,7 @@ public class StageService {
     return stageRepository
         .getById(user.getId(), stageKey)
         .map((maybeStage) -> maybeStage.map(this::toStage))
-        .mapAsync(1, fetchActivities2(user))
+        .mapAsync(1, fetchStageActivities(user))
         .runWith(Sink.head(), actorSystem);
   }
 
@@ -60,9 +60,7 @@ public class StageService {
   }
 
   public CompletionStage<Stage> updateStage(User user, StageKey key, UpdatedStage updatedStage) {
-
     StageEntity entity = StageEntity.newStage(key, user.getId(), updatedStage.getTitle());
-
     Sink<StageEntity, CompletionStage<Stage>> sink =
         stageRepository
             .updateStage(entity)
@@ -72,7 +70,6 @@ public class StageService {
   }
 
   public CompletionStage<StageKey> deleteStage(User user, StageKey stageKey) {
-
     Sink<StageKey, CompletionStage<StageKey>> sink =
         stageRepository
             .deleteStage(stageKey, user.getId())
@@ -98,7 +95,7 @@ public class StageService {
             .thenApply((activities) -> stage.withActivities(activities));
   }
 
-  protected Function<Optional<Stage>, CompletionStage<Optional<Stage>>> fetchActivities2(
+  protected Function<Optional<Stage>, CompletionStage<Optional<Stage>>> fetchStageActivities(
       User user) {
     return (Optional<Stage> maybeStage) ->
         maybeStage

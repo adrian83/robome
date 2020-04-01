@@ -9,10 +9,8 @@ class Info extends Component {
     }
 
     hideInfo(info){
-        console.log("hide", info);
         const self = this;
         return function(event) {
-            console.log("real hide", info);
             self.props.hideInfo(info);
             event.preventDefault();
         }
@@ -29,15 +27,10 @@ class Info extends Component {
     }
 
     render() {
-
         var self = this;
         var id = 1;
         if(this.props && this.props.info) {
-            var info = this.props.info.map(function(i){ 
-                console.log("render info", i);
-                return self.renderInfo(id++, i);
-
-            });
+            var info = this.props.info.map(i => self.renderInfo(id++, i));
             return(<div>{info}</div>);
         }
         return(<div></div>);

@@ -1,5 +1,7 @@
 package com.github.adrian83.robome.domain.activity.model;
 
+import static java.util.UUID.randomUUID;
+
 import java.util.UUID;
 
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -20,9 +22,9 @@ public class ActivityKey extends StageKey {
   }
 
   public ActivityKey(StageKey stageKey) {
-	    this(stageKey.getTableId(), stageKey.getStageId(), UUID.randomUUID());
-	  }
-  
+    this(stageKey.getTableId(), stageKey.getStageId(), randomUUID());
+  }
+
   public UUID getActivityId() {
     return activityId;
   }

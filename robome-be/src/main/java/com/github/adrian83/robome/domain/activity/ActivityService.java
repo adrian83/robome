@@ -8,6 +8,7 @@ import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
+import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
@@ -52,7 +53,7 @@ public class ActivityService {
   }
 
   public CompletionStage<Activity> updateActivity(
-      User user, ActivityKey key, NewActivity updatedActivity) {
+      User user, ActivityKey key, UpdatedActivity updatedActivity) {
 
     ActivityEntity entity =
         ActivityEntity.newActivity(key, user.getId(), updatedActivity.getName());

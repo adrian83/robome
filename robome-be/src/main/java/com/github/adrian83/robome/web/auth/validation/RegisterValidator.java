@@ -1,14 +1,15 @@
 package com.github.adrian83.robome.web.auth.validation;
 
+import static com.github.adrian83.robome.web.common.Validation.check;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.adrian83.robome.common.web.Validation;
-import com.github.adrian83.robome.common.web.ValidationError;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.web.auth.model.Register;
+import com.github.adrian83.robome.web.common.ValidationError;
 import com.google.common.base.Strings;
 
 public class RegisterValidator implements Validator<Register> {
@@ -35,9 +36,9 @@ public class RegisterValidator implements Validator<Register> {
   @Override
   public List<ValidationError> validate(Register form) {
     return Stream.of(
-            Validation.check(form.getEmail(), EMPTY_EMAIL, Strings::isNullOrEmpty),
-            Validation.check(form.getPassword(), EMPTY_PASSWORD_1, Strings::isNullOrEmpty),
-            Validation.check(
+            check(form.getEmail(), EMPTY_EMAIL, Strings::isNullOrEmpty),
+            check(form.getPassword(), EMPTY_PASSWORD_1, Strings::isNullOrEmpty),
+            check(
                 form.getRepeatedPassword(),
                 DIFFERENT_PASSWORDS,
                 (String pass2) -> !pass2.equals(form.getPassword())))

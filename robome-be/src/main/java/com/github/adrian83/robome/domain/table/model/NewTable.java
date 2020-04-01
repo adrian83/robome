@@ -5,28 +5,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NewTable {
 
-	private static final String TITLE_LABEL = "title";
-	private static final String DESC_LABEL = "description";
+  private static final String TITLE_LABEL = "title";
+  private static final String DESC_LABEL = "description";
 
-	final String title;
-	final String description;
+  final String title;
+  final String description;
 
-	@JsonCreator
-	public NewTable(@JsonProperty(TITLE_LABEL) String title, @JsonProperty(DESC_LABEL) String description) {
-		this.title = title;
-		this.description = description;
-	}
+  @JsonCreator
+  public NewTable(
+      @JsonProperty(TITLE_LABEL) String title, @JsonProperty(DESC_LABEL) String description) {
+    this.title = title;
+    this.description = description;
+  }
 
-	public String getTitle() {
-		return title;
-	}
+  public String getTitle() {
+    return title;
+  }
 
-	public String getDescription() {
-		return description;
-	}
+  public String getDescription() {
+    return description;
+  }
 
-	@Override
-	public String toString() {
-		return "NewTable [title=" + title + ", description=" + description + "]";
-	}
+  @Override
+  public String toString() {
+    return "NewTable [title=" + title + ", description=" + description + "]";
+  }
 }

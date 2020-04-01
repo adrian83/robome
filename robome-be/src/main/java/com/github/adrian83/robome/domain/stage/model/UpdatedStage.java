@@ -21,7 +21,6 @@ public class UpdatedStage {
 
   @Override
   public String toString() {
-	return "UpdatedStage [title=" + title + "]";
+    return "UpdatedStage [title=" + title + "]";
   }
-
 }

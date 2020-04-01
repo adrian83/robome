@@ -9,11 +9,13 @@ import Title from '../tiles/Title';
 import EditLink from '../tiles/EditLink';
 import DeleteLink from '../tiles/DeleteLink';
 import CreateLink from '../tiles/CreateLink';
+import MoveActLink from '../tiles/MoveActLink';
+
 import Base from '../Base';
 
-import securedGet, { securedDelete } from '../../web/ajax';
+import securedGet, { securedDelete, securedPost } from '../../web/ajax';
 import { editActivityUrl, createActivityUrl, editStageUrl, tableBeUrl, editTableUrl, 
-    createStageUrl, stageBeUrl, activityBeUrl } from '../../web/url';
+    createStageUrl, stageBeUrl, activityBeUrl, activitiesBeUrl } from '../../web/url';
 
 class ShowTable extends Base {
 
@@ -116,6 +118,76 @@ class ShowTable extends Base {
         }
     }
 
+    selectActivity(activity) {
+        const self = this;
+        return function(event) {
+            self.setState({move: activity});
+            event.preventDefault();
+        }
+    }
+
+    moveActivity(destStage) {
+        const self = this;
+        const authToken = this.props.authToken;
+
+        return function(event) {
+    
+            var act = self.state.move;
+
+            const editUrl = activitiesBeUrl(
+                act.key.tableId, 
+                destStage.key.stageId);
+    
+            
+
+            var activ = {name: act.name};
+
+            securedPost(editUrl, authToken, activ)
+                .then(response => response.json())
+                .then(function(data){
+
+                var delActUrl = activityBeUrl(  
+                    act.key.tableId, 
+                    act.key.stageId,
+                    act.key.activityId);
+
+                return securedDelete(delActUrl, authToken)
+
+                })
+                .then(function(data){
+                    var table = self.state.table;
+                    var stage = table.stages.find(s => s.key.stageId === destStage.key.stageId);
+                    
+                    stage.activities.push(act);
+        
+                    var sourceStage = table.stages.find(s => s.key.stageId === act.key.stageId);
+                    var activities = sourceStage.activities.filter((activity, index, arr) => activity.key.activityId !== act.key.activityId);
+                    sourceStage.activities = activities;
+        
+                    self.setState({table: table});
+                    self.setState({move: null});
+                })
+                .catch(error => self.registerError(error));
+    
+
+            event.preventDefault();
+        }
+    }
+
+    renderStagesDropdown(stageId) {
+        var stagesLinks = this.state.table.stages.filter((stage, index, arr) => stage.key.stageId !== stageId).map(stage => (<a key={stage.key.stageId} className="dropdown-item" href="#" onClick={this.moveActivity(stage)}>{stage.title}</a>));
+
+        return (
+            <div className="btn-group">
+                <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Select stage
+                </button>
+                <div className="dropdown-menu">
+                    {stagesLinks}
+                </div>
+            </div>);
+    }
+
     renderStage(stage) {
         const self = this;
         const stgKey = stage.key;
@@ -127,7 +199,7 @@ class ShowTable extends Base {
         
         return (
             <div key={stage.title}>
-                <div class="border border-primary rounded">
+                <div className="border border-primary rounded">
                     <br/>
 
                     <h3>{stage.title}</h3>
@@ -152,6 +224,10 @@ class ShowTable extends Base {
         const actKey = activity.key;
         const updateActUrl = editActivityUrl(actKey.tableId, actKey.stageId, actKey.activityId);
 
+
+        var h = (this.state && this.state.move && (this.state.move.key.activityId === actKey.activityId)) ? this.renderStagesDropdown(this.state.move.key.stageId) : "";
+
+
         return (
             <span className="badge badge-light" 
                 style={{marginLeft: '10px'}} 
@@ -161,6 +237,8 @@ class ShowTable extends Base {
                     &nbsp;&nbsp;&nbsp;&nbsp;
                     {activity.name}
                     &nbsp;&nbsp;&nbsp;&nbsp;
+                    {h}
+                    <MoveActLink onClick={this.selectActivity(activity)}></MoveActLink>
                     <EditLink to={updateActUrl}></EditLink>
                     <DeleteLink onClick={this.deleteActivity(actKey)}></DeleteLink>
                 </div>

@@ -3,7 +3,7 @@ package com.github.adrian83.robome.domain.stage.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.github.adrian83.robome.common.time.TimeUtils;
+import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 
 public class StageEntity {
@@ -32,14 +32,13 @@ public class StageEntity {
   }
 
   public StageEntity(TableKey tableKey, UUID userId, String title) {
-    this(new StageKey(tableKey), userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
+    this(new StageKey(tableKey), userId, title, StageState.ACTIVE, Time.utcNow(), Time.utcNow());
   }
 
   public static StageEntity newStage(StageKey key, UUID userId, String title) {
-	    return new StageEntity(
-	        key, userId, title, StageState.ACTIVE, TimeUtils.utcNow(), TimeUtils.utcNow());
-	  }
-  
+    return new StageEntity(key, userId, title, StageState.ACTIVE, Time.utcNow(), Time.utcNow());
+  }
+
   public StageKey getKey() {
     return key;
   }
@@ -63,5 +62,4 @@ public class StageEntity {
   public LocalDateTime getModifiedAt() {
     return modifiedAt;
   }
-
 }

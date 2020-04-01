@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.common.web;
+package com.github.adrian83.robome.web.common;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 package com.github.adrian83.robome.domain.user;
 
-import static com.github.adrian83.robome.common.time.TimeUtils.toDate;
-import static com.github.adrian83.robome.common.time.TimeUtils.toUtcLocalDate;
+import static com.github.adrian83.robome.common.Time.toDate;
+import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
 import static com.github.adrian83.robome.domain.user.model.Role.fromString;
 
 import java.util.Optional;
@@ -31,6 +31,13 @@ public class UserRepository {
       "INSERT INTO robome.users (id, email, password_hash, "
           + "roles, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
 
+  private static final String ID_COL = "id";
+  private static final String EMAIL_COL = "email";
+  private static final String PASS_HASH_COL = "password_hash";
+  private static final String ROLES_COL = "roles";
+  private static final String CREATED_AT_COL = "created_at";
+  private static final String MODIFIED_AT_COL = "modified_at";
+
   private Session session;
 
   @Inject
@@ -39,21 +46,20 @@ public class UserRepository {
   }
 
   public Source<Optional<User>, NotUsed> getByEmail(String email) {
-    PreparedStatement preparedStatement = session.prepare(SELECT_USER_BY_EMAIL);
-    BoundStatement bound = preparedStatement.bind(email);
+    BoundStatement bound = session.prepare(SELECT_USER_BY_EMAIL).bind(email);
     ResultSet r = session.execute(bound);
     return Source.single(Optional.ofNullable(r.one()).map(this::fromRow));
   }
 
   private User fromRow(Row row) {
     return new User(
-        row.get("id", UUID.class),
-        row.getString("email"),
-        row.getString("password_hash"),
-        //fromStringList(row.getList("roles", String.class)),
-        fromString(row.getString("roles")),
-        toUtcLocalDate(row.getTimestamp("created_at")),
-        toUtcLocalDate(row.getTimestamp("modified_at")));
+        row.get(ID_COL, UUID.class),
+        row.getString(EMAIL_COL),
+        row.getString(PASS_HASH_COL),
+        // fromStringList(row.getList("roles", String.class)),
+        fromString(row.getString(ROLES_COL)),
+        toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
+        toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
   }
 
   public Sink<User, CompletionStage<Done>> saveUser() {
@@ -65,7 +71,7 @@ public class UserRepository {
                 user.getId(),
                 user.getEmail(),
                 user.getPasswordHash(),
-                //toStringList(user.getRoles()),
+                // toStringList(user.getRoles()),
                 Role.toString(user.getRoles()),
                 toDate(user.getCreatedAt()),
                 toDate(user.getModifiedAt()));
