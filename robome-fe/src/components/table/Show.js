@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import Error from '../notification/Error';
@@ -138,8 +137,6 @@ class ShowTable extends Base {
                 act.key.tableId, 
                 destStage.key.stageId);
     
-            
-
             var activ = {name: act.name};
 
             securedPost(editUrl, authToken, activ)
@@ -152,22 +149,27 @@ class ShowTable extends Base {
                     act.key.activityId);
 
                 return securedDelete(delActUrl, authToken)
-
-                })
                 .then(function(data){
+                    var sourceStageId = act.key.stageId;
+
                     var table = self.state.table;
                     var stage = table.stages.find(s => s.key.stageId === destStage.key.stageId);
                     
-                    stage.activities.push(act);
-        
-                    var sourceStage = table.stages.find(s => s.key.stageId === act.key.stageId);
+                    var actCopy = JSON.parse(JSON.stringify(act))
+                    actCopy.key.stageId = stage.key.stageId;
+                    stage.activities.push(actCopy);
+                    console.log("act", act)
+                    
+                    var sourceStage = table.stages.find(s => s.key.stageId === sourceStageId);
                     var activities = sourceStage.activities.filter((activity, index, arr) => activity.key.activityId !== act.key.activityId);
                     sourceStage.activities = activities;
-        
+
                     self.setState({table: table});
                     self.setState({move: null});
                 })
                 .catch(error => self.registerError(error));
+            })
+            .catch(error => self.registerError(error));
     
 
             event.preventDefault();
@@ -175,7 +177,7 @@ class ShowTable extends Base {
     }
 
     renderStagesDropdown(stageId) {
-        var stagesLinks = this.state.table.stages.filter((stage, index, arr) => stage.key.stageId !== stageId).map(stage => (<a key={stage.key.stageId} className="dropdown-item" href="#" onClick={this.moveActivity(stage)}>{stage.title}</a>));
+        var stagesLinks = this.state.table.stages.filter((stage, index, arr) => stage.key.stageId !== stageId).map(stage => (<span key={stage.key.stageId} className="dropdown-item" onClick={this.moveActivity(stage)}>{stage.title}</span>));
 
         return (
             <div className="btn-group">

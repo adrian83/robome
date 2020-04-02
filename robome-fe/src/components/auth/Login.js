@@ -51,6 +51,7 @@ class Login extends Base {
                 var authToken = response.headers.get('Authorization');
                 if(authToken) {
                     console.log(authToken);
+                    self.setState({signedIn: true})
                     self.props.onLogin(authToken);
                 } else {
                     throw new ResponseError(401, "User is not authenticated");
@@ -63,7 +64,7 @@ class Login extends Base {
 
     render() {
 
-        if (this.props.authToken) {
+        if (this.state && this.state.signedIn) {
             return <Redirect to='/' />
         }
 

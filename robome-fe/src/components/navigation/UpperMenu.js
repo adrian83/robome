@@ -1,9 +1,12 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl } from '../../web/url';
+import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl, isSignedInUrl } from '../../web/url';
+import securedGet from '../../web/ajax';
+
+import Base from '../Base';
 
 const loginLink = <Link className="btn btn-outline-primary" to={loginUrl()}>Login</Link>;
 const logoutLink = <Link className="btn btn-outline-primary" to={logoutUrl()}>Logout</Link>;
@@ -11,24 +14,37 @@ const tablesListLink = <Link key="1" className="p-2 text-dark" to={listTablesUrl
 const registerLink = <Link key="1" className="p-2 text-dark" to={registerUrl()}>Register</Link>;
 const healthLink = <Link key="0" className="p-2 text-dark" to={healthUrl()}>Health</Link>;
 
-class UpperMenu extends Component {
+class UpperMenu extends Base {
 
     static propTypes = {
         authToken: PropTypes.string
     };
 
+    componentDidMount() {
+        const self = this;
+        const authToken = self.props.authToken;
+
+        if(!authToken){
+            return
+        }
+
+        securedGet(isSignedInUrl(), authToken)
+            .then(response => self.setState({signedIn: response.status === 200}))
+            .catch(error => self.registerError(error));
+    }
+
     render() {
 
-        const authenticated = this.props.authToken;
+
+        console.log("menu", this.props.authToken);
+
+        const authenticated = this.props.authToken && this.state && this.state.signedIn;
         const highlitedLink = authenticated ? logoutLink : loginLink; 
 
-        var links = [];
+        console.log("menu auth", authenticated);
 
-        if(authenticated){
-            links.push(tablesListLink);
-        } else {
-            links.push(registerLink);
-        }
+        var links = [];
+        links.push(authenticated ? tablesListLink : registerLink);
 
         return (
             <div className="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">

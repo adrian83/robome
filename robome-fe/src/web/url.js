@@ -32,6 +32,10 @@ export function registerBeUrl() {
     return `/auth/register`;
 }
 
+export function isSignedInUrl() {
+    return `/auth/check`;
+}
+
 export function editTableUrl(tableId) {
     return `/tables/edit/${tableId}`;
 }
