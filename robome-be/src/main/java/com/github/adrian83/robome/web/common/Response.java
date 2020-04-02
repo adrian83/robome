@@ -58,6 +58,10 @@ public class Response {
     return HttpResponse.create().withStatus(StatusCodes.NOT_FOUND).addHeaders(corsHeaders());
   }
 
+  public HttpResponse response200() {
+    return HttpResponse.create().withStatus(StatusCodes.OK).addHeaders(corsHeaders());
+  }
+
   public HttpResponse response200(HttpHeader... hdrs) {
     return HttpResponse.create()
         .withStatus(StatusCodes.OK)
@@ -77,30 +81,28 @@ public class Response {
   }
 
   public HttpResponse response401(HttpHeader... hdrs) {
-	return HttpResponse.create()
-	    .withStatus(StatusCodes.UNAUTHORIZED)
-	    .addHeaders(corsHeaders());
+    return HttpResponse.create().withStatus(StatusCodes.UNAUTHORIZED).addHeaders(corsHeaders());
   }
-  
+
   public HttpResponse response500(String msg) {
-	return HttpResponse.create()
-	    .withStatus(StatusCodes.INTERNAL_SERVER_ERROR)
-	    .withEntity(ContentTypes.TEXT_PLAIN_UTF8, toJsonString(msg))
-	    .addHeaders(corsHeaders());
+    return HttpResponse.create()
+        .withStatus(StatusCodes.INTERNAL_SERVER_ERROR)
+        .withEntity(ContentTypes.TEXT_PLAIN_UTF8, toJsonString(msg))
+        .addHeaders(corsHeaders());
   }
-  
+
   private List<HttpHeader> concantenateHeaders(List<HttpHeader> list1, List<HttpHeader> list2) {
-	  var result = new ArrayList<HttpHeader>(list1);
-	  result.addAll(list2);
-	  return result;
+    var result = new ArrayList<HttpHeader>(list1);
+    result.addAll(list2);
+    return result;
   }
-  
+
   protected List<HttpHeader> corsHeaders() {
     return headers(
         Cors.allowHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()),
         Cors.origin(corsOrigin()),
         Cors.methods("*"),
-    	Cors.exposeHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()));
+        Cors.exposeHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()));
   }
 
   protected String corsOrigin() {

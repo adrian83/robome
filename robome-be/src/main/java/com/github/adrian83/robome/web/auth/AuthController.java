@@ -4,13 +4,17 @@ import static com.github.adrian83.robome.auth.Authentication.hashPassword;
 import static com.github.adrian83.robome.auth.Authentication.userWithPasswordExists;
 import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROLES;
 import static com.github.adrian83.robome.util.http.HttpMethod.POST;
+import static com.github.adrian83.robome.util.http.HttpMethod.GET;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
@@ -36,6 +40,7 @@ public class AuthController extends AllDirectives {
   public static final String AUTH = "auth";
   public static final String LOGIN = "login";
   public static final String REGISTER = "register";
+  public static final String CHECK = "check";
 
   private static final LoginValidator LOGIN_VALIDATOR = new LoginValidator();
   private static final RegisterValidator REGISTER_VALIDATOR = new RegisterValidator();
@@ -68,7 +73,9 @@ public class AuthController extends AllDirectives {
         options(routes.prefixPrefixSlash(AUTH, LOGIN, handleLoginOptionsRequest())),
         post(routes.prefixPrefixFormSlash(AUTH, LOGIN, Login.class, loginAction)),
         options(routes.prefixPrefixSlash(AUTH, REGISTER, handleRegisterOptionsRequest())),
-        post(routes.prefixPrefixFormSlash(AUTH, REGISTER, Register.class, registerAction)));
+        post(routes.prefixPrefixFormSlash(AUTH, REGISTER, Register.class, registerAction)),
+        get(routes.prefixPrefixSlash(AUTH, CHECK, security.jwtSecured(this::isSignedIn))),
+        options(routes.prefixPrefixSlash(AUTH, CHECK, handleCheckOptionsRequest())));
   }
 
   Function<Class<Register>, Route> registerAction =
@@ -108,6 +115,19 @@ public class AuthController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
+  private Route isSignedIn(CompletionStage<Optional<User>> maybeUserF) {
+
+    LOGGER.info("Checking if user is logged in");
+
+    CompletionStage<HttpResponse> responseF =
+        maybeUserF
+            .thenApply(Authentication::userExists)
+            .thenApply(user -> response.response200())
+            .exceptionally(exceptionHandler::handleException);
+
+    return completeWithFuture(responseF);
+  }
+
   private User toUser(Register form) {
     return new User(form.getEmail(), hashPassword(form.getPassword()), DEFAULT_USER_ROLES);
   }
@@ -118,5 +138,9 @@ public class AuthController extends AllDirectives {
 
   private Route handleLoginOptionsRequest() {
     return complete(response.response200(POST));
+  }
+
+  private Route handleCheckOptionsRequest() {
+    return complete(response.response200(GET));
   }
 }
