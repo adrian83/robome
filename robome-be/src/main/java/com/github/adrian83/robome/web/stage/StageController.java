@@ -98,7 +98,7 @@ public class StageController extends AllDirectives {
             .thenApply(Authorization::canReadStages)
             .thenCompose(user -> stageService.getTableStages(user, fromString(tableIdStr)))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -113,7 +113,7 @@ public class StageController extends AllDirectives {
             .thenApply(Authorization::canReadStages)
             .thenCompose(user -> stageService.getStage(user, fromStrings(tableIdStr, stageIdStr)))
             .thenApply(response::jsonFromOptional)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -131,7 +131,7 @@ public class StageController extends AllDirectives {
             .thenCompose(
                 uaf -> stageService.saveStage(uaf.getUser(), fromString(tableId), uaf.getForm()))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -159,7 +159,7 @@ public class StageController extends AllDirectives {
                     stageService.updateStage(
                         uaf.getUser(), fromStrings(tableId, stageId), uaf.getForm()))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -174,7 +174,7 @@ public class StageController extends AllDirectives {
             .thenApply(Authorization::canWriteStages)
             .thenCompose(user -> stageService.deleteStage(user, fromStrings(tableId, stageId)))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }

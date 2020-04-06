@@ -10,8 +10,7 @@
 /robome-fe/build
 
 # misc
-/robome-fe/.DS_Store
-/robome-be/.DS_Store
+.DS_Store
 
 /robome-fe/npm-debug.log
 

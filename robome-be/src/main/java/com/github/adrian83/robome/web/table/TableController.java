@@ -94,7 +94,7 @@ public class TableController extends AllDirectives {
             .thenApply(Authorization::canReadTables)
             .thenCompose(tableService::getTables)
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -108,7 +108,7 @@ public class TableController extends AllDirectives {
             .thenApply(Authorization::canReadTables)
             .thenCompose(user -> tableService.getTable(user, TableKey.fromString(tableIdStr)))
             .thenApply(response::jsonFromOptional)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -122,7 +122,7 @@ public class TableController extends AllDirectives {
             .thenApply(Authorization::canWriteTables)
             .thenCompose(user -> tableService.deleteTable(user, TableKey.fromString(tableIdStr)))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -142,7 +142,7 @@ public class TableController extends AllDirectives {
                     tableService.updateTable(
                         uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
             .thenApply(table -> response.jsonFromObject(table))
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -158,7 +158,7 @@ public class TableController extends AllDirectives {
             .thenApply(UserAndForm::validate)
             .thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
             .thenApply(table -> response.jsonFromObject(table))
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }

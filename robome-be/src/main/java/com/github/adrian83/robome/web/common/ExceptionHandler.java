@@ -31,11 +31,11 @@ public class ExceptionHandler {
     this.responseFactory = responseFactory;
   }
 
-  public HttpResponse handleException(Throwable ex) {
+  public HttpResponse handle(Throwable ex) {
     LOGGER.error("Handling exception: {}", ex);
 
     if (ex instanceof CompletionException) {
-      return handleException(ex.getCause());
+      return handle(ex.getCause());
     } else if (ex instanceof ValidationException) {
       return responseFactory.response400(((ValidationException) ex).getErrors());
     } else if (ex instanceof InvalidSignInDataException) {

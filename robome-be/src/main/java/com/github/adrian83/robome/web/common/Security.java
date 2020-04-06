@@ -41,7 +41,7 @@ public class Security extends AllDirectives {
 
     var maybeUserF =
         completedStage(maybeJwtToken)
-            .thenApply((maybeToken) -> maybeToken.map(jwtAuthorizer::emailFromJwsToken))
+            .thenApply((maybeToken) -> maybeToken.flatMap(jwtAuthorizer::emailFromJwsToken))
             .thenCompose(jwtAuthorizer::findUser);
 
     return inner.apply(maybeUserF);

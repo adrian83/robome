@@ -28,7 +28,7 @@ public class JwtAuthorizer {
 
   private Config config;
   private UserService userService;
-  
+
   @Inject
   public JwtAuthorizer(Config config, UserService userService) {
     this.config = config;
@@ -54,10 +54,10 @@ public class JwtAuthorizer {
         .orElse(completedStage(Optional.empty()));
   }
 
-  public String emailFromJwsToken(String jwtToken) {
+  public Optional<String> emailFromJwsToken(String jwtToken) {
     Key key = getSecurityKey();
     Jws<Claims> jwt = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
     Claims body = jwt.getBody();
-    return body.get(USER_EMAIL).toString();
+    return Optional.ofNullable(body.get(USER_EMAIL)).map((emailObj) -> emailObj.toString());
   }
 }

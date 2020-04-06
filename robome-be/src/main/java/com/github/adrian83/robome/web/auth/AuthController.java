@@ -95,7 +95,7 @@ public class AuthController extends AllDirectives {
             .thenApply(maybeUser -> userWithPasswordExists(maybeUser, login.getPassword()))
             .thenApply(jwtAuthorizer::createJWTToken)
             .thenApply(token -> response.response200(security.jwt(token)))
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -110,7 +110,7 @@ public class AuthController extends AllDirectives {
             .thenApply(this::toUser)
             .thenCompose(userService::saveUser)
             .thenApply(done -> response.response201())
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -123,7 +123,7 @@ public class AuthController extends AllDirectives {
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(user -> response.response200())
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }

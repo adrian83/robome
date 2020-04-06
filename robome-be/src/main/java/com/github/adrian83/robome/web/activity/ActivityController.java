@@ -126,7 +126,7 @@ public class ActivityController extends AllDirectives {
                     activityService.getStageActivities(
                         user, StageKey.fromStrings(tableIdStr, stageIdStr)))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -151,7 +151,7 @@ public class ActivityController extends AllDirectives {
                     activityService.deleteActivity(
                         user, ActivityKey.fromStrings(tableId, stageId, activityId)))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -171,7 +171,7 @@ public class ActivityController extends AllDirectives {
                     activityService.getActivity(
                         user, ActivityKey.fromStrings(tableIdStr, stageIdStr, activityIdStr)))
             .thenApply(response::jsonFromOptional)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -193,7 +193,7 @@ public class ActivityController extends AllDirectives {
                     activityService.saveActivity(
                         uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
@@ -226,7 +226,7 @@ public class ActivityController extends AllDirectives {
                         ActivityKey.fromStrings(tableId, stageId, activityId),
                         uaf.getForm()))
             .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handleException);
+            .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
