@@ -2,13 +2,13 @@ package com.github.adrian83.robome.domain.table;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import akka.actor.ActorSystem;
 import akka.japi.function.Function;
 
 import com.github.adrian83.robome.domain.stage.StageService;
-import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
@@ -98,8 +98,15 @@ public class TableService {
 
   protected Function<Optional<Table>, CompletionStage<Optional<Table>>> fetchStages(
       User user, TableKey tableId) {
-    CompletionStage<List<Stage>> stagesF = stageService.getTableStages(user, tableId);
-    return (Optional<Table> maybeTable) ->
-        stagesF.thenApply((stages) -> maybeTable.map((table) -> table.withStages(stages)));
+
+    return (Optional<Table> maybeTable) -> {
+      return maybeTable
+          .map(
+              (table) ->
+                  stageService
+                      .getTableStages(user, tableId)
+                      .thenApply((stages) -> Optional.of(table.withStages(stages))))
+          .orElse(CompletableFuture.<Optional<Table>>completedFuture(Optional.<Table>empty()));
+    };
   }
 }
