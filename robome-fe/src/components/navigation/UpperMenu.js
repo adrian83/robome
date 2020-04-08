@@ -17,7 +17,8 @@ const healthLink = <Link key="0" className="p-2 text-dark" to={healthUrl()}>Heal
 class UpperMenu extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        invalidateToken: PropTypes.func
     };
 
     componentDidMount() {
@@ -29,22 +30,18 @@ class UpperMenu extends Base {
         }
 
         securedGet(isSignedInUrl(), authToken)
-            .then(response => self.setState({signedIn: response.status === 200}))
+            .then(function(response) { 
+                if(response.status === 200) {
+                    self.props.invalidateToken();
+                }
+            })
             .catch(error => self.registerError(error));
     }
 
     render() {
-
-
-        console.log("menu", this.props.authToken);
-
-        const authenticated = this.props.authToken && this.state && this.state.signedIn;
+        const authenticated = this.props.authToken;
         const highlitedLink = authenticated ? logoutLink : loginLink; 
-
-        console.log("menu auth", authenticated);
-
-        var links = [];
-        links.push(authenticated ? tablesListLink : registerLink);
+        const links = [authenticated ? tablesListLink : registerLink];
 
         return (
             <div className="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
@@ -64,7 +61,9 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = (dispatch) => {
-    return {}
+    return {
+        invalidateToken: () => dispatch({ type: 'REMOVE_JWT_TOKEN' })
+    }
 };
 
 UpperMenu = connect(mapStateToProps, mapDispatchToProps)(UpperMenu);
