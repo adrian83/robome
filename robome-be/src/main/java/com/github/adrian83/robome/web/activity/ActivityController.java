@@ -120,7 +120,7 @@ public class ActivityController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
-            .thenApply(Authorization::canReadStages)
+            .thenApply(Authorization::canReadAcivities)
             .thenCompose(
                 user ->
                     activityService.getStageActivities(
@@ -145,7 +145,7 @@ public class ActivityController extends AllDirectives {
     var responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
-            .thenApply(Authorization::canWriteStages)
+            .thenApply(Authorization::canWriteAcivities)
             .thenCompose(
                 user ->
                     activityService.deleteActivity(
@@ -165,7 +165,7 @@ public class ActivityController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
-            .thenApply(Authorization::canReadStages)
+            .thenApply(Authorization::canReadAcivities)
             .thenCompose(
                 user ->
                     activityService.getActivity(
@@ -185,7 +185,7 @@ public class ActivityController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
-            .thenApply(Authorization::canWriteStages)
+            .thenApply(Authorization::canWriteAcivities)
             .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
@@ -215,7 +215,7 @@ public class ActivityController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
-            .thenApply(Authorization::canWriteStages)
+            .thenApply(Authorization::canWriteAcivities)
             .thenApply(
                 user -> new UserAndForm<UpdatedActivity>(user, updatedActivity, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
