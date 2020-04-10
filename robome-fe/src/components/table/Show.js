@@ -141,7 +141,7 @@ class ShowTable extends Base {
 
             securedPost(editUrl, authToken, activ)
                 .then(response => response.json())
-                .then(function(data){
+                .then(function(newAct){
 
                 var delActUrl = activityBeUrl(  
                     act.key.tableId, 
@@ -155,9 +155,10 @@ class ShowTable extends Base {
                     var table = self.state.table;
                     var stage = table.stages.find(s => s.key.stageId === destStage.key.stageId);
                     
-                    var actCopy = JSON.parse(JSON.stringify(act))
-                    actCopy.key.stageId = stage.key.stageId;
-                    stage.activities.push(actCopy);
+                    // var actCopy = JSON.parse(JSON.stringify(act))
+                    // actCopy.key.stageId = stage.key.stageId;
+                    // actCopy.key.activityId = stage.key.activityId;
+                    stage.activities.push(newAct);
                     console.log("act", act)
                     
                     var sourceStage = table.stages.find(s => s.key.stageId === sourceStageId);
