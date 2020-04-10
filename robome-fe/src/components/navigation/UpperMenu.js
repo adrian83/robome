@@ -31,7 +31,7 @@ class UpperMenu extends Base {
 
         securedGet(isSignedInUrl(), authToken)
             .then(function(response) { 
-                if(response.status === 200) {
+                if(response.status !== 200) {
                     self.props.invalidateToken();
                 }
             })

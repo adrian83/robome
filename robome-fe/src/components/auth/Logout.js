@@ -13,9 +13,8 @@ class Logout extends Base {
         onLogout: PropTypes.func
     };
 
-    componentDidMount() {
-        // TODO send signout request to backend
-        this.props.onLogout();
+    componentDidMount() {   
+         this.props.onLogout();
     }
 
     render() {

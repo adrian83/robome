@@ -1,8 +1,9 @@
 
 
 const Reducer = (state, action) => {
-    console.log("state", state)
     console.log("action", action)
+    console.log("state", state)
+    
     switch (action.type) {
         case 'STORE_JWT_TOKEN':
             return { ...state, authToken: action.authToken };
