@@ -155,11 +155,7 @@ class ShowTable extends Base {
                     var table = self.state.table;
                     var stage = table.stages.find(s => s.key.stageId === destStage.key.stageId);
                     
-                    // var actCopy = JSON.parse(JSON.stringify(act))
-                    // actCopy.key.stageId = stage.key.stageId;
-                    // actCopy.key.activityId = stage.key.activityId;
                     stage.activities.push(newAct);
-                    console.log("act", act)
                     
                     var sourceStage = table.stages.find(s => s.key.stageId === sourceStageId);
                     var activities = sourceStage.activities.filter((activity, index, arr) => activity.key.activityId !== act.key.activityId);
