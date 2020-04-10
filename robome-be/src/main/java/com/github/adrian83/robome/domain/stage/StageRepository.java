@@ -104,7 +104,7 @@ public class StageRepository {
         session
             .prepare(SELECT_STAGE_BY_ID_STMT)
             .bind(stageKey.getTableId(), stageKey.getStageId(), userID);
-    
+
     var result = session.execute(bound);
     return Source.single(result)
         .map(ResultSet::one)

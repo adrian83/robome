@@ -14,7 +14,7 @@ import com.datastax.driver.core.Session;
 
 @ExtendWith(MockitoExtension.class)
 public class TableRepositoryTest {
-	
+
   @Mock private Session sessionMock;
   @InjectMocks private TableRepository tableRespository;
 

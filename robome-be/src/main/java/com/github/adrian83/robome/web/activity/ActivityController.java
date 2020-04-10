@@ -204,7 +204,7 @@ public class ActivityController extends AllDirectives {
       String stageId,
       String activityId,
       UpdatedActivity updatedActivity) {
-	  
+
     LOGGER.info(
         "New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}",
         tableId,

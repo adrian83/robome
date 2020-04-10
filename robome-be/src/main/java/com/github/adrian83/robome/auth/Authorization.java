@@ -33,16 +33,16 @@ public final class Authorization {
         .filter((u) -> PermissionChecker.canWriteStages(user))
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot write stages"));
   }
-  
-  public static User canReadAcivities(User user) {
-	    return Optional.ofNullable(user)
-	        .filter((u) -> PermissionChecker.canReadAcivities(user))
-	        .orElseThrow(() -> new UserNotAuthorizedException("user cannot read activities"));
-	  }
 
-	  public static User canWriteAcivities(User user) {
-	    return Optional.ofNullable(user)
-	        .filter((u) -> PermissionChecker.canWriteAcivities(user))
-	        .orElseThrow(() -> new UserNotAuthorizedException("user cannot write activities"));
-	  }
+  public static User canReadAcivities(User user) {
+    return Optional.ofNullable(user)
+        .filter((u) -> PermissionChecker.canReadAcivities(user))
+        .orElseThrow(() -> new UserNotAuthorizedException("user cannot read activities"));
+  }
+
+  public static User canWriteAcivities(User user) {
+    return Optional.ofNullable(user)
+        .filter((u) -> PermissionChecker.canWriteAcivities(user))
+        .orElseThrow(() -> new UserNotAuthorizedException("user cannot write activities"));
+  }
 }
