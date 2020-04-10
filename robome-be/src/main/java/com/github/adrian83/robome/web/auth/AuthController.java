@@ -3,8 +3,6 @@ package com.github.adrian83.robome.web.auth;
 import static com.github.adrian83.robome.auth.Authentication.hashPassword;
 import static com.github.adrian83.robome.auth.Authentication.userWithPasswordExists;
 import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROLES;
-import static com.github.adrian83.robome.util.http.HttpMethod.POST;
-import static com.github.adrian83.robome.util.http.HttpMethod.GET;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +16,7 @@ import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.util.http.HttpMethod;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.auth.validation.LoginValidator;
@@ -133,14 +132,14 @@ public class AuthController extends AllDirectives {
   }
 
   private Route handleRegisterOptionsRequest() {
-    return complete(response.response200(POST));
+    return complete(response.response200(HttpMethod.POST));
   }
 
   private Route handleLoginOptionsRequest() {
-    return complete(response.response200(POST));
+    return complete(response.response200(HttpMethod.POST));
   }
 
   private Route handleCheckOptionsRequest() {
-    return complete(response.response200(GET));
+    return complete(response.response200(HttpMethod.GET));
   }
 }
