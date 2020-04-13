@@ -35,7 +35,12 @@ class UpperMenu extends Base {
                     self.props.invalidateToken();
                 }
             })
-            .catch(error => self.registerError(error));
+            .catch(function(error){
+                if(error.status === 401){
+                    self.props.invalidateToken();
+                }
+                self.registerError(error)
+            });
     }
 
     render() {

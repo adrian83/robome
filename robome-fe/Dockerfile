@@ -1,13 +1,13 @@
-FROM node:10.15.3-jessie-slim
+FROM node:13.12.0-stretch-slim
 
 ADD . /robome-fe
 WORKDIR /robome-fe
+
 RUN rm -rf node_modules
 
 RUN npm --version
-RUN ls -al
-RUN pwd
+RUN npm install 
 
-RUN npm install react-scripts@latest
+# RUN npm install react-scripts@latest
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "start"]
