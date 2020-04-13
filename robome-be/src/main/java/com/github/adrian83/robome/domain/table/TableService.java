@@ -38,6 +38,7 @@ public class TableService {
     return tableRepository
         .getById(user.getId(), tableId.getTableId())
         .map((maybeEntity) -> maybeEntity.map(this::toTable))
+        //.map(fetchStages(user, tableId))
         .mapAsync(1, fetchStages(user, tableId))
         .runWith(Sink.head(), actorSystem);
   }
