@@ -37,7 +37,6 @@ class Register extends Base {
     }
 
     handleSubmit(event) {
-
         const self = this;
 
         var form = {
@@ -47,7 +46,7 @@ class Register extends Base {
         }
 
         unsecuredPost(registerBeUrl(), form)
-        .then(data => self.registerInfo("Registration completed. Please go to 'Login' page"))
+        .then(_ => self.registerInfo("Registration completed. Please go to 'Login' page"))
         .catch(error => self.registerError(error));
 
         event.preventDefault();
@@ -64,9 +63,7 @@ class Register extends Base {
                 <form onSubmit={this.handleSubmit}>
 
                     <div className="form-group">
-
                         <label htmlFor="emailInput">Email address</label>
-
                         <input type="email" 
                                 className="form-control" 
                                 id="emailInput" 
@@ -74,15 +71,10 @@ class Register extends Base {
                                 placeholder="Enter email" 
                                 value={this.state.email}
                                 onChange={this.handleEmailChange} />
-
-                        <small id="emailHelp" 
-                                className="form-text text-muted">We'll never share your email with anyone else.</small>
                     </div>
                 
                     <div className="form-group">
-
                         <label htmlFor="password1Input">Password</label>
-
                         <input type="password" 
                                 className="form-control" 
                                 id="password1Input" 
@@ -92,9 +84,7 @@ class Register extends Base {
                     </div>
 
                     <div className="form-group">
-
                         <label htmlFor="password2Input">Password</label>
-
                         <input type="password" 
                                 className="form-control" 
                                 id="password2Input" 

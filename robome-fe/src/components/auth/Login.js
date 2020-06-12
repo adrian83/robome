@@ -50,7 +50,6 @@ class Login extends Base {
             .then(function(response){
                 var authToken = response.headers.get('Authorization');
                 if(authToken) {
-                    console.log(authToken);
                     self.setState({signedIn: true})
                     self.props.onLogin(authToken);
                 } else {
@@ -77,9 +76,7 @@ class Login extends Base {
                 <form onSubmit={this.handleSubmit}>
 
                     <div className="form-group">
-
                         <label htmlFor="emailInput">Email address</label>
-
                         <input type="email" 
                                 className="form-control" 
                                 id="emailInput" 
@@ -87,13 +84,10 @@ class Login extends Base {
                                 placeholder="Enter email" 
                                 value={this.state.email}
                                 onChange={this.handleEmailChange} />
-
                     </div>
 
                     <div className="form-group">
-
                         <label htmlFor="passwordInput">Password</label>
-
                         <input type="password" 
                                 className="form-control" 
                                 id="passwordInput" 
@@ -104,10 +98,8 @@ class Login extends Base {
 
                     <button type="submit" 
                             className="btn btn-primary">Login</button>
-
                 </form>
             </div>
-
         );
     }
 }

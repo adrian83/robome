@@ -21,17 +21,17 @@ class CreateActivity extends Base {
     constructor(props) { 
         super(props);
 
-        this.state = {
-            activity: {name: ""}
-        };
-
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
         this.hideError = this.hideError.bind(this);
     }
 
+    activityFromState() {
+        return (this.state && this.state.activity) ? this.state.activity : {};
+    }
+
     handleNameChange(event) {
-        var activity = this.state.activity;
+        var activity = this.activityFromState();
         activity.name = event.target.value;
         this.setState({activity: activity});
     }
@@ -39,26 +39,27 @@ class CreateActivity extends Base {
     handleSubmit(event) {
         const self = this;
         const authToken = this.props.authToken;
+        const activity = this.activityFromState();
 
         const editUrl = activitiesBeUrl(
             this.props.match.params.tableId, 
             this.props.match.params.stageId);
 
-        securedPost(editUrl, authToken, this.state.activity)
+        securedPost(editUrl, authToken, activity)
             .then(response => response.json())
-            .then(data => self.setState({key: data.key}))
+            .then(data => self.setState({activity: data}))
             .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
 
     render() {
-
-        if(this.state && this.state.key) {
+        var activity = this.activityFromState();
+        if(activity.key) {
             var editActUrl = editActivityUrl(
-                this.state.key.tableId, 
-                this.state.key.stageId, 
-                this.state.key.activityId);
+                activity.key.tableId, 
+                activity.key.stageId, 
+                activity.key.activityId);
 
             return (<Redirect to={editActUrl} />);
         }
@@ -87,7 +88,7 @@ class CreateActivity extends Base {
                                 className="form-control" 
                                 id="nameInput" 
                                 placeholder="Enter name" 
-                                value={this.state.name}
+                                value={activity.name}
                                 onChange={this.handleNameChange} />
                     </div>
 

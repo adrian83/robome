@@ -21,50 +21,45 @@ class CreateTable extends Base {
     constructor(props) { 
         super(props);
 
-        this.state =  {
-            title: '', 
-            description: ''
-        };
-
         this.hideError = this.hideError.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleTitleChange = this.handleTitleChange.bind(this);
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     }
 
+    tableFromState() {
+        return (this.state && this.state.table) ? this.state.table : {};
+    }
+
     handleTitleChange(event) {
-        this.setState({title: event.target.value});
+        var table = this.tableFromState();
+        table.title = event.target.value;
+        this.setState({table: table});
     }
 
     handleDescriptionChange(event) {
-        this.setState({description: event.target.value});
+        var table = this.tableFromState();
+        table.description = event.target.value;
+        this.setState({table: table});
     }
 
     handleSubmit(event) {
-
         const self = this;
         const authToken = this.props.authToken;
+        const table = this.tableFromState();
 
-        const form = {
-            title: this.state.title,
-            description: this.state.description
-        }
-
-        securedPost(tablesBeUrl(), authToken, form)
+        securedPost(tablesBeUrl(), authToken, table)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
-            //.then(data => self.registerInfo("Table added"))
             .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
 
     render() {
-
-        if(this.state && this.state.table) {
-            var editUrl = editTableUrl(
-                this.state.table.key.tableId);
-
+        const table = this.tableFromState();
+        if(table.key) {
+            var editUrl = editTableUrl(table.key.tableId);
             return (<Redirect to={editUrl} />);
         }
 
@@ -83,7 +78,7 @@ class CreateTable extends Base {
                                 className="form-control" 
                                 id="titleInput" 
                                 placeholder="Enter title" 
-                                value={this.state.title}
+                                value={table.title}
                                 onChange={this.handleTitleChange} />
                     </div>
 
@@ -93,7 +88,7 @@ class CreateTable extends Base {
                                 className="form-control" 
                                 id="descriptionInput" 
                                 placeholder="Enter description" 
-                                value={this.state.description}
+                                value={table.description}
                                 onChange={this.handleDescriptionChange} />
                     </div>
 

@@ -14,7 +14,7 @@ class Logout extends Base {
     };
 
     componentDidMount() {   
-         this.props.onLogout();
+        this.props.onLogout();
     }
 
     render() {

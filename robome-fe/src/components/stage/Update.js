@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import Error from '../notification/Error';
+import Info from '../notification/Info';
 import BackLink from '../tiles/BackLink';
 import Title from '../tiles/Title';
 import Base from '../Base';
@@ -24,35 +25,39 @@ class UpdateStage extends Base {
         this.hideError = this.hideError.bind(this);
     }
 
+    stageFromState() {
+        return (this.state && this.state.stage) ? this.state.stage : {};
+    }
+
     handleNameChange(event) {
-        var stage = this.state.stage;
+        var stage = this.stageFromState();
         stage.title = event.target.value;
         this.setState({stage: stage});
     }
 
     handleSubmit(event) {
-
         const self = this;
         const authToken = this.props.authToken;
+        const stage = this.stageFromState();
 
         const updateStgUrl = stageBeUrl(
             this.props.match.params.tableId,
             this.props.match.params.stageId); 
         
-        const stage = {
-            title: self.state.stage.title
+        const updatedStage = {
+            title: stage.title
         };
 
-        securedPut(updateStgUrl, authToken, stage)
+        securedPut(updateStgUrl, authToken, updatedStage)
             .then(response => response.json())
             .then(data => self.setState({stage: data}))
+            .then(_ => self.registerInfo("Stage updated"))
             .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
 
     componentDidMount() {
-
         const self = this;
         const authToken = this.props.authToken;
         
@@ -67,8 +72,8 @@ class UpdateStage extends Base {
     }
 
     render() {
-
-        if(!this.state || ! this.state.stage){
+        const stage = this.stageFromState();
+        if(!stage.key){
             return (<div>waiting for data</div>);
         }
 
@@ -76,27 +81,25 @@ class UpdateStage extends Base {
 
         return (
             <div>
-                <Title title={this.state.stage.title} description=""></Title>
+                <Title title={stage.title} description=""></Title>
 
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <div>
                     <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
-
                 <br/>
 
                 <form onSubmit={this.handleSubmit}>
 
                     <div className="form-group">
-
                         <label htmlFor="nameInput">Name</label>
-
                         <input type="name" 
                                 className="form-control" 
                                 id="nameInput" 
                                 placeholder="Enter name" 
-                                value={this.state.stage.title}
+                                value={stage.title}
                                 onChange={this.handleNameChange} />
                     </div>
 

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import uuidv4 from '../../web/uuid';
+
 class Info extends Component {
 
     constructor(props) { 
@@ -27,13 +29,13 @@ class Info extends Component {
     }
 
     render() {
-        var self = this;
-        var id = 1;
-        if(this.props && this.props.info) {
-            var info = this.props.info.map(i => self.renderInfo(id++, i));
-            return(<div>{info}</div>);
+        if(!this.props || !this.props.info) {
+            return
         }
-        return(<div></div>);
+
+        var self = this;
+        var info = this.props.info.map(i => self.renderInfo(uuidv4(), i));
+        return(<div>{info}</div>);
     }
 }
 

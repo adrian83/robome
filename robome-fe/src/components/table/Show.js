@@ -24,7 +24,12 @@ class ShowTable extends Base {
 
     constructor(props) { 
         super(props);
+
         this.hideError = this.hideError.bind(this);
+    }
+
+    tableFromState() {
+        return (this.state && this.state.table) ? this.state.table : {};
     }
 
     componentDidMount() {
@@ -39,17 +44,13 @@ class ShowTable extends Base {
     }
 
     render() {
-        if(!this.state || !this.state.table) {
+        var table = this.tableFromState();
+        if(!table.title) {
             return (<div>waiting for table data</div>);
         }
 
-        var tableData = this.renderTable(this.state.table);
-
-        return (
-            <div>
-                {tableData}
-            </div>
-        );
+        var tableData = this.renderTable(table);
+        return (<div>{tableData}</div>);
     }
 
     renderTable(table) {
@@ -80,13 +81,12 @@ class ShowTable extends Base {
     deleteStage(stageKey) {
         const self = this;
         const authToken = this.props.authToken;
-        const table = this.state.table;
 
         return function(event) {
             securedDelete(stageBeUrl(stageKey.tableId, stageKey.stageId), authToken)
-                .then(function(response){
-                    var filtered = table.stages.filter((stage, index, arr) => stage.key.stageId !== stageKey.stageId);
-                    table.stages = filtered;
+                .then(function(_){
+                    var table = self.tableFromState();
+                    table.stages = table.stages.filter((stage, index, arr) => stage.key.stageId !== stageKey.stageId);
                     self.setState({table: table});
                 })
                 .catch(error => self.registerError(error));
@@ -98,16 +98,14 @@ class ShowTable extends Base {
     deleteActivity(activityKey) {
         const self = this;
         const authToken = self.props.authToken;
-        const table = self.state.table;
-
         const delStgUrl = activityBeUrl(activityKey.tableId, activityKey.stageId, activityKey.activityId);
 
         return function(event) {
             securedDelete(delStgUrl, authToken)
                 .then(function(response){
+                    var table = self.tableFromState();
                     table.stages.forEach(function(stage, index){
-                        var filtered = stage.activities.filter((activity, index, arr) => activity.key.activityId !== activityKey.activityId);
-                        stage.activities = filtered;
+                        stage.activities = stage.activities.filter((activity, index, arr) => activity.key.activityId !== activityKey.activityId);
                     })
                     self.setState({table: table});
                 })

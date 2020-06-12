@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import Error from '../notification/Error';
+import Info from '../notification/Info';
 import BackLink from '../tiles/BackLink';
 import Title from '../tiles/Title';
 import Base from '../Base';
@@ -24,14 +25,17 @@ class UpdateActivity extends Base {
         this.handleNameChange = this.handleNameChange.bind(this);
     }
 
+    activityFromState() {
+        return (this.state && this.state.activity) ? this.state.activity : {};
+    }
+
     handleNameChange(event) {
-        var activity = this.state.activity;
+        var activity = this.activityFromState();
         activity.name = event.target.value;
         this.setState({activity: activity});
     }
 
     handleSubmit(event) {
-
         const self = this;
         const authToken = this.props.authToken;
 
@@ -45,13 +49,13 @@ class UpdateActivity extends Base {
         securedPut(updateActUrl, authToken, act)
             .then(response => response.json())
             .then(data => self.setState({activity: data}))
+            .then(_ => self.registerInfo("Activity updated"))
             .catch(error => self.registerError(error));
 
         event.preventDefault();
     }
 
     componentDidMount() {
-
         const self = this;
         const authToken = this.props.authToken;
         
@@ -68,8 +72,8 @@ class UpdateActivity extends Base {
 
 
     render() {
-
-        if(!this.state || ! this.state.activity){
+        var activity = this.activityFromState();
+        if(!activity.name){
             return (<div>waiting for data</div>);
         }
 
@@ -77,25 +81,23 @@ class UpdateActivity extends Base {
 
         return (
             <div>
-                <Title title={this.state.activity.name} description=""></Title>
+                <Title title={activity.name} description=""></Title>
 
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
+                <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
 
                 <div>
                     <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
 
                 <form onSubmit={this.handleSubmit}>
-
                     <div className="form-group">
-
                         <label htmlFor="nameInput">Name</label>
-
                         <input type="name" 
                                 className="form-control" 
                                 id="nameInput" 
                                 placeholder="Enter name" 
-                                value={this.state.activity.name}
+                                value={activity.name}
                                 onChange={this.handleNameChange} />
                     </div>
 

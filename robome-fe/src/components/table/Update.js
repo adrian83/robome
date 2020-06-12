@@ -25,14 +25,18 @@ class UpdateTable extends Base {
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     }
 
+    tableFromState() {
+        return (this.state && this.state.table) ? this.state.table : {};
+    }
+
     handleTitleChange(event) {
-        var table = this.state.table ? this.state.table : {};
+        var table = this.tableFromState();
         table.title = event.target.value;
         this.setState({table: table});
     }
 
     handleDescriptionChange(event) {
-        var table = this.state.table ? this.state.table : {};
+        var table = this.tableFromState();
         table.description = event.target.value;
         this.setState({table: table});
     }
@@ -41,13 +45,14 @@ class UpdateTable extends Base {
         const self = this;
         const tableId = this.props.match.params.tableId
         const authToken = this.props.authToken;
+        const table = this.tableFromState();
 
-        const tab = {
-            title: self.state.table.title, 
-            description: self.state.table.description
+        const updatedTable = {
+            title: table.title, 
+            description: table.description
         };
         
-        securedPut(tableBeUrl(tableId), authToken, tab)
+        securedPut(tableBeUrl(tableId), authToken, updatedTable)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .then(data => self.registerInfo("Table updated"))
@@ -68,8 +73,8 @@ class UpdateTable extends Base {
     }
 
     render() {
-
-        if(!this.state || ! this.state.table){
+        var table = this.tableFromState();
+        if(!table.key){
             return (<div>waiting for data</div>);
         }
 
@@ -77,7 +82,7 @@ class UpdateTable extends Base {
 
         return (
             <div>
-                <Title title={this.state.table.title} description={this.state.table.description}></Title>
+                <Title title={table.title} description={table.description}></Title>
 
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
                 <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
@@ -85,32 +90,27 @@ class UpdateTable extends Base {
                 <div>
                     <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
-
                 <br/>
 
                 <form onSubmit={this.handleSubmit}>
 
                     <div className="form-group">
-
                         <label htmlFor="titleInput">Title</label>
-
                         <input type="title" 
                                 className="form-control" 
                                 id="titleInput" 
                                 placeholder="Enter title" 
-                                value={this.state.table.title}
+                                value={table.title}
                                 onChange={this.handleTitleChange} />
                     </div>
 
                     <div className="form-group">
-
                         <label htmlFor="descriptionInput">Description</label>
-
                         <input type="description" 
                                 className="form-control" 
                                 id="descriptionInput" 
                                 placeholder="Enter description" 
-                                value={this.state.table.description}
+                                value={table.description}
                                 onChange={this.handleDescriptionChange} />
                     </div>
 

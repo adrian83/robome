@@ -21,41 +21,41 @@ class CreateStage extends Base {
     constructor(props) { 
         super(props);
 
-        this.state = {name: ''};
-
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
         this.hideError = this.hideError.bind(this);
     }
 
+    stageFromState() {
+        return (this.state && this.state.stage) ? this.state.stage : {};
+    }
+
     handleNameChange(event) {
-        this.setState({name: event.target.value});
+        var stage = this.stageFromState();
+        stage.title = event.target.value;
+        this.setState({stage: stage});
     }
 
     handleSubmit(event) {
-
         const self = this;
         const authToken = this.props.authToken;
         const editStgUrl = stagesBeUrl(this.props.match.params.tableId);
+        const stage = this.stageFromState();
 
-        var form = {
-            name: this.state.name
-        };
-
-        securedPost(editStgUrl, authToken, form)
+        securedPost(editStgUrl, authToken, stage)
             .then(response => response.json())
-            .then(data => self.setState({key: data.key}))
+            .then(data => self.setState({stage: data}))
             .catch(error => self.registerError(error));
             
         event.preventDefault();
     }
 
     render() {
-
-        if(this.state && this.state.key) {
-            var editStgUrl = editStageUrl(
-                this.state.key.tableId, 
-                this.state.key.stageId);
+        const stage = this.stageFromState();
+        if(stage.key) {
+            const editStgUrl = editStageUrl(
+                stage.key.tableId, 
+                stage.key.stageId);
 
             return (<Redirect to={editStgUrl} />);
         }
@@ -71,20 +71,16 @@ class CreateStage extends Base {
                 <div>
                     <BackLink to={showTabUrl} text="show table"></BackLink>
                 </div>
-
                 <br/>
 
                 <form onSubmit={this.handleSubmit}>
-
                     <div className="form-group">
-
                         <label htmlFor="nameInput">Name</label>
-
                         <input type="name" 
                                 className="form-control" 
                                 id="nameInput" 
                                 placeholder="Enter name" 
-                                value={this.state.name}
+                                value={stage.name}
                                 onChange={this.handleNameChange} />
                     </div>
 

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import uuidv4 from '../../web/uuid';
+
 class Error extends Component {
 
     constructor(props) { 
@@ -9,19 +11,15 @@ class Error extends Component {
     }
 
     hideError(errId){
-        console.log("hide", errId);
         const self = this;
         return function(event) {
-            console.log("real hide", errId);
             self.props.hideError(errId);
             event.preventDefault();
         }
     }
 
     renderError(id, message, details=[]){
-
-        var i = 0;
-        var detailsList = details.map(msg => (<div key={i++}>{msg}</div>));
+        var detailsList = details.map(msg => (<div key={uuidv4()}>{msg}</div>));
 
         return (
             <div className="alert alert-danger alert-dismissible fade show" role="alert" key={id}>
@@ -34,33 +32,29 @@ class Error extends Component {
     }
 
     render() {
+        if(!this.props || !this.props.errors) {
+            return
+        }
 
         var self = this;
-        if(this.props && this.props.errors) {
-            console.log("render errors", this.props.errors);
-            var errors = this.props.errors.map(function(error){ 
-                console.log("render error", error);
-
-                if(error.status) {
-
-                    if(error.status === 500) {
-                        return self.renderError(error.id, error.body);
-
-                    } else if(error.status === 400) {
-                        var msgs = error.body.map(v => v.message);
-                        return self.renderError(error.id, "Invalida data", msgs);
-                    
-                    }  else if(error.status === 401) {
-                        return self.renderError(error.id, error.body);
-                    }
-
+        var errors = this.props.errors.map(function(error){ 
+            if(error.status) {
+                if(error.status === 500) {
+                    return self.renderError(error.id, error.body);
+                } else if(error.status === 400) {
+                    var msgs = error.body.map(v => v.message);
+                    return self.renderError(error.id, "Invalida data", msgs);
+                }  else if(error.status === 401) {
                     return self.renderError(error.id, error.body);
                 }
-                return self.renderError("abc", "---");
-            });
-            return(<div>{errors}</div>);
-        }
-        return(<div></div>);
+
+                return self.renderError(error.id, error.body);
+            }
+            console.log('error: ', JSON.stringify(error))
+            return self.renderError(uuidv4(), "Unknown error, please try again later");
+        });
+    
+        return(<div>{errors}</div>);
     }
 }
 

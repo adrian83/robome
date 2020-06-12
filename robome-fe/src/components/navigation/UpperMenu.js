@@ -23,7 +23,7 @@ class UpperMenu extends Base {
 
     componentDidMount() {
         const self = this;
-        const authToken = self.props.authToken;
+        const authToken = this.props.authToken;
 
         if(!authToken){
             return

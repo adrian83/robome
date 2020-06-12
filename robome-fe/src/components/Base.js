@@ -12,11 +12,9 @@ class Base extends Component {
     }
 
     registerError(err) {
-        var errs = this.state && this.state.errors ? this.state.errors : [];
-        console.log("errs", errs);
+        var errs = this.errors();
         errs.push(err);
         this.setState({errors: errs});
-        console.log("base state", this.state);
     }
 
     errors() {
@@ -24,24 +22,15 @@ class Base extends Component {
     }
 
     hideError(errId) {
-        console.log("base hide", errId);
-        console.log("base state", this.state);
-        if(this.state && this.state.errors){
-            console.log("base errors", this.state.errors);
-            var errs = this.state.errors;
-            errs = errs.filter((err, index, arr) => err.id !== errId);
-            this.setState({errors: errs});
-        }
+        var filteredErrors = this.errors().filter((err, index, arr) => err.id !== errId);
+        this.setState({errors: filteredErrors});
+        
     }
 
     registerInfo(msg) {
-        var info = this.state.info;
-        if(info){
-            info.push(msg);
-            this.setState({info: info});
-        } else {
-            this.setState({info: [msg]});
-        }
+        var info = this.info();
+        info.push(msg);
+        this.setState({info: info});
     }
 
     info() {
@@ -49,17 +38,12 @@ class Base extends Component {
     }
 
     hideInfo(msg) {
-        if(this.state && this.state.info){
-            var info = this.state.info;
-            info = info.filter((i, index, arr) => i !== msg);
-            this.setState({info: info});
-        }
+        var filteredInfo = this.info().filter((i, index, arr) => i !== msg);
+        this.setState({info: filteredInfo});
     }
 
     render() {
-        return (
-            <div>BASE BASE</div>
-        );
+        return (<div></div>);
     }
 }
 

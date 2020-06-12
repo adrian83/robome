@@ -21,7 +21,6 @@ class ListTables extends Base {
     };
 
     componentDidMount() {
-
         const self = this;
         const authToken = self.props.authToken;
 
