@@ -12,14 +12,14 @@
 	<properties>
 		<scala.version>2.12.7</scala.version>
 		<scala.binary.version>2.12</scala.binary.version>
-		<akka.http.version>10.1.11</akka.http.version>
-		<akka.actor.version>2.6.1</akka.actor.version>
-		<akka.stream.version>2.6.1</akka.stream.version>
+		<akka.http.version>10.1.12</akka.http.version>
+		<akka.actor.version>2.6.6</akka.actor.version>
+		<akka.stream.version>2.6.6</akka.stream.version>
 		<cassandra.alpakka.version>1.1.2</cassandra.alpakka.version>
 		<jackson.jsr310.version>2.10.1</jackson.jsr310.version>
 		<jaxb.api.version>2.3.1</jaxb.api.version>
 		<guice.version>4.2.2</guice.version>
-		<log4j.version>2.13.0</log4j.version>
+		<log4j.version>2.13.2</log4j.version>
 		<sl4j.version>1.7.30</sl4j.version>
 		<jjwt.version>0.9.1</jjwt.version>
 		<jbcrypt.version>0.4</jbcrypt.version>

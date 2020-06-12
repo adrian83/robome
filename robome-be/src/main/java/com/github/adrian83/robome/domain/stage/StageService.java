@@ -51,7 +51,7 @@ public class StageService {
   }
 
   public CompletionStage<Stage> saveStage(User user, TableKey tableKey, NewStage newStage) {
-    var entity = new StageEntity(tableKey, user.getId(), newStage.getName());
+    var entity = new StageEntity(tableKey, user.getId(), newStage.getTitle());
     var sink =
         stageRepository
             .saveStage()

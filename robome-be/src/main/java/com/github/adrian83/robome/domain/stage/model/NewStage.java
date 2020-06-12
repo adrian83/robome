@@ -5,22 +5,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NewStage {
 
-  private static final String NAME_LABEL = "name";
+  private static final String TITLE_LABEL = "title";
 
-  private String name;
+  private String title;
 
   @JsonCreator
-  public NewStage(@JsonProperty(NAME_LABEL) String name) {
+  public NewStage(@JsonProperty(TITLE_LABEL) String title) {
     super();
-    this.name = name;
+    this.title = title;
   }
 
-  public String getName() {
-    return name;
+  public String getTitle() {
+    return title;
   }
 
   @Override
   public String toString() {
-    return "NewStage [name=" + name + "]";
+    return "NewStage [title=" + title + "]";
   }
 }
