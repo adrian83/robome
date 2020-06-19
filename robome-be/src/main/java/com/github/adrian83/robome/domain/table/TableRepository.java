@@ -62,7 +62,7 @@ public class TableRepository {
     return CassandraSink.create(1, preparedStatement, this::createInserBoundStatement, session);
   }
 
-  public Sink<TableKey, CompletionStage<Done>> deleteTable(TableKey tableId, UUID userId) {
+  public Sink<TableKey, CompletionStage<Done>> deleteTable(UUID userId) {
     PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
     BiFunction<TableKey, PreparedStatement, BoundStatement> boundStmt =
         (tabId, stmt) -> stmt.bind(tabId.getTableId(), userId);

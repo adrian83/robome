@@ -180,13 +180,13 @@ public class TableServiceTest {
     // given
     var sink = Sink.fold(Done.done(), (Done d, TableKey k) -> d);
 
-    when(tableRepositoryMock.deleteTable(any(TableKey.class), any(UUID.class))).thenReturn(sink);
+    when(tableRepositoryMock.deleteTable(any(UUID.class))).thenReturn(sink);
 
     // when
     var tableKeyF = tableService.deleteTable(user, tableKey1);
 
     // then
-    verify(tableRepositoryMock).deleteTable(any(TableKey.class), any(UUID.class));
+    verify(tableRepositoryMock).deleteTable(any(UUID.class));
 
     var tableKey = tableKeyF.toCompletableFuture().get(2, SECONDS);
     assertEquals(tableKey1, tableKey);

@@ -24,4 +24,9 @@ public class TableKey {
   public UUID getTableId() {
     return tableId;
   }
+
+  @Override
+  public String toString() {
+    return "TableKey [tableId=" + tableId + "]";
+  }
 }

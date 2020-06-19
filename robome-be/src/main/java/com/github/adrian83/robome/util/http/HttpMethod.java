@@ -1,9 +1,20 @@
 package com.github.adrian83.robome.util.http;
 
 public enum HttpMethod {
-  POST,
-  GET,
-  PUT,
-  OPTIONS,
-  DELETE
+  POST("POST"),
+  GET("GET"),
+  PUT("PUT"),
+  OPTIONS("OPTIONS"),
+  DELETE("DELETE"),
+  ALL("*");
+
+  private String name;
+
+  HttpMethod(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

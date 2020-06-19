@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.common;
 
-import java.util.Arrays;
+
 import java.util.List;
 import java.util.concurrent.CompletionException;
 
@@ -12,7 +12,6 @@ import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.google.inject.Inject;
 
-import akka.http.javadsl.model.HttpHeader;
 import akka.http.javadsl.model.HttpResponse;
 
 public class ExceptionHandler {
@@ -46,9 +45,5 @@ public class ExceptionHandler {
       return responseFactory.response400(List.of(EMAIL_IN_USE_ERROR));
     }
     return responseFactory.response500(ex.getMessage());
-  }
-
-  protected List<HttpHeader> headers(HttpHeader... headers) {
-    return Arrays.asList(headers);
   }
 }

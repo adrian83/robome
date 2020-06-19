@@ -7,8 +7,6 @@ import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,26 +62,30 @@ public class TableController extends AllDirectives {
 
   public Route createRoute() {
     return route(
-        put(routes.prefixVarFormSlash(TABLES, UpdatedTable.class, updateTableAction)),
-        options(routes.prefixSlash(TABLES, handleOptionsRequest())),
-        post(routes.prefixFormSlash(TABLES, NewTable.class, createTableAction)),
+        get(routes.prefixVarSlash(TABLES, this::getTableAction)),
         get(routes.prefixSlash(TABLES, security.jwtSecured(this::getTables))),
-        options(routes.prefixVarSlash(TABLES, tableId -> handleOptionsRequestWithId())),
-        get(routes.prefixVarSlash(TABLES, getTableAction)),
-        delete(routes.prefixVarSlash(TABLES, deleteTableAction)));
+        post(routes.prefixFormSlash(TABLES, NewTable.class, this::createTableAction)),
+        put(routes.prefixVarFormSlash(TABLES, UpdatedTable.class, this::updateTableAction)),
+        delete(routes.prefixVarSlash(TABLES, this::deleteTableAction)),
+        options(routes.prefixSlash(TABLES, handleOptionsRequest())),
+        options(routes.prefixVarSlash(TABLES, tableId -> handleOptionsRequestWithId())));
   }
 
-  Function<String, Route> getTableAction =
-      (var tableId) -> security.jwtSecured(tableId, this::getTableById);
+  private Route getTableAction(String tableId) {
+    return security.jwtSecured(tableId, this::getTableById);
+  }
 
-  Function<String, Route> deleteTableAction =
-      (var tableId) -> security.jwtSecured(tableId, this::deleteTable);
+  private Route deleteTableAction(String tableId) {
+    return security.jwtSecured(tableId, this::deleteTable);
+  }
 
-  BiFunction<String, Class<UpdatedTable>, Route> updateTableAction =
-      (var tableId, var clazz) -> security.jwtSecured(tableId, clazz, this::updateTable);
+  private Route updateTableAction(String tableId, Class<UpdatedTable> clazz) {
+    return security.jwtSecured(tableId, clazz, this::updateTable);
+  }
 
-  Function<Class<NewTable>, Route> createTableAction =
-      (var clazz) -> security.jwtSecured(clazz, this::persistTable);
+  private Route createTableAction(Class<NewTable> clazz) {
+    return security.jwtSecured(clazz, this::persistTable);
+  }
 
   private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
     LOGGER.info("New list table request");

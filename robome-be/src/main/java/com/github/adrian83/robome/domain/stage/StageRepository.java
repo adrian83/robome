@@ -84,7 +84,7 @@ public class StageRepository {
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 
-  public Sink<StageKey, CompletionStage<Done>> deleteStage(StageKey stageKey, UUID userId) {
+  public Sink<StageKey, CompletionStage<Done>> deleteStage(UUID userId) {
     PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
     BiFunction<StageKey, PreparedStatement, BoundStatement> boundStmt =
         (stgKey, stmt) -> stmt.bind(stgKey.getTableId(), stgKey.getStageId(), userId);

@@ -7,7 +7,6 @@ import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROL
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,7 @@ import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.http.HttpMethod;
+import com.github.adrian83.robome.util.tuple.Tuple2;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.auth.validation.LoginValidator;
@@ -40,6 +40,10 @@ public class AuthController extends AllDirectives {
   public static final String LOGIN = "login";
   public static final String REGISTER = "register";
   public static final String CHECK = "check";
+
+  public static final Tuple2<String, String> LOGIN_PATH = new Tuple2<>(AUTH, LOGIN);
+  public static final Tuple2<String, String> REGISTER_PATH = new Tuple2<>(AUTH, REGISTER);
+  public static final Tuple2<String, String> CHECK_PATH = new Tuple2<>(AUTH, CHECK);
 
   private static final LoginValidator LOGIN_VALIDATOR = new LoginValidator();
   private static final RegisterValidator REGISTER_VALIDATOR = new RegisterValidator();
@@ -69,22 +73,23 @@ public class AuthController extends AllDirectives {
 
   public Route createRoute() {
     return route(
-        options(routes.prefixPrefixSlash(AUTH, LOGIN, handleLoginOptionsRequest())),
-        post(routes.prefixPrefixFormSlash(AUTH, LOGIN, Login.class, loginAction)),
-        options(routes.prefixPrefixSlash(AUTH, REGISTER, handleRegisterOptionsRequest())),
-        post(routes.prefixPrefixFormSlash(AUTH, REGISTER, Register.class, registerAction)),
-        get(routes.prefixPrefixSlash(AUTH, CHECK, security.jwtSecured(this::isSignedIn))),
-        options(routes.prefixPrefixSlash(AUTH, CHECK, handleCheckOptionsRequest())));
+        options(routes.prefixPrefixSlash(LOGIN_PATH, handleLoginOptionsRequest())),
+        post(routes.prefixPrefixFormSlash(LOGIN_PATH, Login.class, this::loginAction)),
+        options(routes.prefixPrefixSlash(REGISTER_PATH, handleRegisterOptionsRequest())),
+        post(routes.prefixPrefixFormSlash(REGISTER_PATH, Register.class, this::registerAction)),
+        get(routes.prefixPrefixSlash(CHECK_PATH, security.jwtSecured(this::isSignedIn))),
+        options(routes.prefixPrefixSlash(CHECK_PATH, handleCheckOptionsRequest())));
   }
 
-  Function<Class<Register>, Route> registerAction =
-      (Class<Register> clazz) -> security.unsecured(clazz, this::registerUser);
+  private Route registerAction(Class<Register> clazz) {
+    return security.unsecured(clazz, this::registerUser);
+  }
 
-  Function<Class<Login>, Route> loginAction =
-      (Class<Login> clazz) -> security.unsecured(clazz, this::loginUser);
+  private Route loginAction(Class<Login> clazz) {
+    return security.unsecured(clazz, this::loginUser);
+  }
 
   private Route loginUser(Login login) {
-
     LOGGER.info("Signing in user: {}", login);
 
     CompletableFuture<HttpResponse> responseF =
@@ -100,7 +105,6 @@ public class AuthController extends AllDirectives {
   }
 
   private Route registerUser(Register register) {
-
     LOGGER.info("Registering new user: {}", register);
 
     CompletableFuture<HttpResponse> responseF =
@@ -115,7 +119,6 @@ public class AuthController extends AllDirectives {
   }
 
   private Route isSignedIn(CompletionStage<Optional<User>> maybeUserF) {
-
     LOGGER.info("Checking if user is logged in");
 
     CompletionStage<HttpResponse> responseF =

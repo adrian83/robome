@@ -16,7 +16,6 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.actor.ActorSystem;
-import akka.japi.function.Function;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 
@@ -38,7 +37,7 @@ public class StageService {
     return stageRepository
         .getById(user.getId(), stageKey)
         .map((maybeStage) -> maybeStage.map(this::toStage))
-        .mapAsync(1, fetchStageActivities(user))
+        .mapAsync(1, (maybeStage) -> fetchStageActivities(user, maybeStage))
         .runWith(Sink.head(), actorSystem);
   }
 
@@ -46,7 +45,7 @@ public class StageService {
     return stageRepository
         .getTableStages(user.getId(), id.getTableId())
         .map(this::toStage)
-        .mapAsync(1, fetchActivities(user))
+        .mapAsync(1, (stage) -> fetchActivities(user, stage))
         .runWith(Sink.seq(), actorSystem);
   }
 
@@ -72,7 +71,7 @@ public class StageService {
   public CompletionStage<StageKey> deleteStage(User user, StageKey stageKey) {
     Sink<StageKey, CompletionStage<StageKey>> sink =
         stageRepository
-            .deleteStage(stageKey, user.getId())
+            .deleteStage(user.getId())
             .mapMaterializedValue(doneF -> doneF.thenApply(done -> stageKey));
 
     return Source.single(stageKey).runWith(sink, actorSystem);
@@ -88,23 +87,23 @@ public class StageService {
         entity.getModifiedAt());
   }
 
-  protected Function<Stage, CompletionStage<Stage>> fetchActivities(User user) {
-    return (Stage stage) ->
-        activityService
-            .getStageActivities(user, stage.getKey())
-            .thenApply((activities) -> stage.withActivities(activities));
+  private CompletionStage<Stage> fetchActivities(User user, Stage stage) {
+    return activityService
+        .getStageActivities(user, stage.getKey())
+        .thenApply((activities) -> stage.withActivities(activities));
   }
 
-  protected Function<Optional<Stage>, CompletionStage<Optional<Stage>>> fetchStageActivities(
-      User user) {
-    return (Optional<Stage> maybeStage) ->
-        maybeStage
-            .map(
-                (stage) ->
-                    activityService
-                        .getStageActivities(user, stage.getKey())
-                        .thenApply((activities) -> stage.withActivities(activities))
-                        .thenApply((resultStage) -> Optional.of(resultStage)))
-            .orElse(CompletableFuture.completedFuture(Optional.empty()));
+  private CompletionStage<Optional<Stage>> getStageWithActivities(User user, Stage stage) {
+    return activityService
+        .getStageActivities(user, stage.getKey())
+        .thenApply((activities) -> stage.withActivities(activities))
+        .thenApply((resultStage) -> Optional.of(resultStage));
+  }
+
+  private CompletionStage<Optional<Stage>> fetchStageActivities(
+      User user, Optional<Stage> maybeStage) {
+    return maybeStage
+        .map((stage) -> getStageWithActivities(user, stage))
+        .orElse(CompletableFuture.completedFuture(Optional.empty()));
   }
 }

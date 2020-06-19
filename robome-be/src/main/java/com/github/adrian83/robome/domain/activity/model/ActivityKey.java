@@ -28,4 +28,15 @@ public class ActivityKey extends StageKey {
   public UUID getActivityId() {
     return activityId;
   }
+
+  @Override
+  public String toString() {
+    return "ActivityKey [tableId="
+        + getTableId()
+        + ", stageId="
+        + getStageId()
+        + ", activityId="
+        + activityId
+        + "]";
+  }
 }

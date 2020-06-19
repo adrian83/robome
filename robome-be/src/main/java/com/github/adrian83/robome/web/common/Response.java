@@ -1,8 +1,8 @@
 package com.github.adrian83.robome.web.common;
 
-import static com.github.adrian83.robome.util.http.Header.AUTHORIZATION;
-import static com.github.adrian83.robome.util.http.Header.CONTENT_TYPE;
-import static com.github.adrian83.robome.util.http.Header.LOCATION;
+import static com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION;
+import static com.github.adrian83.robome.util.http.HttpHeader.CONTENT_TYPE;
+import static com.github.adrian83.robome.util.http.HttpHeader.LOCATION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,10 +99,10 @@ public class Response {
 
   protected List<HttpHeader> corsHeaders() {
     return headers(
-        Cors.allowHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()),
+        Cors.allowHeaders(AUTHORIZATION, CONTENT_TYPE, LOCATION),
         Cors.origin(corsOrigin()),
-        Cors.methods("*"),
-        Cors.exposeHeaders(AUTHORIZATION.getText(), CONTENT_TYPE.getText(), LOCATION.getText()));
+        Cors.methods(HttpMethod.ALL),
+        Cors.exposeHeaders(AUTHORIZATION, CONTENT_TYPE, LOCATION));
   }
 
   protected String corsOrigin() {

@@ -43,10 +43,9 @@ public class ActivityService {
   }
 
   public CompletionStage<ActivityKey> deleteActivity(User user, ActivityKey activityKey) {
-
     Sink<ActivityKey, CompletionStage<ActivityKey>> sink =
         activityRepository
-            .deleteActivity(activityKey, user.getId())
+            .deleteActivity(user.getId())
             .mapMaterializedValue(doneF -> doneF.thenApply(done -> activityKey));
 
     return Source.single(activityKey).runWith(sink, actorSystem);
@@ -54,9 +53,7 @@ public class ActivityService {
 
   public CompletionStage<Activity> updateActivity(
       User user, ActivityKey key, UpdatedActivity updatedActivity) {
-
-    ActivityEntity entity =
-        ActivityEntity.newActivity(key, user.getId(), updatedActivity.getName());
+    var entity = ActivityEntity.newActivity(key, user.getId(), updatedActivity.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =
         activityRepository
@@ -68,8 +65,7 @@ public class ActivityService {
 
   public CompletionStage<Activity> saveActivity(
       User user, StageKey stageKey, NewActivity newActivity) {
-
-    ActivityEntity entity = new ActivityEntity(stageKey, user.getId(), newActivity.getName());
+    var entity = new ActivityEntity(stageKey, user.getId(), newActivity.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =
         activityRepository

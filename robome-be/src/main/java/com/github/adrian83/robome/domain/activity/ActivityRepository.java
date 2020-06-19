@@ -92,8 +92,8 @@ public class ActivityRepository {
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 
-  public Sink<ActivityKey, CompletionStage<Done>> deleteActivity(
-      ActivityKey activityId, UUID userId) {
+  public Sink<ActivityKey, CompletionStage<Done>> deleteActivity( UUID userId) {
+	  
     PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
     BiFunction<ActivityKey, PreparedStatement, BoundStatement> boundStmt =
         (actKey, stmt) ->
@@ -101,12 +101,12 @@ public class ActivityRepository {
     return CassandraSink.create(1, preparedStatement, boundStmt, session);
   }
 
-  public Source<ActivityEntity, NotUsed> getStageActivities(UUID userId, StageKey stageId) {
+  public Source<ActivityEntity, NotUsed> getStageActivities(UUID userId, StageKey stageKey) {
 
     BoundStatement bound =
         session
             .prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT)
-            .bind(stageId.getTableId(), stageId.getStageId(), userId);
+            .bind(stageKey.getTableId(), stageKey.getStageId(), userId);
 
     var entities =
         session.execute(bound).all().stream().map(this::fromRow).collect(Collectors.toList());
@@ -114,16 +114,16 @@ public class ActivityRepository {
     return Source.from(entities);
   }
 
-  public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityId, User user) {
+  public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityKey, User user) {
 
     BoundStatement bound =
         session
             .prepare(SELECT_ACTIVITY_BY_ID_STMT)
             .bind(
                 user.getId(),
-                activityId.getTableId(),
-                activityId.getStageId(),
-                activityId.getActivityId());
+                activityKey.getTableId(),
+                activityKey.getStageId(),
+                activityKey.getActivityId());
 
     ResultSet r = session.execute(bound);
 

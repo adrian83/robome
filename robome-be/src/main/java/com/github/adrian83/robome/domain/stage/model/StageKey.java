@@ -26,4 +26,9 @@ public class StageKey extends TableKey {
   public UUID getStageId() {
     return stageId;
   }
+
+  @Override
+  public String toString() {
+    return "StageKey [tableId=" + getTableId() + ", stageId=" + stageId + "]";
+  }
 }

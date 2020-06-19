@@ -33,14 +33,10 @@ public final class Authentication {
   }
 
   public static String hidePassword(String password) {
-
-    return ofNullable(
-            password != null && password.length() > MIN_PASSWORD_LENGTH ? password.length() : null)
-        .map(
-            (len) -> {
-              var stars = new String(new char[len - 2]).replace("\0", "*");
-              return fromBegining(password, 1) + stars + fromEnd(password, 1);
-            })
+    return ofNullable(password)
+        .filter(p -> p.length() > MIN_PASSWORD_LENGTH)
+        .map(p -> new String(new char[p.length() - 2]).replace("\0", "*"))
+        .map(s -> fromBegining(password, 1) + s + fromEnd(password, 1))
         .orElse("**");
   }
 }

@@ -6,7 +6,6 @@ import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +20,7 @@ import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
-import com.github.adrian83.robome.util.function.TetraFunction;
-import com.github.adrian83.robome.util.function.TriFunction;
+import com.github.adrian83.robome.util.tuple.Tuple3;
 import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
 import com.github.adrian83.robome.web.activity.validation.UpdatedActivityValidator;
 import com.github.adrian83.robome.web.common.ExceptionHandler;
@@ -44,6 +42,9 @@ public class ActivityController extends AllDirectives {
 
   public static final String ACTIVITIES = "activities";
 
+  public static final Tuple3<String, String, String> PATH_ELEMENTS =
+      new Tuple3<>(TABLES, STAGES, ACTIVITIES);
+
   private ActivityService activityService;
   private ExceptionHandler exceptionHandler;
   private Security security;
@@ -64,67 +65,64 @@ public class ActivityController extends AllDirectives {
     this.response = response;
   }
 
-  private TriFunction<String, String, String, Route> getActivityByIdAction =
-      (String tableId, String stageId, String activityId) ->
-          security.jwtSecured(tableId, stageId, activityId, this::getActivityById);
-
-  private TriFunction<String, String, Class<NewActivity>, Route> persistActivityAction =
-      (String tableId, String stageId, Class<NewActivity> clazz) ->
-          security.jwtSecured(tableId, stageId, clazz, this::persistActivity);
-
-  private TriFunction<String, String, String, Route> deleteActivityAction =
-      (String tableId, String stageId, String activityId) ->
-          security.jwtSecured(tableId, stageId, activityId, this::deleteActivity);
-
-  private TetraFunction<String, String, String, Class<UpdatedActivity>, Route>
-      updateActivityAction =
-          (String tableId, String stageId, String activityId, Class<UpdatedActivity> clazz) ->
-              security.jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
-
-  private BiFunction<String, String, Route> getStageActivitiesAction =
-      (String tableId, String stageId) ->
-          security.jwtSecured(tableId, stageId, this::getStageActivities);
-
   public Route createRoute() {
     return route(
-        get(
-            routes.prefixVarPrefixVarPrefixVarSlash(
-                TABLES, STAGES, ACTIVITIES, getActivityByIdAction)),
+        get(routes.prefixVarPrefixVarPrefixVarSlash(PATH_ELEMENTS, this::getActivityByIdAction)),
+        get(routes.prefixVarPrefixVarPrefixSlash(PATH_ELEMENTS, this::getStageActivitiesAction)),
+        options(routes.prefixVarPrefixVarPrefixSlash(PATH_ELEMENTS, this::handleOptionsRequest)),
+        delete(routes.prefixVarPrefixVarPrefixVarSlash(PATH_ELEMENTS, this::deleteActivityAction)),
         put(
             routes.prefixVarPrefixVarPrefixVarFormSlash(
-                TABLES, STAGES, ACTIVITIES, UpdatedActivity.class, updateActivityAction)),
+                PATH_ELEMENTS, UpdatedActivity.class, this::updateActivityAction)),
         post(
             routes.prefixVarPrefixVarPrefixFormSlash(
-                TABLES, STAGES, ACTIVITIES, NewActivity.class, persistActivityAction)),
-        options(
-            routes.prefixVarPrefixVarPrefixSlash(
-                TABLES, STAGES, ACTIVITIES, (tableId, stageId) -> handleOptionsRequest())),
+                PATH_ELEMENTS, NewActivity.class, this::persistActivityAction)),
         options(
             routes.prefixVarPrefixVarPrefixVarSlash(
-                TABLES,
-                STAGES,
-                ACTIVITIES,
-                (tableId, stageId, activityId) -> handleOptionsRequestWithId())),
-        delete(
-            routes.prefixVarPrefixVarPrefixVarSlash(
-                TABLES, STAGES, ACTIVITIES, deleteActivityAction)),
-        get(
-            routes.prefixVarPrefixVarPrefixSlash(
-                TABLES, STAGES, ACTIVITIES, getStageActivitiesAction)));
+                PATH_ELEMENTS, this::handleOptionsRequestWithId)));
+  }
+
+  private Route getActivityByIdAction(String tableId, String stageId, String activityId) {
+    return security.jwtSecured(tableId, stageId, activityId, this::getActivityById);
+  }
+
+  private Route persistActivityAction(String tableId, String stageId, Class<NewActivity> clazz) {
+    return security.jwtSecured(tableId, stageId, clazz, this::persistActivity);
+  }
+
+  private Route deleteActivityAction(String tableId, String stageId, String activityId) {
+    return security.jwtSecured(tableId, stageId, activityId, this::deleteActivity);
+  }
+
+  private Route updateActivityAction(
+      String tableId, String stageId, String activityId, Class<UpdatedActivity> clazz) {
+    return security.jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
+  }
+
+  private Route getStageActivitiesAction(String tableId, String stageId) {
+    return security.jwtSecured(tableId, stageId, this::getStageActivities);
+  }
+
+  private Route handleOptionsRequestWithId(String tableId, String stageId, String activityId) {
+    return complete(response.response200(GET, DELETE, PUT));
+  }
+
+  private Route handleOptionsRequest(String tableId, String stageId) {
+    return complete(response.response200(GET, POST));
   }
 
   private Route getStageActivities(
       CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
-    LOGGER.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
+
+    var stageKey = newStageKey(tableIdStr, stageIdStr);
+
+    LOGGER.info("New list stage activities, stageKey: {}", stageKey);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadAcivities)
-            .thenCompose(
-                user ->
-                    activityService.getStageActivities(
-                        user, StageKey.fromStrings(tableIdStr, stageIdStr)))
+            .thenCompose(user -> activityService.getStageActivities(user, stageKey))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -133,23 +131,19 @@ public class ActivityController extends AllDirectives {
 
   private Route deleteActivity(
       CompletionStage<Optional<User>> maybeUserF,
-      String tableId,
-      String stageId,
-      String activityId) {
-    LOGGER.info(
-        "New delete activity request, tableId: {}, stageId: {}, activityId: {}",
-        tableId,
-        stageId,
-        activityId);
+      String tableIdStr,
+      String stageIdStr,
+      String activityIdStr) {
+
+    var activityKey = newActivityKey(tableIdStr, stageIdStr, activityIdStr);
+
+    LOGGER.info("New delete activity request, activityKey: {}", activityKey);
 
     var responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canWriteAcivities)
-            .thenCompose(
-                user ->
-                    activityService.deleteActivity(
-                        user, ActivityKey.fromStrings(tableId, stageId, activityId)))
+            .thenCompose(user -> activityService.deleteActivity(user, activityKey))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -162,14 +156,15 @@ public class ActivityController extends AllDirectives {
       String stageIdStr,
       String activityIdStr) {
 
+    var activityKey = newActivityKey(tableIdStr, stageIdStr, activityIdStr);
+
+    LOGGER.info("New find activity request, activityKey: {}", activityKey);
+
     CompletionStage<HttpResponse> responseF =
         maybeUserF
             .thenApply(Authentication::userExists)
             .thenApply(Authorization::canReadAcivities)
-            .thenCompose(
-                user ->
-                    activityService.getActivity(
-                        user, ActivityKey.fromStrings(tableIdStr, stageIdStr, activityIdStr)))
+            .thenCompose(user -> activityService.getActivity(user, activityKey))
             .thenApply(response::jsonFromOptional)
             .exceptionally(exceptionHandler::handle);
 
@@ -178,9 +173,13 @@ public class ActivityController extends AllDirectives {
 
   private Route persistActivity(
       CompletionStage<Optional<User>> maybeUserF,
-      String tableId,
-      String stageId,
+      String tableIdStr,
+      String stageIdStr,
       NewActivity newActivity) {
+
+    var stageKey = newStageKey(tableIdStr, stageIdStr);
+
+    LOGGER.info("New persist table request, stageKey: {}, activity: {}", stageKey, newActivity);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -189,9 +188,7 @@ public class ActivityController extends AllDirectives {
             .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
-                uaf ->
-                    activityService.saveActivity(
-                        uaf.getUser(), StageKey.fromStrings(tableId, stageId), uaf.getForm()))
+                uaf -> activityService.saveActivity(uaf.getUser(), stageKey, uaf.getForm()))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -200,17 +197,15 @@ public class ActivityController extends AllDirectives {
 
   private Route updateActivity(
       CompletionStage<Optional<User>> maybeUserF,
-      String tableId,
-      String stageId,
-      String activityId,
+      String tableIdStr,
+      String stageIdStr,
+      String activityIdStr,
       UpdatedActivity updatedActivity) {
 
+    var activityKey = newActivityKey(tableIdStr, stageIdStr, activityIdStr);
+
     LOGGER.info(
-        "New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}",
-        tableId,
-        stageId,
-        activityId,
-        updatedActivity);
+        "New update activity request, activityKey: {}, form: {}", activityKey, updatedActivity);
 
     CompletionStage<HttpResponse> responseF =
         maybeUserF
@@ -220,22 +215,18 @@ public class ActivityController extends AllDirectives {
                 user -> new UserAndForm<UpdatedActivity>(user, updatedActivity, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
-                uaf ->
-                    activityService.updateActivity(
-                        uaf.getUser(),
-                        ActivityKey.fromStrings(tableId, stageId, activityId),
-                        uaf.getForm()))
+                uaf -> activityService.updateActivity(uaf.getUser(), activityKey, uaf.getForm()))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
 
-  private Route handleOptionsRequestWithId() {
-    return complete(response.response200(GET, DELETE, PUT));
+  private StageKey newStageKey(String tableIdStr, String stageIdStr) {
+    return StageKey.fromStrings(tableIdStr, stageIdStr);
   }
 
-  private Route handleOptionsRequest() {
-    return complete(response.response200(GET, POST));
+  private ActivityKey newActivityKey(String tableIdStr, String stageIdStr, String activityIdStr) {
+    return ActivityKey.fromStrings(tableIdStr, stageIdStr, activityIdStr);
   }
 }
