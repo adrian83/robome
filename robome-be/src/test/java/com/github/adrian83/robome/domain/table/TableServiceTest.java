@@ -161,13 +161,13 @@ public class TableServiceTest {
     var updatedTable = new UpdatedTable("some stuff", "table with my stuff");
     var sink = Sink.fold(Done.done(), (Done d, TableEntity k) -> d);
 
-    when(tableRepositoryMock.updateTable(any(TableEntity.class))).thenReturn(sink);
+    when(tableRepositoryMock.updateTable()).thenReturn(sink);
 
     // when
     var tableF = tableService.updateTable(user, tableKey1, updatedTable);
 
     // then
-    verify(tableRepositoryMock).updateTable(any(TableEntity.class));
+    verify(tableRepositoryMock).updateTable();
 
     var table = tableF.toCompletableFuture().get(2, SECONDS);
     assertEquals(updatedTable.getTitle(), table.getTitle());

@@ -61,7 +61,7 @@ public class TableService {
 
     Sink<TableEntity, CompletionStage<Table>> sink =
         tableRepository
-            .updateTable(entity)
+            .updateTable()
             .mapMaterializedValue(doneF -> doneF.thenApply(done -> toTable(entity)));
 
     return Source.single(entity).runWith(sink, actorSystem);
@@ -94,9 +94,9 @@ public class TableService {
         entity.getModifiedAt());
   }
 
-  private CompletionStage<Optional<Table>> fetchStages(User user, TableKey tableKey, Table table) {
+  private CompletionStage<Optional<Table>> fetchStages(User user, Table table) {
     return stageService
-        .getTableStages(user, tableKey)
+        .getTableStages(user, table.getKey())
         .thenApply((stages) -> table.withStages(stages))
         .thenApply(Optional::ofNullable);
   }
@@ -104,7 +104,7 @@ public class TableService {
   private CompletionStage<Optional<Table>> fetchStages(
       User user, TableKey tableKey, Optional<Table> maybeTable) {
     return maybeTable
-        .map((table) -> fetchStages(user, tableKey, table))
+        .map((table) -> fetchStages(user, table))
         .orElse(CompletableFuture.<Optional<Table>>completedFuture(Optional.<Table>empty()));
   }
 }

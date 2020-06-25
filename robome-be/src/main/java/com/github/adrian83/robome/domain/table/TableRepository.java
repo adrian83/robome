@@ -52,67 +52,63 @@ public class TableRepository {
 
   private Session session;
 
+  private Sink<TableEntity, CompletionStage<Done>> saveTableSink;
+  private Sink<TableEntity, CompletionStage<Done>> updateTableSink;
+
+  private Source<TableEntity, NotUsed> getTablesSource;
+
+  private PreparedStatement deleteTableStmt;
+  private PreparedStatement findTableByIdStmt;
+  private PreparedStatement findUserTablesStmt;
+
   @Inject
   public TableRepository(Session session) {
     this.session = session;
+
+    PreparedStatement saveTableStmt = session.prepare(INSERT_TABLE_STMT);
+    saveTableSink = CassandraSink.create(1, saveTableStmt, this::bindInsertedTable, session);
+
+    PreparedStatement updateTableStmt = session.prepare(UPDATE_STMT);
+    updateTableSink = CassandraSink.create(1, updateTableStmt, this::bindUpdatedTable, session);
+
+    Statement preparedStatement = new SimpleStatement(SELECT_ALL_STMT);
+    getTablesSource = CassandraSource.create(preparedStatement, session).map(this::fromRow);
+
+    deleteTableStmt = session.prepare(DELETE_BY_ID_STMT);
+    findTableByIdStmt = session.prepare(SELECT_BY_ID_STMT);
+    findUserTablesStmt = session.prepare(SELECT_BY_EMAIL_STMT);
   }
 
   public Sink<TableEntity, CompletionStage<Done>> saveTable() {
-    PreparedStatement preparedStatement = session.prepare(INSERT_TABLE_STMT);
-    return CassandraSink.create(1, preparedStatement, this::createInserBoundStatement, session);
+    return saveTableSink;
+  }
+
+  public Sink<TableEntity, CompletionStage<Done>> updateTable() {
+    return updateTableSink;
+  }
+
+  public Source<TableEntity, NotUsed> getAllTables() {
+    return getTablesSource;
   }
 
   public Sink<TableKey, CompletionStage<Done>> deleteTable(UUID userId) {
-    PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
     BiFunction<TableKey, PreparedStatement, BoundStatement> boundStmt =
         (tabId, stmt) -> stmt.bind(tabId.getTableId(), userId);
-    return CassandraSink.create(1, preparedStatement, boundStmt, session);
-  }
-
-  public Sink<TableEntity, CompletionStage<Done>> updateTable(TableEntity table) {
-    PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
-    BiFunction<TableEntity, PreparedStatement, BoundStatement> boundStmt =
-        (tab, stmt) ->
-            stmt.bind(
-                tab.getTitle(),
-                tab.getDescription(),
-                tab.getState().name(),
-                toDate(tab.getModifiedAt()),
-                table.getKey().getTableId(),
-                table.getUserId());
-    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+    return CassandraSink.create(1, deleteTableStmt, boundStmt, session);
   }
 
   public Source<Optional<TableEntity>, NotUsed> getById(UUID userId, UUID tableId) {
-    BoundStatement bound = session.prepare(SELECT_BY_ID_STMT).bind(userId, tableId);
-    ResultSet result = session.execute(bound);
+    BoundStatement boundStmt = findTableByIdStmt.bind(userId, tableId);
+    ResultSet result = session.execute(boundStmt);
     return Source.single(result)
         .map(ResultSet::one)
         .map(Optional::ofNullable)
         .map(mayneRow -> mayneRow.map(this::fromRow));
   }
 
-  public Source<TableEntity, NotUsed> getAllTables() {
-    Statement preparedStatement = new SimpleStatement(SELECT_ALL_STMT);
-    return CassandraSource.create(preparedStatement, session).map(this::fromRow);
-  }
-
   public Source<TableEntity, NotUsed> getUserTables(UUID userId) {
-    PreparedStatement preparedStatement = session.prepare(SELECT_BY_EMAIL_STMT);
-    BoundStatement bound = preparedStatement.bind(userId);
+    BoundStatement bound = findUserTablesStmt.bind(userId);
     return CassandraSource.create(bound, session).map(this::fromRow);
-  }
-
-  private BoundStatement createInserBoundStatement(
-      TableEntity table, PreparedStatement preparedStmt) {
-    return preparedStmt.bind(
-        table.getKey().getTableId(),
-        table.getUserId(),
-        table.getTitle(),
-        table.getDescription(),
-        table.getState().name(),
-        toDate(table.getCreatedAt()),
-        toDate(table.getModifiedAt()));
   }
 
   private TableEntity fromRow(Row row) {
@@ -124,5 +120,26 @@ public class TableRepository {
         valueOf(row.getString(STATE_COL)),
         toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
         toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
+  }
+
+  private BoundStatement bindInsertedTable(TableEntity entity, PreparedStatement stmt) {
+    return stmt.bind(
+        entity.getKey().getTableId(),
+        entity.getUserId(),
+        entity.getTitle(),
+        entity.getDescription(),
+        entity.getState().name(),
+        toDate(entity.getCreatedAt()),
+        toDate(entity.getModifiedAt()));
+  }
+
+  private BoundStatement bindUpdatedTable(TableEntity entity, PreparedStatement stmt) {
+    return stmt.bind(
+        entity.getTitle(),
+        entity.getDescription(),
+        entity.getState().name(),
+        toDate(entity.getModifiedAt()),
+        entity.getKey().getTableId(),
+        entity.getUserId());
   }
 }

@@ -48,62 +48,51 @@ public class StageRepository {
 
   private Session session;
 
+  private Sink<StageEntity, CompletionStage<Done>> saveStageSink;
+  private Sink<StageEntity, CompletionStage<Done>> updateStageSink;
+
+  private PreparedStatement findStageByIdStmt;
+  private PreparedStatement findStagesByTableStmt;
+  private PreparedStatement deleteStageStmt;
+
   @Inject
   public StageRepository(Session session) {
     this.session = session;
+
+    var insertStageStmt = session.prepare(INSERT_STAGE_STMT);
+    saveStageSink = CassandraSink.create(1, insertStageStmt, this::bindInsertedStage, session);
+
+    var updateStageStmt = session.prepare(UPDATE_STMT);
+    updateStageSink = CassandraSink.create(1, updateStageStmt, this::bindUpdatedStage, session);
+
+    findStageByIdStmt = session.prepare(SELECT_STAGE_BY_ID_STMT);
+    findStagesByTableStmt = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
+    deleteStageStmt = session.prepare(DELETE_BY_ID_STMT);
   }
 
   public Sink<StageEntity, CompletionStage<Done>> saveStage() {
-    PreparedStatement preparedStatement = session.prepare(INSERT_STAGE_STMT);
-    BiFunction<StageEntity, PreparedStatement, BoundStatement> statementBinder =
-        (stage, statement) ->
-            statement.bind(
-                stage.getKey().getStageId(),
-                stage.getKey().getTableId(),
-                stage.getUserId(),
-                stage.getTitle(),
-                stage.getState().name(),
-                toDate(stage.getCreatedAt()),
-                toDate(stage.getModifiedAt()));
-
-    return CassandraSink.create(1, preparedStatement, statementBinder, session);
+    return saveStageSink;
   }
 
-  public Sink<StageEntity, CompletionStage<Done>> updateStage(StageEntity stage) {
-    PreparedStatement preparedStatement = session.prepare(UPDATE_STMT);
-    BiFunction<StageEntity, PreparedStatement, BoundStatement> boundStmt =
-        (stg, stmt) ->
-            stmt.bind(
-                stg.getTitle(),
-                stg.getState().name(),
-                toDate(stg.getModifiedAt()),
-                stg.getKey().getTableId(),
-                stg.getKey().getStageId(),
-                stg.getUserId());
-
-    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+  public Sink<StageEntity, CompletionStage<Done>> updateStage() {
+    return updateStageSink;
   }
 
   public Sink<StageKey, CompletionStage<Done>> deleteStage(UUID userId) {
-    PreparedStatement preparedStatement = session.prepare(DELETE_BY_ID_STMT);
     BiFunction<StageKey, PreparedStatement, BoundStatement> boundStmt =
         (stgKey, stmt) -> stmt.bind(stgKey.getTableId(), stgKey.getStageId(), userId);
 
-    return CassandraSink.create(1, preparedStatement, boundStmt, session);
+    return CassandraSink.create(1, deleteStageStmt, boundStmt, session);
   }
 
   public Source<StageEntity, NotUsed> getTableStages(UUID userID, UUID tableUuid) {
-    var preparedStatement = session.prepare(SELECT_STAGES_BY_TABLE_ID_STMT);
-    var bound = preparedStatement.bind(tableUuid, userID);
+    var bound = findStagesByTableStmt.bind(tableUuid, userID);
     var stages = session.execute(bound).all().stream().map(this::fromRow).collect(toList());
     return Source.from(stages);
   }
 
   public Source<Optional<StageEntity>, NotUsed> getById(UUID userID, StageKey stageKey) {
-    var bound =
-        session
-            .prepare(SELECT_STAGE_BY_ID_STMT)
-            .bind(stageKey.getTableId(), stageKey.getStageId(), userID);
+    var bound = findStageByIdStmt.bind(stageKey.getTableId(), stageKey.getStageId(), userID);
 
     var result = session.execute(bound);
     return Source.single(result)
@@ -121,5 +110,26 @@ public class StageRepository {
         valueOf(row.getString(STATE_COL)),
         toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
         toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
+  }
+
+  private BoundStatement bindInsertedStage(StageEntity stage, PreparedStatement statement) {
+    return statement.bind(
+        stage.getKey().getStageId(),
+        stage.getKey().getTableId(),
+        stage.getUserId(),
+        stage.getTitle(),
+        stage.getState().name(),
+        toDate(stage.getCreatedAt()),
+        toDate(stage.getModifiedAt()));
+  }
+
+  private BoundStatement bindUpdatedStage(StageEntity stg, PreparedStatement stmt) {
+    return stmt.bind(
+        stg.getTitle(),
+        stg.getState().name(),
+        toDate(stg.getModifiedAt()),
+        stg.getKey().getTableId(),
+        stg.getKey().getStageId(),
+        stg.getUserId());
   }
 }

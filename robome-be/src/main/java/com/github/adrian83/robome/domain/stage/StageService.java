@@ -62,7 +62,7 @@ public class StageService {
     StageEntity entity = StageEntity.newStage(key, user.getId(), updatedStage.getTitle());
     Sink<StageEntity, CompletionStage<Stage>> sink =
         stageRepository
-            .updateStage(entity)
+            .updateStage()
             .mapMaterializedValue(doneF -> doneF.thenApply(done -> toStage(entity)));
 
     return Source.single(entity).runWith(sink, actorSystem);

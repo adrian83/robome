@@ -57,7 +57,7 @@ public class ActivityService {
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =
         activityRepository
-            .updateActivity(entity)
+            .updateActivity()
             .mapMaterializedValue(doneF -> doneF.thenApply(done -> toActivity(entity)));
 
     return Source.single(entity).runWith(sink, actorSystem);

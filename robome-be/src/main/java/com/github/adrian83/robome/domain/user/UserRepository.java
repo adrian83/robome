@@ -28,7 +28,8 @@ public class UserRepository {
 
   private static final String SELECT_USER_BY_EMAIL = "SELECT * FROM robome.users WHERE email = ?";
   private static final String INSERT_USER_STMT =
-      "INSERT INTO robome.users (id, email, password_hash, "
+      "INSERT INTO robome.users (id, email, "
+          + "password_hash, "
           + "roles, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
 
   private static final String ID_COL = "id";
@@ -40,14 +41,20 @@ public class UserRepository {
 
   private Session session;
 
+  private PreparedStatement findByEmailStmt;
+  private PreparedStatement insterUserStmt;
+
   @Inject
   public UserRepository(Session session) {
     this.session = session;
+
+    findByEmailStmt = session.prepare(SELECT_USER_BY_EMAIL);
+    insterUserStmt = session.prepare(INSERT_USER_STMT);
   }
 
   public Source<Optional<User>, NotUsed> getByEmail(String email) {
-    BoundStatement bound = session.prepare(SELECT_USER_BY_EMAIL).bind(email);
-    ResultSet r = session.execute(bound);
+    BoundStatement boundStmt = findByEmailStmt.bind(email);
+    ResultSet r = session.execute(boundStmt);
     return Source.single(Optional.ofNullable(r.one()).map(this::fromRow));
   }
 
@@ -63,8 +70,6 @@ public class UserRepository {
   }
 
   public Sink<User, CompletionStage<Done>> saveUser() {
-    PreparedStatement preparedStatement = session.prepare(INSERT_USER_STMT);
-
     BiFunction<User, PreparedStatement, BoundStatement> statementBinder =
         (user, statement) ->
             statement.bind(
@@ -76,6 +81,6 @@ public class UserRepository {
                 toDate(user.getCreatedAt()),
                 toDate(user.getModifiedAt()));
 
-    return CassandraSink.create(1, preparedStatement, statementBinder, session);
+    return CassandraSink.create(1, insterUserStmt, statementBinder, session);
   }
 }
