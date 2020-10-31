@@ -102,9 +102,14 @@ public class StageRepository {
   }
 
   private StageEntity fromRow(Row row) {
-    var id = new StageKey(row.get(TABLE_ID_COL, UUID.class), row.get(STAGE_ID_COL, UUID.class));
+    var key =
+        StageKey.builder()
+            .tableId(row.get(TABLE_ID_COL, UUID.class))
+            .stageId(row.get(STAGE_ID_COL, UUID.class))
+            .build();
+
     return new StageEntity(
-        id,
+        key,
         row.get(USER_ID_COL, UUID.class),
         row.getString(TITLE_COL),
         valueOf(row.getString(STATE_COL)),

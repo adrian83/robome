@@ -5,7 +5,6 @@ import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
@@ -22,7 +21,6 @@ import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
 import com.google.inject.Inject;
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +76,7 @@ public class StageController extends AllDirectives {
   }
 
   private Route getStageByIdAction(String tableId, String stageId) {
-    return security.jwtSecured(tableId, stageId, this::getStageById);
+    return security.secured(tableId, stageId, this::getStageById);
   }
 
   private Route persistStageAction(String tableId, Class<NewStage> clazz) {
@@ -86,11 +84,11 @@ public class StageController extends AllDirectives {
   }
 
   private Route updateTableStageAction(String tableId, String stageId, Class<UpdatedStage> clazz) {
-    return security.jwtSecured(tableId, stageId, clazz, this::updateStage);
+    return security.secured(tableId, stageId, clazz, this::updateStage);
   }
 
   private Route deleteStageAction(String tableId, String stageId) {
-    return security.jwtSecured(tableId, stageId, this::deleteStage);
+    return security.secured(tableId, stageId, this::deleteStage);
   }
 
   private Route handleOptionsRequestWithId(String tableId, String stageId) {
@@ -101,15 +99,13 @@ public class StageController extends AllDirectives {
     return complete(response.response200(GET, POST));
   }
 
-  private Route getTableStages(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
-
-    var tableKey = TableKey.fromString(tableIdStr);
+  private Route getTableStages(CompletionStage<User> userF, String tableIdStr) {
+    var tableKey = TableKey.parse(tableIdStr);
 
     LOGGER.info("New list stages request, tableKey: {}", tableKey);
 
     var responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canReadStages)
             .thenCompose(user -> stageService.getTableStages(user, tableKey))
             .thenApply(response::jsonFromObject)
@@ -118,16 +114,13 @@ public class StageController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
-  private Route getStageById(
-      CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
-
-    var stageKey = StageKey.fromStrings(tableIdStr, stageIdStr);
+  private Route getStageById(CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+    var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
     LOGGER.info("New get stage by id request, stageKey: {}", stageKey);
 
     var responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canReadStages)
             .thenCompose(user -> stageService.getStage(user, stageKey))
             .thenApply(response::jsonFromOptional)
@@ -136,16 +129,13 @@ public class StageController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
-  private Route persistStage(
-      CompletionStage<Optional<User>> maybeUserF, String tableIdStr, NewStage newStage) {
-
-    var tableKey = TableKey.fromString(tableIdStr);
+  private Route persistStage(CompletionStage<User> userF, String tableIdStr, NewStage newStage) {
+    var tableKey = TableKey.parse(tableIdStr);
 
     LOGGER.info("New persist stage request, tableKey: {}, newStage: {}", tableKey, newStage);
 
     var responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteStages)
             .thenApply(user -> new UserAndForm<NewStage>(user, newStage, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
@@ -157,18 +147,16 @@ public class StageController extends AllDirectives {
   }
 
   private Route updateStage(
-      CompletionStage<Optional<User>> maybeUserF,
+      CompletionStage<User> userF,
       String tableIdStr,
       String stageIdStr,
       UpdatedStage updatedStage) {
-
-    var stageKey = StageKey.fromStrings(tableIdStr, stageIdStr);
+    var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
     LOGGER.info("New update stage request, stageKey: {}, newStage: {}", stageKey, updatedStage);
 
     var responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteStages)
             .thenApply(user -> new UserAndForm<UpdatedStage>(user, updatedStage, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
@@ -179,16 +167,13 @@ public class StageController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
-  private Route deleteStage(
-      CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
-
-    var stageKey = StageKey.fromStrings(tableIdStr, stageIdStr);
+  private Route deleteStage(CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+    var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
     LOGGER.info("New delete stage request, stageKey: {}", stageKey);
 
     var responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteStages)
             .thenCompose(user -> stageService.deleteStage(user, stageKey))
             .thenApply(response::jsonFromObject)

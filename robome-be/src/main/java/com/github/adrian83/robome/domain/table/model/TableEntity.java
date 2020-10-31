@@ -17,7 +17,7 @@ public class TableEntity {
 
   public TableEntity(UUID userId, String title, String description) {
     this(
-        new TableKey(),
+        TableKey.random(),
         userId,
         title,
         description,

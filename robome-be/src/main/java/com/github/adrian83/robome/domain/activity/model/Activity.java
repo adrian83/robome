@@ -3,9 +3,13 @@ package com.github.adrian83.robome.domain.activity.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.github.adrian83.robome.common.Time;
-import com.github.adrian83.robome.domain.stage.model.StageKey;
+import lombok.Builder;
+import lombok.Data;
+import lombok.ToString;
 
+@Builder
+@Data
+@ToString
 public class Activity {
 
   private ActivityKey key;
@@ -14,54 +18,4 @@ public class Activity {
   private ActivityState state;
   private LocalDateTime createdAt;
   private LocalDateTime modifiedAt;
-
-  public Activity(
-      ActivityKey key,
-      UUID userId,
-      String name,
-      ActivityState state,
-      LocalDateTime createdAt,
-      LocalDateTime modifiedAt) {
-    super();
-    this.key = key;
-    this.userId = userId;
-    this.name = name;
-    this.state = state;
-    this.createdAt = createdAt;
-    this.modifiedAt = modifiedAt;
-  }
-
-  public Activity(StageKey stageKey, UUID userId, String name) {
-    this(
-        new ActivityKey(stageKey),
-        userId,
-        name,
-        ActivityState.ACTIVE,
-        Time.utcNow(),
-        Time.utcNow());
-  }
-
-  public ActivityKey getKey() {
-    return key;
-  }
-
-  public UUID getUserId() {
-    return userId;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public ActivityState getState() {
-    return state;
-  }
-
-  public LocalDateTime getCreatedAt() {
-    return createdAt;
-  }
-
-  public LocalDateTime getModifiedAt() {
-    return modifiedAt;
-  }
 }

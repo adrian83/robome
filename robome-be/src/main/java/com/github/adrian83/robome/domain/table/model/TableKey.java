@@ -4,29 +4,22 @@ import static java.util.UUID.randomUUID;
 
 import java.util.UUID;
 
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
+@SuperBuilder
+@Data
+@ToString
 public class TableKey {
 
   private UUID tableId;
-
-  public TableKey(UUID tableId) {
-    super();
-    this.tableId = tableId;
+  
+  public static TableKey random() {
+	  return TableKey.builder().tableId(randomUUID()).build();
   }
 
-  public TableKey() {
-    this(randomUUID());
-  }
-
-  public static TableKey fromString(String uuidStr) {
-    return new TableKey(UUID.fromString(uuidStr));
-  }
-
-  public UUID getTableId() {
-    return tableId;
-  }
-
-  @Override
-  public String toString() {
-    return "TableKey [tableId=" + tableId + "]";
+  public static TableKey parse(String uuidStr) {
+    return TableKey.builder().tableId(UUID.fromString(uuidStr)).build();
   }
 }

@@ -1,4 +1,4 @@
-FROM maven:3.6.2-jdk-13
+FROM maven:3.6-jdk-14
 
 ADD . /robome-be
 WORKDIR /robome-be

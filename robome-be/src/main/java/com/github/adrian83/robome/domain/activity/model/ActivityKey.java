@@ -1,42 +1,38 @@
 package com.github.adrian83.robome.domain.activity.model;
 
+import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 
 import java.util.UUID;
 
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@ToString
+@EqualsAndHashCode(callSuper = false)
 public class ActivityKey extends StageKey {
 
   private UUID activityId;
 
-  public static ActivityKey fromStrings(
-      String tableIdStr, String stageIdStr, String activityIdStr) {
-    return new ActivityKey(
-        UUID.fromString(tableIdStr), UUID.fromString(stageIdStr), UUID.fromString(activityIdStr));
+  public static ActivityKey parse(String tableIdStr, String stageIdStr, String activityIdStr) {
+    return ActivityKey.builder()
+        .tableId(fromString(tableIdStr))
+        .stageId(fromString(stageIdStr))
+        .activityId(fromString(activityIdStr))
+        .build();
   }
 
-  public ActivityKey(UUID tableId, UUID stageId, UUID activityId) {
-    super(tableId, stageId);
-    this.activityId = activityId;
-  }
-
-  public ActivityKey(StageKey stageKey) {
-    this(stageKey.getTableId(), stageKey.getStageId(), randomUUID());
-  }
-
-  public UUID getActivityId() {
-    return activityId;
-  }
-
-  @Override
-  public String toString() {
-    return "ActivityKey [tableId="
-        + getTableId()
-        + ", stageId="
-        + getStageId()
-        + ", activityId="
-        + activityId
-        + "]";
+  public static ActivityKey randomWithStageKey(StageKey stageKey) {
+    return ActivityKey.builder()
+        .tableId(stageKey.getStageId())
+        .stageId(stageKey.getStageId())
+        .activityId(randomUUID())
+        .build();
   }
 }

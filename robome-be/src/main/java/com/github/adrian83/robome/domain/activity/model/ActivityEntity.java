@@ -33,7 +33,7 @@ public class ActivityEntity {
 
   public ActivityEntity(StageKey stageKey, UUID userId, String name) {
     this(
-        new ActivityKey(stageKey),
+        ActivityKey.randomWithStageKey(stageKey),
         userId,
         name,
         ActivityState.ACTIVE,

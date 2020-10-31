@@ -112,14 +112,15 @@ public class ActivityRepository {
   }
 
   private ActivityEntity fromRow(Row row) {
-    ActivityKey id =
-        new ActivityKey(
-            row.get(TABLE_ID_COL, UUID.class),
-            row.get(STAGE_ID_COL, UUID.class),
-            row.get(ACTIVITY_ID_COL, UUID.class));
+    var key =
+        ActivityKey.builder()
+            .tableId(row.get(TABLE_ID_COL, UUID.class))
+            .stageId(row.get(STAGE_ID_COL, UUID.class))
+            .activityId(row.get(ACTIVITY_ID_COL, UUID.class))
+            .build();
 
     return new ActivityEntity(
-        id,
+        key,
         row.get(USER_ID_COL, UUID.class),
         row.getString(NAME_COL),
         valueOf(row.getString(STATE_COL)),

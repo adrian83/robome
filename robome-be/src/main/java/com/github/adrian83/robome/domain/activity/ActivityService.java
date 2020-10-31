@@ -76,12 +76,13 @@ public class ActivityService {
   }
 
   private Activity toActivity(ActivityEntity entity) {
-    return new Activity(
-        entity.getKey(),
-        entity.getUserId(),
-        entity.getName(),
-        entity.getState(),
-        entity.getCreatedAt(),
-        entity.getModifiedAt());
+    return Activity.builder()
+        .key(entity.getKey())
+        .userId(entity.getUserId())
+        .name(entity.getName())
+        .state(entity.getState())
+        .createdAt(entity.getCreatedAt())
+        .modifiedAt(entity.getModifiedAt())
+        .build();
   }
 }

@@ -4,14 +4,12 @@ import static com.github.adrian83.robome.auth.Authentication.hashPassword;
 import static com.github.adrian83.robome.auth.Authentication.userWithPasswordExists;
 import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROLES;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
@@ -97,7 +95,7 @@ public class AuthController extends AllDirectives {
             .thenApply(form -> Validation.validate(form, LOGIN_VALIDATOR))
             .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
             .thenApply(maybeUser -> userWithPasswordExists(maybeUser, login.getPassword()))
-            .thenApply(jwtAuthorizer::createJWTToken)
+            .thenApply(jwtAuthorizer::createToken)
             .thenApply(token -> response.response200(security.jwt(token)))
             .exceptionally(exceptionHandler::handle);
 
@@ -118,12 +116,12 @@ public class AuthController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
-  private Route isSignedIn(CompletionStage<Optional<User>> maybeUserF) {
+  private Route isSignedIn(CompletionStage<User> userF) {
     LOGGER.info("Checking if user is logged in");
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
+            //.thenApply(Authentication::userExists)
             .thenApply(user -> response.response200())
             .exceptionally(exceptionHandler::handle);
 

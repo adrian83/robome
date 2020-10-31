@@ -1,6 +1,5 @@
 package com.github.adrian83.robome.web.common;
 
-
 import java.util.List;
 import java.util.concurrent.CompletionException;
 
@@ -8,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
+import com.github.adrian83.robome.auth.exception.UserNotAuthenticatedException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.google.inject.Inject;
@@ -40,6 +40,8 @@ public class ExceptionHandler {
     } else if (ex instanceof InvalidSignInDataException) {
       return responseFactory.response400(List.of(INVALID_EMAIL_OR_PASS_ERROR));
     } else if (ex instanceof UserNotFoundException) {
+      return responseFactory.response401();
+    } else if (ex instanceof UserNotAuthenticatedException) {
       return responseFactory.response401();
     } else if (ex instanceof EmailAlreadyInUseException) {
       return responseFactory.response400(List.of(EMAIL_IN_USE_ERROR));

@@ -22,5 +22,4 @@ public final class Validation {
       T arg, ValidationError error, Function<T, Boolean> isInvalid) {
     return isInvalid.apply(arg) ? Optional.ofNullable(error) : Optional.empty();
   }
-
 }

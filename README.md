@@ -17,7 +17,7 @@ Simple CRUD application written with: Java (Akka Streams, Akka Http) and JavaScr
 
 #### Prerequisites
 - Docker
-- Java 11
+- Java 14
 - Maven
 - Npm
 

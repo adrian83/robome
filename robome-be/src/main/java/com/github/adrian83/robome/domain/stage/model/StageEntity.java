@@ -32,7 +32,7 @@ public class StageEntity {
   }
 
   public StageEntity(TableKey tableKey, UUID userId, String title) {
-    this(new StageKey(tableKey), userId, title, StageState.ACTIVE, Time.utcNow(), Time.utcNow());
+    this(StageKey.randomWithTableKey(tableKey), userId, title, StageState.ACTIVE, Time.utcNow(), Time.utcNow());
   }
 
   public static StageEntity newStage(StageKey key, UUID userId, String title) {

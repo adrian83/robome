@@ -48,8 +48,8 @@ public class TableServiceTest {
 
   private User user = new User("johndoe@somedomain.com", "fbwyflwegrl", newArrayList());
 
-  private TableKey tableKey1 = new TableKey();
-  private TableKey tableKey2 = new TableKey();
+  private TableKey tableKey1 = TableKey.random();
+  private TableKey tableKey2 = TableKey.random();
 
   private TableEntity tableEntity1 =
       new TableEntity(

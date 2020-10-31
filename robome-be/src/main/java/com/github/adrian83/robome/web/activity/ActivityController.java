@@ -4,13 +4,11 @@ import static com.github.adrian83.robome.util.http.HttpMethod.*;
 import static com.github.adrian83.robome.web.stage.StageController.STAGES;
 import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
@@ -83,24 +81,24 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route getActivityByIdAction(String tableId, String stageId, String activityId) {
-    return security.jwtSecured(tableId, stageId, activityId, this::getActivityById);
+    return security.secured(tableId, stageId, activityId, this::getActivityById);
   }
 
   private Route persistActivityAction(String tableId, String stageId, Class<NewActivity> clazz) {
-    return security.jwtSecured(tableId, stageId, clazz, this::persistActivity);
+    return security.secured(tableId, stageId, clazz, this::persistActivity);
   }
 
   private Route deleteActivityAction(String tableId, String stageId, String activityId) {
-    return security.jwtSecured(tableId, stageId, activityId, this::deleteActivity);
+    return security.secured(tableId, stageId, activityId, this::deleteActivity);
   }
 
   private Route updateActivityAction(
       String tableId, String stageId, String activityId, Class<UpdatedActivity> clazz) {
-    return security.jwtSecured(tableId, stageId, activityId, clazz, this::updateActivity);
+    return security.secured(tableId, stageId, activityId, clazz, this::updateActivity);
   }
 
   private Route getStageActivitiesAction(String tableId, String stageId) {
-    return security.jwtSecured(tableId, stageId, this::getStageActivities);
+    return security.secured(tableId, stageId, this::getStageActivities);
   }
 
   private Route handleOptionsRequestWithId(String tableId, String stageId, String activityId) {
@@ -112,15 +110,14 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route getStageActivities(
-      CompletionStage<Optional<User>> maybeUserF, String tableIdStr, String stageIdStr) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
 
     var stageKey = newStageKey(tableIdStr, stageIdStr);
 
     LOGGER.info("New list stage activities, stageKey: {}", stageKey);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canReadAcivities)
             .thenCompose(user -> activityService.getStageActivities(user, stageKey))
             .thenApply(response::jsonFromObject)
@@ -130,18 +127,14 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route deleteActivity(
-      CompletionStage<Optional<User>> maybeUserF,
-      String tableIdStr,
-      String stageIdStr,
-      String activityIdStr) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     var activityKey = newActivityKey(tableIdStr, stageIdStr, activityIdStr);
 
     LOGGER.info("New delete activity request, activityKey: {}", activityKey);
 
     var responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteAcivities)
             .thenCompose(user -> activityService.deleteActivity(user, activityKey))
             .thenApply(response::jsonFromObject)
@@ -151,18 +144,14 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route getActivityById(
-      CompletionStage<Optional<User>> maybeUserF,
-      String tableIdStr,
-      String stageIdStr,
-      String activityIdStr) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     var activityKey = newActivityKey(tableIdStr, stageIdStr, activityIdStr);
 
     LOGGER.info("New find activity request, activityKey: {}", activityKey);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canReadAcivities)
             .thenCompose(user -> activityService.getActivity(user, activityKey))
             .thenApply(response::jsonFromOptional)
@@ -172,18 +161,14 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route persistActivity(
-      CompletionStage<Optional<User>> maybeUserF,
-      String tableIdStr,
-      String stageIdStr,
-      NewActivity newActivity) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity newActivity) {
 
     var stageKey = newStageKey(tableIdStr, stageIdStr);
 
     LOGGER.info("New persist table request, stageKey: {}, activity: {}", stageKey, newActivity);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteAcivities)
             .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
@@ -196,7 +181,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route updateActivity(
-      CompletionStage<Optional<User>> maybeUserF,
+      CompletionStage<User> userF,
       String tableIdStr,
       String stageIdStr,
       String activityIdStr,
@@ -208,8 +193,7 @@ public class ActivityController extends AllDirectives {
         "New update activity request, activityKey: {}, form: {}", activityKey, updatedActivity);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteAcivities)
             .thenApply(
                 user -> new UserAndForm<UpdatedActivity>(user, updatedActivity, UPDATE_VALIDATOR))
@@ -223,10 +207,10 @@ public class ActivityController extends AllDirectives {
   }
 
   private StageKey newStageKey(String tableIdStr, String stageIdStr) {
-    return StageKey.fromStrings(tableIdStr, stageIdStr);
+    return StageKey.parse(tableIdStr, stageIdStr);
   }
 
   private ActivityKey newActivityKey(String tableIdStr, String stageIdStr, String activityIdStr) {
-    return ActivityKey.fromStrings(tableIdStr, stageIdStr, activityIdStr);
+    return ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr);
   }
 }

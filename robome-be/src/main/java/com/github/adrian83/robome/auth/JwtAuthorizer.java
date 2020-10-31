@@ -1,7 +1,5 @@
 package com.github.adrian83.robome.auth;
 
-import static java.util.concurrent.CompletableFuture.completedStage;
-
 import java.security.Key;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -35,7 +33,7 @@ public class JwtAuthorizer {
     this.userService = userService;
   }
 
-  public String createJWTToken(User user) {
+  public String createToken(User user) {
     return Jwts.builder()
         .setSubject("UserData")
         .setClaims(ImmutableMap.of(USER_EMAIL, user.getEmail()))
@@ -43,21 +41,19 @@ public class JwtAuthorizer {
         .compact();
   }
 
-  public Key getSecurityKey() {
-    return new SecretKeySpec(
-        config.getString(SECURITY_KEY).getBytes(), SECURITY_ALGORITHM.getValue());
+  public CompletionStage<Optional<User>> findUser2(String email) {
+    return userService.findUserByEmail(email);
   }
 
-  public CompletionStage<Optional<User>> findUser(Optional<String> maybeEmail) {
-    return maybeEmail
-        .map((email) -> userService.findUserByEmail(email))
-        .orElse(completedStage(Optional.empty()));
-  }
-
-  public Optional<String> emailFromJwsToken(String jwtToken) {
+  public Optional<String> emailFromToken(String token) {
     Key key = getSecurityKey();
-    Jws<Claims> jwt = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
+    Jws<Claims> jwt = Jwts.parser().setSigningKey(key).parseClaimsJws(token);
     Claims body = jwt.getBody();
     return Optional.ofNullable(body.get(USER_EMAIL)).map((emailObj) -> emailObj.toString());
+  }
+
+  private Key getSecurityKey() {
+    return new SecretKeySpec(
+        config.getString(SECURITY_KEY).getBytes(), SECURITY_ALGORITHM.getValue());
   }
 }

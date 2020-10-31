@@ -113,7 +113,7 @@ public class TableRepository {
 
   private TableEntity fromRow(Row row) {
     return new TableEntity(
-        new TableKey(row.get(TABLE_ID_COL, UUID.class)),
+        TableKey.builder().tableId(row.get(TABLE_ID_COL, UUID.class)).build(),
         row.getUUID(USER_ID_COL),
         row.getString(TITLE_COL),
         row.getString(DESCRIPTION_COL),

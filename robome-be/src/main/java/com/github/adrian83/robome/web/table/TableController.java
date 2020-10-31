@@ -5,13 +5,11 @@ import static com.github.adrian83.robome.util.http.HttpMethod.GET;
 import static com.github.adrian83.robome.util.http.HttpMethod.POST;
 import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.TableService;
@@ -84,15 +82,14 @@ public class TableController extends AllDirectives {
   }
 
   private Route createTableAction(Class<NewTable> clazz) {
-    return security.jwtSecured(clazz, this::persistTable);
+    return security.secured(clazz, this::persistTable);
   }
 
-  private Route getTables(CompletionStage<Optional<User>> maybeUserF) {
+  private Route getTables(CompletionStage<User> userF) {
     LOGGER.info("New list table request");
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canReadTables)
             .thenCompose(tableService::getTables)
             .thenApply(response::jsonFromObject)
@@ -101,28 +98,26 @@ public class TableController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
-  private Route getTableById(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+  private Route getTableById(CompletionStage<User> userF, String tableIdStr) {
     LOGGER.info("New find table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canReadTables)
-            .thenCompose(user -> tableService.getTable(user, TableKey.fromString(tableIdStr)))
+            .thenCompose(user -> tableService.getTable(user, TableKey.parse(tableIdStr)))
             .thenApply(response::jsonFromOptional)
             .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
 
-  private Route deleteTable(CompletionStage<Optional<User>> maybeUserF, String tableIdStr) {
+  private Route deleteTable(CompletionStage<User> userF, String tableIdStr) {
     LOGGER.info("New delete table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteTables)
-            .thenCompose(user -> tableService.deleteTable(user, TableKey.fromString(tableIdStr)))
+            .thenCompose(user -> tableService.deleteTable(user, TableKey.parse(tableIdStr)))
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -130,31 +125,29 @@ public class TableController extends AllDirectives {
   }
 
   private Route updateTable(
-      CompletionStage<Optional<User>> maybeUserF, String tableIdStr, UpdatedTable updatedTable) {
+      CompletionStage<User> userF, String tableIdStr, UpdatedTable updatedTable) {
     LOGGER.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteTables)
             .thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
                 uaf ->
                     tableService.updateTable(
-                        uaf.getUser(), TableKey.fromString(tableIdStr), uaf.getForm()))
+                        uaf.getUser(), TableKey.parse(tableIdStr), uaf.getForm()))
             .thenApply(table -> response.jsonFromObject(table))
             .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
 
-  private Route persistTable(CompletionStage<Optional<User>> maybeUserF, NewTable newTable) {
+  private Route persistTable(CompletionStage<User> userF, NewTable newTable) {
     LOGGER.info("New persist table request, table: {}", newTable);
 
     CompletionStage<HttpResponse> responseF =
-        maybeUserF
-            .thenApply(Authentication::userExists)
+        userF
             .thenApply(Authorization::canWriteTables)
             .thenApply(user -> new UserAndForm<NewTable>(user, newTable, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
