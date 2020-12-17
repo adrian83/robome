@@ -2,12 +2,16 @@ package com.github.adrian83.robome.domain.table;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import akka.actor.ActorSystem;
 
 import com.github.adrian83.robome.domain.stage.StageService;
+import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
+import com.github.adrian83.robome.domain.table.model.GetTableRequest;
+import com.github.adrian83.robome.domain.table.model.ListTablesRequest;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
@@ -33,11 +37,11 @@ public class TableService {
     this.actorSystem = actorSystem;
   }
 
-  public CompletionStage<Optional<Table>> getTable(User user, TableKey tableKey) {
+  public CompletionStage<Optional<Table>> getTable(GetTableRequest req) {
     return tableRepository
-        .getById(user.getId(), tableKey.getTableId())
+        .getById(req.getUserId(), req.getTableKey().getTableId())
         .map((maybeEntity) -> maybeEntity.map(this::toTable))
-        .mapAsync(1, (table) -> fetchStages(user, tableKey, table))
+        .mapAsync(1, (table) -> fetchStages(req.getUserId(), req.getTableKey(), table))
         .runWith(Sink.head(), actorSystem);
   }
 
@@ -67,9 +71,9 @@ public class TableService {
     return Source.single(entity).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<List<Table>> getTables(User user) {
+  public CompletionStage<List<Table>> getTables(ListTablesRequest req) {
     return tableRepository
-        .getUserTables(user.getId())
+        .getUserTables(req.getUserId())
         .map(this::toTable)
         .runWith(Sink.seq(), actorSystem);
   }
@@ -94,17 +98,18 @@ public class TableService {
         entity.getModifiedAt());
   }
 
-  private CompletionStage<Optional<Table>> fetchStages(User user, Table table) {
+  private CompletionStage<Optional<Table>> fetchStages(UUID userId, Table table) {
+	  var listReq = ListTableStagesRequest.builder().userId(userId).tableKey(table.getKey()).build();
     return stageService
-        .getTableStages(user, table.getKey())
+        .getTableStages(listReq)
         .thenApply((stages) -> table.withStages(stages))
         .thenApply(Optional::ofNullable);
   }
 
   private CompletionStage<Optional<Table>> fetchStages(
-      User user, TableKey tableKey, Optional<Table> maybeTable) {
+      UUID userId, TableKey tableKey, Optional<Table> maybeTable) {
     return maybeTable
-        .map((table) -> fetchStages(user, table))
+        .map((table) -> fetchStages(userId, table))
         .orElse(CompletableFuture.<Optional<Table>>completedFuture(Optional.<Table>empty()));
   }
 }

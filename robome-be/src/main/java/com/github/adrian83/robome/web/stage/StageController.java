@@ -8,6 +8,7 @@ import akka.http.javadsl.server.Route;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
+import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
@@ -99,6 +100,13 @@ public class StageController extends AllDirectives {
     return complete(response.response200(GET, POST));
   }
 
+  private ListTableStagesRequest toListTableStagesRequest(User user, String tableIdStr) {
+    return ListTableStagesRequest.builder()
+        .userId(user.getId())
+        .tableKey(TableKey.parse(tableIdStr))
+        .build();
+  }
+
   private Route getTableStages(CompletionStage<User> userF, String tableIdStr) {
     var tableKey = TableKey.parse(tableIdStr);
 
@@ -107,7 +115,8 @@ public class StageController extends AllDirectives {
     var responseF =
         userF
             .thenApply(Authorization::canReadStages)
-            .thenCompose(user -> stageService.getTableStages(user, tableKey))
+            .thenApply(user -> toListTableStagesRequest(user, tableIdStr))
+            .thenCompose(stageService::getTableStages)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 

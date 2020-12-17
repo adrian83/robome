@@ -2,6 +2,7 @@ package com.github.adrian83.robome.auth;
 
 import static com.github.adrian83.robome.common.Strings.fromBegining;
 import static com.github.adrian83.robome.common.Strings.fromEnd;
+import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROLES;
 import static java.util.Optional.ofNullable;
 
 import java.util.Optional;
@@ -12,9 +13,13 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
+import com.github.adrian83.robome.auth.model.LoginRequest;
+import com.github.adrian83.robome.auth.model.RegisterRequest;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
+
+import akka.Done;
 
 public class Authentication {
 
@@ -29,11 +34,17 @@ public class Authentication {
     this.jwtAuthorizer = jwtAuthorizer;
   }
 
-  public CompletionStage<User> findUserWithPassword(String email, String password) {
+  public CompletionStage<User> findUserWithPassword(LoginRequest req) {
     return userService
-        .findUserByEmail(email)
-        .thenApply(mUser -> mUser.filter(u -> validPassword(password, u.getPasswordHash())))
+        .findUserByEmail(req.getEmail())
+        .thenApply(
+            mUser -> mUser.filter(u -> validPassword(req.getPassword(), u.getPasswordHash())))
         .thenApply(mUser -> mUser.orElseThrow(() -> new InvalidSignInDataException()));
+  }
+  
+  public CompletionStage<Done> registerUser(RegisterRequest req){
+	  User user = new User(req.getEmail(), hashPassword(req.getPassword()), DEFAULT_USER_ROLES);
+	  return userService.saveUser(user);
   }
 
   public CompletionStage<User> findUserByToken(String token) {
@@ -43,7 +54,11 @@ public class Authentication {
         .thenApply(this::userExists);
   }
 
-  public static String hashPassword(String password) {
+  public String createAuthToken(User user) {
+	    return jwtAuthorizer.createToken(user);
+	  }
+  
+  private String hashPassword(String password) {
     return BCrypt.hashpw(password, BCrypt.gensalt());
   }
 

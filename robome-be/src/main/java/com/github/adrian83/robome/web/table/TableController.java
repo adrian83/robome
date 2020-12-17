@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.TableService;
+import com.github.adrian83.robome.domain.table.model.GetTableRequest;
+import com.github.adrian83.robome.domain.table.model.ListTablesRequest;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.UpdatedTable;
@@ -69,21 +71,7 @@ public class TableController extends AllDirectives {
         options(routes.prefixVarSlash(TABLES, tableId -> handleOptionsRequestWithId())));
   }
 
-  private Route getTableAction(String tableId) {
-    return security.jwtSecured(tableId, this::getTableById);
-  }
 
-  private Route deleteTableAction(String tableId) {
-    return security.jwtSecured(tableId, this::deleteTable);
-  }
-
-  private Route updateTableAction(String tableId, Class<UpdatedTable> clazz) {
-    return security.jwtSecured(tableId, clazz, this::updateTable);
-  }
-
-  private Route createTableAction(Class<NewTable> clazz) {
-    return security.secured(clazz, this::persistTable);
-  }
 
   private Route getTables(CompletionStage<User> userF) {
     LOGGER.info("New list table request");
@@ -91,6 +79,7 @@ public class TableController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canReadTables)
+            .thenApply(this::toListTablesRequest)
             .thenCompose(tableService::getTables)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
@@ -104,7 +93,8 @@ public class TableController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canReadTables)
-            .thenCompose(user -> tableService.getTable(user, TableKey.parse(tableIdStr)))
+            .thenApply(user -> toGetTableRequest(user, tableIdStr))
+            .thenCompose(tableService::getTable)
             .thenApply(response::jsonFromOptional)
             .exceptionally(exceptionHandler::handle);
 
@@ -165,4 +155,29 @@ public class TableController extends AllDirectives {
   private Route handleOptionsRequest() {
     return complete(response.response200(GET, DELETE));
   }
+  
+  private Route getTableAction(String tableId) {
+	    return security.jwtSecured(tableId, this::getTableById);
+	  }
+
+	  private Route deleteTableAction(String tableId) {
+	    return security.jwtSecured(tableId, this::deleteTable);
+	  }
+
+	  private Route updateTableAction(String tableId, Class<UpdatedTable> clazz) {
+	    return security.jwtSecured(tableId, clazz, this::updateTable);
+	  }
+
+	  private Route createTableAction(Class<NewTable> clazz) {
+	    return security.secured(clazz, this::persistTable);
+	  }
+	  
+	  private ListTablesRequest toListTablesRequest(User user) {
+		  return ListTablesRequest.builder().userId(user.getId()).build();
+	  }
+	  
+	  private GetTableRequest toGetTableRequest(User user, String tableIdStr) {
+		  return GetTableRequest.builder().userId(user.getId()).tableKey(TableKey.parse(tableIdStr)).build();
+	  }
+  
 }

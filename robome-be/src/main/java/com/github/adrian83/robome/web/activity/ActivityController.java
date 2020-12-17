@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
+import com.github.adrian83.robome.domain.activity.model.ListStageActivitiesRequest;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
 import com.github.adrian83.robome.domain.common.UserAndForm;
@@ -109,6 +110,10 @@ public class ActivityController extends AllDirectives {
     return complete(response.response200(GET, POST));
   }
 
+  private ListStageActivitiesRequest toListStageActivitiesRequest(User user, StageKey stageKey) {
+	  return ListStageActivitiesRequest.builder().userId(user.getId()).stageKey(stageKey).build();
+  }
+  
   private Route getStageActivities(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
 
@@ -119,7 +124,8 @@ public class ActivityController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canReadAcivities)
-            .thenCompose(user -> activityService.getStageActivities(user, stageKey))
+            .thenApply(user -> toListStageActivitiesRequest(user, stageKey))
+            .thenCompose(activityService::getStageActivities)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 

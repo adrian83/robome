@@ -37,7 +37,7 @@ public class Security extends AllDirectives {
     this.authentication = authentication;
   }
 
-  public RawHeader jwt(String token) {
+  public RawHeader createAuthHeader(String token) {
     return RawHeader.create(AUTHORIZATION, token);
   }
 

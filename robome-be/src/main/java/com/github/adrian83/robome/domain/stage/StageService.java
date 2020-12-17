@@ -2,10 +2,13 @@ package com.github.adrian83.robome.domain.stage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.activity.ActivityService;
+import com.github.adrian83.robome.domain.activity.model.ListStageActivitiesRequest;
+import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.stage.model.StageEntity;
@@ -41,11 +44,11 @@ public class StageService {
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<List<Stage>> getTableStages(User user, TableKey id) {
+  public CompletionStage<List<Stage>> getTableStages(ListTableStagesRequest req) {
     return stageRepository
-        .getTableStages(user.getId(), id.getTableId())
+        .getTableStages(req.getUserId(), req.getTableKey().getTableId())
         .map(this::toStage)
-        .mapAsync(1, (stage) -> fetchActivities(user, stage))
+        .mapAsync(1, (stage) -> fetchActivities(req.getUserId(), stage))
         .runWith(Sink.seq(), actorSystem);
   }
 
@@ -87,15 +90,17 @@ public class StageService {
         entity.getModifiedAt());
   }
 
-  private CompletionStage<Stage> fetchActivities(User user, Stage stage) {
+  private CompletionStage<Stage> fetchActivities(UUID userId, Stage stage) {
+	  var listReq = ListStageActivitiesRequest.builder().userId(userId).stageKey(stage.getKey()).build();
     return activityService
-        .getStageActivities(user, stage.getKey())
+        .getStageActivities(listReq)
         .thenApply((activities) -> stage.withActivities(activities));
   }
 
-  private CompletionStage<Optional<Stage>> getStageWithActivities(User user, Stage stage) {
+  private CompletionStage<Optional<Stage>> getStageWithActivities(UUID userId, Stage stage) {
+	  var listReq = ListStageActivitiesRequest.builder().userId(userId).stageKey(stage.getKey()).build();
     return activityService
-        .getStageActivities(user, stage.getKey())
+        .getStageActivities(listReq)
         .thenApply((activities) -> stage.withActivities(activities))
         .thenApply((resultStage) -> Optional.of(resultStage));
   }
@@ -103,7 +108,7 @@ public class StageService {
   private CompletionStage<Optional<Stage>> fetchStageActivities(
       User user, Optional<Stage> maybeStage) {
     return maybeStage
-        .map((stage) -> getStageWithActivities(user, stage))
+        .map((stage) -> getStageWithActivities(user.getId(), stage))
         .orElse(CompletableFuture.completedFuture(Optional.empty()));
   }
 }

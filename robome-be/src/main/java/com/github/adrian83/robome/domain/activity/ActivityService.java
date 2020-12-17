@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
+import com.github.adrian83.robome.domain.activity.model.ListStageActivitiesRequest;
 import com.github.adrian83.robome.domain.activity.model.NewActivity;
 import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -35,9 +36,9 @@ public class ActivityService {
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<List<Activity>> getStageActivities(User user, StageKey stageKey) {
+  public CompletionStage<List<Activity>> getStageActivities(ListStageActivitiesRequest req) {
     return activityRepository
-        .getStageActivities(user.getId(), stageKey)
+        .getStageActivities(req.getUserId(), req.getStageKey())
         .map(this::toActivity)
         .runWith(Sink.seq(), actorSystem);
   }

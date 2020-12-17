@@ -1,8 +1,5 @@
 package com.github.adrian83.robome.web.auth;
 
-import static com.github.adrian83.robome.auth.Authentication.hashPassword;
-import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROLES;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -10,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.Authentication;
-import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.domain.user.UserService;
+import com.github.adrian83.robome.auth.model.LoginRequest;
+import com.github.adrian83.robome.auth.model.RegisterRequest;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.http.HttpMethod;
 import com.github.adrian83.robome.util.tuple.Tuple2;
@@ -46,9 +43,7 @@ public class AuthController extends AllDirectives {
   private static final LoginValidator LOGIN_VALIDATOR = new LoginValidator();
   private static final RegisterValidator REGISTER_VALIDATOR = new RegisterValidator();
 
-  private UserService userService;
   private ExceptionHandler exceptionHandler;
-  private JwtAuthorizer jwtAuthorizer;
   private Response response;
   private Security security;
   private Routes routes;
@@ -57,15 +52,11 @@ public class AuthController extends AllDirectives {
   @Inject
   public AuthController(
       Authentication authentication,
-      UserService userService,
-      JwtAuthorizer jwtAuthorizer,
       ExceptionHandler exceptionHandler,
       Response response,
       Routes routes,
       Security security) {
     this.authentication = authentication;
-    this.jwtAuthorizer = jwtAuthorizer;
-    this.userService = userService;
     this.exceptionHandler = exceptionHandler;
     this.security = security;
     this.response = response;
@@ -82,24 +73,17 @@ public class AuthController extends AllDirectives {
         options(routes.prefixPrefixSlash(CHECK_PATH, handleCheckOptionsRequest())));
   }
 
-  private Route registerAction(Class<Register> clazz) {
-    return security.unsecured(clazz, this::registerUser);
-  }
-
-  private Route loginAction(Class<Login> clazz) {
-    return security.unsecured(clazz, this::loginUser);
-  }
-
   private Route loginUser(Login login) {
     LOGGER.info("Signing in user: {}", login);
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(login)
-            .thenApply(form -> Validation.validate(form, LOGIN_VALIDATOR))
-            .thenCompose(
-                form -> authentication.findUserWithPassword(form.getEmail(), form.getPassword()))
-            .thenApply(jwtAuthorizer::createToken)
-            .thenApply(token -> response.response200(security.jwt(token)))
+            .thenApply(this::vaidateLoginForm)
+            .thenApply(this::toLoginRequest)
+            .thenCompose(authentication::findUserWithPassword)
+            .thenApply(authentication::createAuthToken)
+            .thenApply(security::createAuthHeader)
+            .thenApply(response::response200)
             .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
@@ -110,9 +94,9 @@ public class AuthController extends AllDirectives {
 
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(register)
-            .thenApply(form -> Validation.validate(form, REGISTER_VALIDATOR))
-            .thenApply(this::toUser)
-            .thenCompose(userService::saveUser)
+            .thenApply(this::vaidateRegisterForm)
+            .thenApply(this::toRegisterRequest)
+            .thenCompose(authentication::registerUser)
             .thenApply(done -> response.response201())
             .exceptionally(exceptionHandler::handle);
 
@@ -128,8 +112,28 @@ public class AuthController extends AllDirectives {
     return completeWithFuture(responseF);
   }
 
-  private User toUser(Register form) {
-    return new User(form.getEmail(), hashPassword(form.getPassword()), DEFAULT_USER_ROLES);
+  private Route registerAction(Class<Register> clazz) {
+    return security.unsecured(clazz, this::registerUser);
+  }
+
+  private Route loginAction(Class<Login> clazz) {
+    return security.unsecured(clazz, this::loginUser);
+  }
+
+  private LoginRequest toLoginRequest(Login form) {
+    return LoginRequest.builder().email(form.getEmail()).password(form.getPassword()).build();
+  }
+
+  private RegisterRequest toRegisterRequest(Register form) {
+    return RegisterRequest.builder().email(form.getEmail()).password(form.getPassword()).build();
+  }
+
+  private Login vaidateLoginForm(Login form) {
+    return Validation.validate(form, LOGIN_VALIDATOR);
+  }
+
+  private Register vaidateRegisterForm(Register form) {
+    return Validation.validate(form, REGISTER_VALIDATOR);
   }
 
   private Route handleRegisterOptionsRequest() {

@@ -23,7 +23,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.github.adrian83.robome.domain.stage.StageService;
+import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.stage.model.Stage;
+import com.github.adrian83.robome.domain.table.model.GetTableRequest;
+import com.github.adrian83.robome.domain.table.model.ListTablesRequest;
 import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
@@ -66,14 +69,15 @@ public class TableServiceTest {
     // given
     var stages = newArrayList(stage);
     var stagesF = CompletableFuture.<List<Stage>>completedFuture(stages);
+    var getTableReq = GetTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build();
 
     var tableSource = Source.lazySingle(() -> Optional.of(tableEntity1));
 
     when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
-    when(stageServiceMock.getTableStages(any(User.class), any(TableKey.class))).thenReturn(stagesF);
+    when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
     // when
-    var maybeTableF = tableService.getTable(user, tableKey1);
+    var maybeTableF = tableService.getTable(getTableReq);
 
     // then
     verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
@@ -99,16 +103,17 @@ public class TableServiceTest {
     // given
     var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
     var tableSource = Source.lazySingle(() -> Optional.<TableEntity>empty());
+    var getTableReq = GetTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build();
 
     when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
-    when(stageServiceMock.getTableStages(any(User.class), any(TableKey.class))).thenReturn(stagesF);
+    when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
     // when
-    var maybeTableF = tableService.getTable(user, tableKey1);
+    var maybeTableF = tableService.getTable(getTableReq);
 
     // then
     verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-    verify(stageServiceMock, never()).getTableStages(any(User.class), any(TableKey.class));
+    verify(stageServiceMock, never()).getTableStages(any(ListTableStagesRequest.class));
 
     var maybeTable = maybeTableF.toCompletableFuture().get(2, SECONDS);
     assertFalse(maybeTable.isPresent());
@@ -120,11 +125,12 @@ public class TableServiceTest {
     // given
     var entities = newArrayList(tableEntity1, tableEntity2);
     var tablesSource = Source.from(entities);
+    var listTablesReq = ListTablesRequest.builder().userId(user.getId()).build();
 
     when(tableRepositoryMock.getUserTables(any(UUID.class))).thenReturn(tablesSource);
 
     // when
-    var tablesF = tableService.getTables(user);
+    var tablesF = tableService.getTables(listTablesReq);
 
     // then
     verify(tableRepositoryMock).getUserTables(any(UUID.class));
