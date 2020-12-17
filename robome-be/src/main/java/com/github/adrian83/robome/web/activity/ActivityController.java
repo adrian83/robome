@@ -165,7 +165,7 @@ public class ActivityController extends AllDirectives {
 
     var stageKey = newStageKey(tableIdStr, stageIdStr);
 
-    LOGGER.info("New persist table request, stageKey: {}, activity: {}", stageKey, newActivity);
+    LOGGER.info("New persist activity request, stageKey: {}, activity: {}", stageKey, newActivity);
 
     CompletionStage<HttpResponse> responseF =
         userF

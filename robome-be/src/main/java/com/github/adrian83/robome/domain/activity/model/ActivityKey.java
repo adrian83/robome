@@ -30,7 +30,7 @@ public class ActivityKey extends StageKey {
 
   public static ActivityKey randomWithStageKey(StageKey stageKey) {
     return ActivityKey.builder()
-        .tableId(stageKey.getStageId())
+        .tableId(stageKey.getTableId())
         .stageId(stageKey.getStageId())
         .activityId(randomUUID())
         .build();

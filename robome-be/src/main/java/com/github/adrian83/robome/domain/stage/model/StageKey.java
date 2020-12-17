@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Data
-@ToString
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
 public class StageKey extends TableKey {
 

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
+import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.exception.UserNotAuthenticatedException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
@@ -42,6 +43,8 @@ public class ExceptionHandler {
     } else if (ex instanceof UserNotFoundException) {
       return responseFactory.response401();
     } else if (ex instanceof UserNotAuthenticatedException) {
+      return responseFactory.response401();
+    } else if (ex instanceof TokenNotFoundException) {
       return responseFactory.response401();
     } else if (ex instanceof EmailAlreadyInUseException) {
       return responseFactory.response400(List.of(EMAIL_IN_USE_ERROR));

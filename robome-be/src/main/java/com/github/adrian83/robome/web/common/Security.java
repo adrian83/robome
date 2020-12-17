@@ -1,17 +1,14 @@
 package com.github.adrian83.robome.web.common;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller;
-import static java.util.concurrent.CompletableFuture.completedStage;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.Authentication;
-import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.auth.exception.UserNotAuthenticatedException;
+import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.function.PentaFunction;
@@ -28,13 +25,16 @@ public class Security extends AllDirectives {
 
   private static final String AUTHORIZATION = HttpHeader.AUTHORIZATION.getText();
 
-  protected JwtAuthorizer jwtAuthorizer;
+  private static final RuntimeException TOKEN_NOT_FOUND_EXCEPTION =
+      new TokenNotFoundException("security token cannot be found");
+
   protected UserService userService;
+  protected Authentication authentication;
 
   @Inject
-  public Security(JwtAuthorizer jwtAuthorizer, UserService userService) {
-    this.jwtAuthorizer = jwtAuthorizer;
+  public Security(UserService userService, Authentication authentication) {
     this.userService = userService;
+    this.authentication = authentication;
   }
 
   public RawHeader jwt(String token) {
@@ -104,26 +104,17 @@ public class Security extends AllDirectives {
   }
 
   private Route withUserFromAuthHeader(Function<CompletionStage<User>, Route> inner) {
-    return optionalHeaderValueByName(
-        AUTHORIZATION,
-        maybeToken ->
-            maybeToken
-                .map((token) -> procedeIfValidToken(token, inner::apply))
-                .orElseThrow(
-                    () -> new UserNotAuthenticatedException("security token cannot be found")));
+    return optionalHeaderValueByName(AUTHORIZATION, maybeToken -> this.hh(maybeToken, inner));
+  }
+
+  private Route hh(Optional<String> maybeToken, Function<CompletionStage<User>, Route> inner) {
+    return maybeToken
+        .map((token) -> procedeIfValidToken(token, inner::apply))
+        .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION);
   }
 
   private Route procedeIfValidToken(String token, Function<CompletionStage<User>, Route> inner) {
-    var userF =
-        completedStage(token)
-            .thenApply(jwtAuthorizer::emailFromToken)
-            .thenCompose(
-                maybeEmail ->
-                    maybeEmail
-                        .map(userService::findUserByEmail)
-                        .orElse(CompletableFuture.completedFuture(Optional.empty())))
-            .thenApply(Authentication::userExists);
-
+    var userF = authentication.findUserByToken(token);
     return inner.apply(userF);
   }
 }

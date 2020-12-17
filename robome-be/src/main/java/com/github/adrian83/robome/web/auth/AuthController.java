@@ -1,7 +1,6 @@
 package com.github.adrian83.robome.web.auth;
 
 import static com.github.adrian83.robome.auth.Authentication.hashPassword;
-import static com.github.adrian83.robome.auth.Authentication.userWithPasswordExists;
 import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROLES;
 
 import java.util.concurrent.CompletableFuture;
@@ -10,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.JwtAuthorizer;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
@@ -52,15 +52,18 @@ public class AuthController extends AllDirectives {
   private Response response;
   private Security security;
   private Routes routes;
+  private Authentication authentication;
 
   @Inject
   public AuthController(
+      Authentication authentication,
       UserService userService,
       JwtAuthorizer jwtAuthorizer,
       ExceptionHandler exceptionHandler,
       Response response,
       Routes routes,
       Security security) {
+    this.authentication = authentication;
     this.jwtAuthorizer = jwtAuthorizer;
     this.userService = userService;
     this.exceptionHandler = exceptionHandler;
@@ -93,8 +96,8 @@ public class AuthController extends AllDirectives {
     CompletableFuture<HttpResponse> responseF =
         CompletableFuture.completedFuture(login)
             .thenApply(form -> Validation.validate(form, LOGIN_VALIDATOR))
-            .thenCompose(form -> userService.findUserByEmail(form.getEmail()))
-            .thenApply(maybeUser -> userWithPasswordExists(maybeUser, login.getPassword()))
+            .thenCompose(
+                form -> authentication.findUserWithPassword(form.getEmail(), form.getPassword()))
             .thenApply(jwtAuthorizer::createToken)
             .thenApply(token -> response.response200(security.jwt(token)))
             .exceptionally(exceptionHandler::handle);
@@ -120,10 +123,7 @@ public class AuthController extends AllDirectives {
     LOGGER.info("Checking if user is logged in");
 
     CompletionStage<HttpResponse> responseF =
-        userF
-            //.thenApply(Authentication::userExists)
-            .thenApply(user -> response.response200())
-            .exceptionally(exceptionHandler::handle);
+        userF.thenApply(user -> response.response200()).exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
   }
