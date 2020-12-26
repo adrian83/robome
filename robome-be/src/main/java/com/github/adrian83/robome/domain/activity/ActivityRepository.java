@@ -18,7 +18,6 @@ import com.datastax.driver.core.Session;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.Done;
@@ -95,10 +94,10 @@ public class ActivityRepository {
     return Source.from(entities);
   }
 
-  public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityKey, User user) {
+  public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityKey, UUID userId) {
     BoundStatement bound =
         findActivityByIdStmt.bind(
-            user.getId(),
+            userId,
             activityKey.getTableId(),
             activityKey.getStageId(),
             activityKey.getActivityId());

@@ -4,18 +4,16 @@ import java.util.UUID;
 
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @ToString
 @EqualsAndHashCode
-public class UpdatedActivityRequest {
-	  private String name;
-	  private UUID userId;
-	  private ActivityKey activityKey;
-
+public class GetActivityRequest {
+	private UUID userId;
+	private ActivityKey activityKey;
 }

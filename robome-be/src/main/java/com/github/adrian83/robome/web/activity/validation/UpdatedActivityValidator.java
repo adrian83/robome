@@ -7,12 +7,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.adrian83.robome.domain.activity.model.request.UpdatedActivityRequest;
 import com.github.adrian83.robome.domain.common.Validator;
+import com.github.adrian83.robome.web.activity.model.UpdateActivity;
 import com.github.adrian83.robome.web.common.ValidationError;
 import com.google.common.base.Strings;
 
-public class UpdatedActivityValidator implements Validator<UpdatedActivityRequest> {
+public class UpdatedActivityValidator implements Validator<UpdateActivity> {
 
   private static final String NAME_LABEL = "name";
   private static final String EMPTY_NAME_KEY = "activity.update.name.empty";
@@ -22,7 +22,7 @@ public class UpdatedActivityValidator implements Validator<UpdatedActivityReques
       new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
 
   @Override
-  public List<ValidationError> validate(UpdatedActivityRequest form) {
+  public List<ValidationError> validate(UpdateActivity form) {
     return Stream.of(check(form.getName(), EMPTY_NAME, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)
         .map(Optional::get)
