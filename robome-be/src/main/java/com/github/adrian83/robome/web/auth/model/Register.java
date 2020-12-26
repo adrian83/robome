@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.auth.model;
 
-import static com.github.adrian83.robome.auth.Authentication.hidePassword;
+import static com.github.adrian83.robome.common.Strings.hideText;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,9 +43,9 @@ public class Register {
     return "Register [email="
         + email
         + ", password="
-        + hidePassword(password)
+        + hideText(password)
         + ", repeatedPassword="
-        + hidePassword(repeatedPassword)
+        + hideText(repeatedPassword)
         + "]";
   }
 }

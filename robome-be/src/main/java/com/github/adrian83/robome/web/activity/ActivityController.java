@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
-import com.github.adrian83.robome.domain.activity.model.ListStageActivitiesRequest;
-import com.github.adrian83.robome.domain.activity.model.NewActivity;
-import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
+import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.UpdatedActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -36,8 +36,9 @@ public class ActivityController extends AllDirectives {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
-  private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
-  private static final Validator<UpdatedActivity> UPDATE_VALIDATOR = new UpdatedActivityValidator();
+  private static final Validator<NewActivityRequest> CREATE_VALIDATOR = new NewActivityValidator();
+  private static final Validator<UpdatedActivityRequest> UPDATE_VALIDATOR =
+      new UpdatedActivityValidator();
 
   public static final String ACTIVITIES = "activities";
 
@@ -72,10 +73,10 @@ public class ActivityController extends AllDirectives {
         delete(routes.prefixVarPrefixVarPrefixVarSlash(PATH_ELEMENTS, this::deleteActivityAction)),
         put(
             routes.prefixVarPrefixVarPrefixVarFormSlash(
-                PATH_ELEMENTS, UpdatedActivity.class, this::updateActivityAction)),
+                PATH_ELEMENTS, UpdatedActivityRequest.class, this::updateActivityAction)),
         post(
             routes.prefixVarPrefixVarPrefixFormSlash(
-                PATH_ELEMENTS, NewActivity.class, this::persistActivityAction)),
+                PATH_ELEMENTS, NewActivityRequest.class, this::persistActivityAction)),
         options(
             routes.prefixVarPrefixVarPrefixVarSlash(
                 PATH_ELEMENTS, this::handleOptionsRequestWithId)));
@@ -85,7 +86,7 @@ public class ActivityController extends AllDirectives {
     return security.secured(tableId, stageId, activityId, this::getActivityById);
   }
 
-  private Route persistActivityAction(String tableId, String stageId, Class<NewActivity> clazz) {
+  private Route persistActivityAction(String tableId, String stageId, Class<NewActivityRequest> clazz) {
     return security.secured(tableId, stageId, clazz, this::persistActivity);
   }
 
@@ -94,7 +95,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route updateActivityAction(
-      String tableId, String stageId, String activityId, Class<UpdatedActivity> clazz) {
+      String tableId, String stageId, String activityId, Class<UpdatedActivityRequest> clazz) {
     return security.secured(tableId, stageId, activityId, clazz, this::updateActivity);
   }
 
@@ -111,9 +112,9 @@ public class ActivityController extends AllDirectives {
   }
 
   private ListStageActivitiesRequest toListStageActivitiesRequest(User user, StageKey stageKey) {
-	  return ListStageActivitiesRequest.builder().userId(user.getId()).stageKey(stageKey).build();
+    return ListStageActivitiesRequest.builder().userId(user.getId()).stageKey(stageKey).build();
   }
-  
+
   private Route getStageActivities(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
 
@@ -167,7 +168,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private Route persistActivity(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity newActivity) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivityRequest newActivity) {
 
     var stageKey = newStageKey(tableIdStr, stageIdStr);
 
@@ -176,7 +177,7 @@ public class ActivityController extends AllDirectives {
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canWriteAcivities)
-            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, CREATE_VALIDATOR))
+            .thenApply(user -> new UserAndForm<NewActivityRequest>(user, newActivity, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
                 uaf -> activityService.saveActivity(uaf.getUser(), stageKey, uaf.getForm()))
@@ -191,7 +192,7 @@ public class ActivityController extends AllDirectives {
       String tableIdStr,
       String stageIdStr,
       String activityIdStr,
-      UpdatedActivity updatedActivity) {
+      UpdatedActivityRequest updatedActivity) {
 
     var activityKey = newActivityKey(tableIdStr, stageIdStr, activityIdStr);
 
@@ -202,7 +203,9 @@ public class ActivityController extends AllDirectives {
         userF
             .thenApply(Authorization::canWriteAcivities)
             .thenApply(
-                user -> new UserAndForm<UpdatedActivity>(user, updatedActivity, UPDATE_VALIDATOR))
+                user ->
+                    new UserAndForm<UpdatedActivityRequest>(
+                        user, updatedActivity, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
             .thenCompose(
                 uaf -> activityService.updateActivity(uaf.getUser(), activityKey, uaf.getForm()))

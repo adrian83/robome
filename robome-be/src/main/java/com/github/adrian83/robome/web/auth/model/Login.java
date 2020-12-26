@@ -1,6 +1,7 @@
 package com.github.adrian83.robome.web.auth.model;
 
-import static com.github.adrian83.robome.auth.Authentication.hidePassword;
+
+import static com.github.adrian83.robome.common.Strings.hideText;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,6 +32,6 @@ public class Login {
 
   @Override
   public String toString() {
-    return "Login [email=" + email + ", password=" + hidePassword(password) + "]";
+    return "Login [email=" + email + ", password=" + hideText(password) + "]";
   }
 }

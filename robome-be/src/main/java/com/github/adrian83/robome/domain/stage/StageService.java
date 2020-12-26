@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.activity.ActivityService;
-import com.github.adrian83.robome.domain.activity.model.ListStageActivitiesRequest;
+import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
 import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.Stage;

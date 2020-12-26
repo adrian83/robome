@@ -7,9 +7,9 @@ import java.util.concurrent.CompletionStage;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
-import com.github.adrian83.robome.domain.activity.model.ListStageActivitiesRequest;
-import com.github.adrian83.robome.domain.activity.model.NewActivity;
-import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
+import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.UpdatedActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
@@ -53,7 +53,7 @@ public class ActivityService {
   }
 
   public CompletionStage<Activity> updateActivity(
-      User user, ActivityKey key, UpdatedActivity updatedActivity) {
+      User user, ActivityKey key, UpdatedActivityRequest updatedActivity) {
     var entity = ActivityEntity.newActivity(key, user.getId(), updatedActivity.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =
@@ -65,7 +65,7 @@ public class ActivityService {
   }
 
   public CompletionStage<Activity> saveActivity(
-      User user, StageKey stageKey, NewActivity newActivity) {
+      User user, StageKey stageKey, NewActivityRequest newActivity) {
     var entity = new ActivityEntity(stageKey, user.getId(), newActivity.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =

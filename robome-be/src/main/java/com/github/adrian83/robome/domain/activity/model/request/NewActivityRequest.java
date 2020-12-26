@@ -1,21 +1,22 @@
-package com.github.adrian83.robome.domain.activity.model;
+package com.github.adrian83.robome.domain.activity.model.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class UpdatedActivity {
+import lombok.Data;
+import lombok.ToString;
+
+@Data
+@ToString
+public class NewActivityRequest {
 
   private static final String NAME_LABEL = "name";
 
   private String name;
 
   @JsonCreator
-  public UpdatedActivity(@JsonProperty(NAME_LABEL) String name) {
+  public NewActivityRequest(@JsonProperty(NAME_LABEL) String name) {
     super();
     this.name = name;
-  }
-
-  public String getName() {
-    return name;
   }
 }
