@@ -19,6 +19,8 @@ import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
+import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
+import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
 import com.google.inject.Inject;
@@ -65,11 +67,15 @@ public class StageController extends AllDirectives {
         delete(routes.prefixVarPrefixVarSlash(PATH_ELEMENTS, this::deleteStageAction)),
         options(routes.prefixVarPrefixVarSlash(PATH_ELEMENTS, this::handleOptionsRequestWithId)),
         post(
-            routes.prefixVarPrefixFormSlash(
-                PATH_ELEMENTS, NewStage.class, this::persistStageAction)),
+            new OneParamAndFormRoute<NewStage>(
+                new String[] {TABLES, "{tableId}", STAGES},
+                NewStage.class,
+                (tabId, clz) -> security.jwtSecured(tabId, clz, this::persistStage))),
         put(
-            routes.prefixVarPrefixVarFormSlash(
-                PATH_ELEMENTS, UpdatedStage.class, this::updateTableStageAction)));
+            new TwoParamsAndFormRoute<UpdatedStage>(
+                new String[] {TABLES, "{tableId}", STAGES, "{stageId}"},
+                UpdatedStage.class,
+                (tabId, stgId, clz) -> security.secured(tabId, stgId, clz, this::updateStage))));
   }
 
   private Route getTableStagesAction(String tableId) {
@@ -78,14 +84,6 @@ public class StageController extends AllDirectives {
 
   private Route getStageByIdAction(String tableId, String stageId) {
     return security.secured(tableId, stageId, this::getStageById);
-  }
-
-  private Route persistStageAction(String tableId, Class<NewStage> clazz) {
-    return security.jwtSecured(tableId, clazz, this::persistStage);
-  }
-
-  private Route updateTableStageAction(String tableId, String stageId, Class<UpdatedStage> clazz) {
-    return security.secured(tableId, stageId, clazz, this::updateStage);
   }
 
   private Route deleteStageAction(String tableId, String stageId) {

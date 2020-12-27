@@ -30,6 +30,8 @@ import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
+import com.github.adrian83.robome.web.common.routes.ThreeParamsAndFormRoute;
+import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
@@ -75,11 +77,16 @@ public class ActivityController extends AllDirectives {
         options(routes.prefixVarPrefixVarPrefixSlash(PATH_ELEMENTS, this::handleOptionsRequest)),
         delete(routes.prefixVarPrefixVarPrefixVarSlash(PATH_ELEMENTS, this::deleteActivityAction)),
         put(
-            routes.prefixVarPrefixVarPrefixVarFormSlash(
-                PATH_ELEMENTS, UpdateActivity.class, this::updateActivityAction)),
+            new ThreeParamsAndFormRoute<UpdateActivity>(
+                new String[] {TABLES, "{tableId}", STAGES, "{stageId}", ACTIVITIES, "{activityId}"},
+                UpdateActivity.class,
+                (tabId, stgId, actId, clz) ->
+                    security.secured(tabId, stgId, actId, clz, this::updateActivity))),
         post(
-            routes.prefixVarPrefixVarPrefixFormSlash(
-                PATH_ELEMENTS, NewActivity.class, this::persistActivityAction)),
+            new TwoParamsAndFormRoute<NewActivity>(
+                new String[] {TABLES, "{tableId}", STAGES, "{stageId}", ACTIVITIES},
+                NewActivity.class,
+                (tabId, stgId, clz) -> security.secured(tabId, stgId, clz, this::persistActivity))),
         options(
             routes.prefixVarPrefixVarPrefixVarSlash(
                 PATH_ELEMENTS, this::handleOptionsRequestWithId)));
@@ -200,17 +207,8 @@ public class ActivityController extends AllDirectives {
     return security.secured(tableId, stageId, activityId, this::getActivityById);
   }
 
-  private Route persistActivityAction(String tableId, String stageId, Class<NewActivity> clazz) {
-    return security.secured(tableId, stageId, clazz, this::persistActivity);
-  }
-
   private Route deleteActivityAction(String tableId, String stageId, String activityId) {
     return security.secured(tableId, stageId, activityId, this::deleteActivity);
-  }
-
-  private Route updateActivityAction(
-      String tableId, String stageId, String activityId, Class<UpdateActivity> clazz) {
-    return security.secured(tableId, stageId, activityId, clazz, this::updateActivity);
   }
 
   private Route getStageActivitiesAction(String tableId, String stageId) {
@@ -242,25 +240,16 @@ public class ActivityController extends AllDirectives {
         .userId(user.getId())
         .build();
   }
-  
-  private GetActivityRequest toGetActivityRequest(
-	      User user, ActivityKey activityKey) {
-	    return GetActivityRequest.builder()
-	        .activityKey(activityKey)
-	        .userId(user.getId())
-	        .build();
-	  }
 
-  private DeleteActivityRequest toDeleteActivityRequest(
-	      User user, ActivityKey activityKey) {
-	    return DeleteActivityRequest.builder()
-	        .activityKey(activityKey)
-	        .userId(user.getId())
-	        .build();
-	  }
-  
+  private GetActivityRequest toGetActivityRequest(User user, ActivityKey activityKey) {
+    return GetActivityRequest.builder().activityKey(activityKey).userId(user.getId()).build();
+  }
+
+  private DeleteActivityRequest toDeleteActivityRequest(User user, ActivityKey activityKey) {
+    return DeleteActivityRequest.builder().activityKey(activityKey).userId(user.getId()).build();
+  }
+
   private ListStageActivitiesRequest toListStageActivitiesRequest(User user, StageKey stageKey) {
     return ListStageActivitiesRequest.builder().userId(user.getId()).stageKey(stageKey).build();
   }
-  
 }

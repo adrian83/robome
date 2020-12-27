@@ -23,6 +23,8 @@ import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
+import com.github.adrian83.robome.web.common.routes.FormRoute;
+import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
 import com.github.adrian83.robome.web.table.validation.NewTableValidator;
 import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
 import com.google.inject.Inject;
@@ -64,14 +66,20 @@ public class TableController extends AllDirectives {
     return route(
         get(routes.prefixVarSlash(TABLES, this::getTableAction)),
         get(routes.prefixSlash(TABLES, security.jwtSecured(this::getTables))),
-        post(routes.prefixFormSlash(TABLES, NewTable.class, this::createTableAction)),
-        put(routes.prefixVarFormSlash(TABLES, UpdatedTable.class, this::updateTableAction)),
+        post(
+            new FormRoute<NewTable>(
+                new String[] {TABLES},
+                NewTable.class,
+                (clz) -> security.secured(clz, this::persistTable))),
+        put(
+            new OneParamAndFormRoute<UpdatedTable>(
+                new String[] {TABLES, "{tableId}"},
+                UpdatedTable.class,
+                (tabId, clz) -> security.jwtSecured(tabId, clz, this::updateTable))),
         delete(routes.prefixVarSlash(TABLES, this::deleteTableAction)),
         options(routes.prefixSlash(TABLES, handleOptionsRequest())),
         options(routes.prefixVarSlash(TABLES, tableId -> handleOptionsRequestWithId())));
   }
-
-
 
   private Route getTables(CompletionStage<User> userF) {
     LOGGER.info("New list table request");
@@ -155,29 +163,23 @@ public class TableController extends AllDirectives {
   private Route handleOptionsRequest() {
     return complete(response.response200(GET, DELETE));
   }
-  
+
   private Route getTableAction(String tableId) {
-	    return security.jwtSecured(tableId, this::getTableById);
-	  }
+    return security.jwtSecured(tableId, this::getTableById);
+  }
 
-	  private Route deleteTableAction(String tableId) {
-	    return security.jwtSecured(tableId, this::deleteTable);
-	  }
+  private Route deleteTableAction(String tableId) {
+    return security.jwtSecured(tableId, this::deleteTable);
+  }
 
-	  private Route updateTableAction(String tableId, Class<UpdatedTable> clazz) {
-	    return security.jwtSecured(tableId, clazz, this::updateTable);
-	  }
+  private ListTablesRequest toListTablesRequest(User user) {
+    return ListTablesRequest.builder().userId(user.getId()).build();
+  }
 
-	  private Route createTableAction(Class<NewTable> clazz) {
-	    return security.secured(clazz, this::persistTable);
-	  }
-	  
-	  private ListTablesRequest toListTablesRequest(User user) {
-		  return ListTablesRequest.builder().userId(user.getId()).build();
-	  }
-	  
-	  private GetTableRequest toGetTableRequest(User user, String tableIdStr) {
-		  return GetTableRequest.builder().userId(user.getId()).tableKey(TableKey.parse(tableIdStr)).build();
-	  }
-  
+  private GetTableRequest toGetTableRequest(User user, String tableIdStr) {
+    return GetTableRequest.builder()
+        .userId(user.getId())
+        .tableKey(TableKey.parse(tableIdStr))
+        .build();
+  }
 }
