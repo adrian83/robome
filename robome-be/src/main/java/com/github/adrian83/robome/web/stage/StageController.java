@@ -1,7 +1,6 @@
 package com.github.adrian83.robome.web.stage;
 
 import static com.github.adrian83.robome.util.http.HttpMethod.*;
-import static com.github.adrian83.robome.web.table.TableController.TABLES;
 
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
@@ -34,7 +33,7 @@ public class StageController extends AllDirectives {
 
   public static final String STAGES = "stages";
 
-  public static final Tuple2<String, String> PATH_ELEMENTS = new Tuple2<>(TABLES, STAGES);
+  public static final Tuple2<String, String> PATH_ELEMENTS = new Tuple2<>("tables", STAGES);
 
   private static final NewStageValidator CREATE_VALIDATOR = new NewStageValidator();
   private static final UpdatedStageValidator UPDATE_VALIDATOR = new UpdatedStageValidator();
@@ -68,12 +67,12 @@ public class StageController extends AllDirectives {
         options(routes.prefixVarPrefixVarSlash(PATH_ELEMENTS, this::handleOptionsRequestWithId)),
         post(
             new OneParamAndFormRoute<NewStage>(
-                new String[] {TABLES, "{tableId}", STAGES},
+                new String[] {"bables", "{tableId}", STAGES},
                 NewStage.class,
                 (tabId, clz) -> security.jwtSecured(tabId, clz, this::persistStage))),
         put(
             new TwoParamsAndFormRoute<UpdatedStage>(
-                new String[] {TABLES, "{tableId}", STAGES, "{stageId}"},
+                new String[] {"tables", "{tableId}", STAGES, "{stageId}"},
                 UpdatedStage.class,
                 (tabId, stgId, clz) -> security.secured(tabId, stgId, clz, this::updateStage))));
   }

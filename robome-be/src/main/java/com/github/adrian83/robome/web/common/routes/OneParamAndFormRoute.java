@@ -2,47 +2,43 @@ package com.github.adrian83.robome.web.common.routes;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
-import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-
-import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class OneParamAndFormRoute<T> extends AllDirectives implements Supplier<Route> {
+public class OneParamAndFormRoute<T> extends AbsFormRoute<T> implements Supplier<Route> {
 
   private BiFunction<String, Class<T>, Route> action;
-  private String[] path;
-  private Class<T> clazz;
 
   public OneParamAndFormRoute(
       String[] path, Class<T> clazz, BiFunction<String, Class<T>, Route> action) {
-    this.clazz = clazz;
-    this.path = path;
+    super(path, clazz);
     this.action = action;
   }
 
-  private boolean isParam(String pathElem) {
-    return pathElem.charAt(0) == '{';
+  public OneParamAndFormRoute(
+      String path, Class<T> clazz, BiFunction<String, Class<T>, Route> action) {
+    super(path, clazz);
+    this.action = action;
   }
 
   @Override
   public Route get() {
-    if (path.length == 0) {
+    if (emptyPath()) {
       throw new IllegalStateException("path should contains one parameter");
     }
 
-    var newPath = Arrays.copyOfRange(path, 1, path.length);
+    var newPath = pathTail();
 
-    if (isParam(path[0])) {
+    if (startsWithParameter()) {
       Function<String, Function<Class<T>, Route>> newFunc =
           (String var1) -> (Class<T> clz) -> action.apply(var1, clz);
       return pathPrefix(
-          segment(), var1 -> new FormRoute<T>(newPath, clazz, newFunc.apply(var1)).get());
+          segment(), var1 -> new FormRoute<T>(newPath, getClazz(), newFunc.apply(var1)).get());
     }
 
-    return pathPrefix(path[0], new OneParamAndFormRoute<T>(newPath, clazz, action));
+    return pathPrefix(pathHead(), new OneParamAndFormRoute<T>(newPath, getClazz(), action));
   }
 }
