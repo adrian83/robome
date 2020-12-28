@@ -13,11 +13,12 @@ import org.slf4j.LoggerFactory;
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.TableService;
-import com.github.adrian83.robome.domain.table.model.GetTableRequest;
-import com.github.adrian83.robome.domain.table.model.ListTablesRequest;
-import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.domain.table.model.TableKey;
-import com.github.adrian83.robome.domain.table.model.UpdatedTable;
+import com.github.adrian83.robome.domain.table.model.request.DeleteTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
+import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
@@ -26,6 +27,8 @@ import com.github.adrian83.robome.web.common.routes.FormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamRoute;
 import com.github.adrian83.robome.web.common.routes.PrefixRoute;
+import com.github.adrian83.robome.web.table.model.NewTable;
+import com.github.adrian83.robome.web.table.model.UpdatedTable;
 import com.github.adrian83.robome.web.table.validation.NewTableValidator;
 import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
 import com.google.inject.Inject;
@@ -85,6 +88,7 @@ public class TableController extends AllDirectives {
   }
 
   private Route getTables(CompletionStage<User> userF) {
+
     LOGGER.info("New list table request");
 
     CompletionStage<HttpResponse> responseF =
@@ -99,6 +103,7 @@ public class TableController extends AllDirectives {
   }
 
   private Route getTableById(CompletionStage<User> userF, String tableIdStr) {
+
     LOGGER.info("New find table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
@@ -113,12 +118,14 @@ public class TableController extends AllDirectives {
   }
 
   private Route deleteTable(CompletionStage<User> userF, String tableIdStr) {
+
     LOGGER.info("New delete table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canWriteTables)
-            .thenCompose(user -> tableService.deleteTable(user, TableKey.parse(tableIdStr)))
+            .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
+            .thenCompose(tableService::deleteTable)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -134,10 +141,8 @@ public class TableController extends AllDirectives {
             .thenApply(Authorization::canWriteTables)
             .thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable, UPDATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
-            .thenCompose(
-                uaf ->
-                    tableService.updateTable(
-                        uaf.getUser(), TableKey.parse(tableIdStr), uaf.getForm()))
+            .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
+            .thenCompose(tableService::updateTable)
             .thenApply(table -> response.jsonFromObject(table))
             .exceptionally(exceptionHandler::handle);
 
@@ -152,7 +157,8 @@ public class TableController extends AllDirectives {
             .thenApply(Authorization::canWriteTables)
             .thenApply(user -> new UserAndForm<NewTable>(user, newTable, CREATE_VALIDATOR))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> tableService.saveTable(uaf.getUser(), uaf.getForm()))
+            .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
+            .thenCompose(tableService::saveTable)
             .thenApply(table -> response.jsonFromObject(table))
             .exceptionally(exceptionHandler::handle);
 
@@ -167,6 +173,30 @@ public class TableController extends AllDirectives {
     return GetTableRequest.builder()
         .userId(user.getId())
         .tableKey(TableKey.parse(tableIdStr))
+        .build();
+  }
+
+  private DeleteTableRequest toDeleteTableRequest(User user, String tableIdStr) {
+    return DeleteTableRequest.builder()
+        .userId(user.getId())
+        .tableKey(TableKey.parse(tableIdStr))
+        .build();
+  }
+
+  private UpdateTableRequest toUpdateTableRequest(User user, String tableIdStr, UpdatedTable form) {
+    return UpdateTableRequest.builder()
+        .tableKey(TableKey.parse(tableIdStr))
+        .userId(user.getId())
+        .title(form.getTitle())
+        .description(form.getDescription())
+        .build();
+  }
+
+  private NewTableRequest toNewTableRequest(User user, NewTable form) {
+    return NewTableRequest.builder()
+        .userId(user.getId())
+        .title(form.getTitle())
+        .description(form.getDescription())
         .build();
   }
 }

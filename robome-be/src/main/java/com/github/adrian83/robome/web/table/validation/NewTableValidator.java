@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.github.adrian83.robome.domain.common.Validator;
-import com.github.adrian83.robome.domain.table.model.NewTable;
 import com.github.adrian83.robome.web.common.ValidationError;
+import com.github.adrian83.robome.web.table.model.NewTable;
 import com.google.common.base.Strings;
 
 public class NewTableValidator implements Validator<NewTable> {

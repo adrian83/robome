@@ -1,9 +1,15 @@
 package com.github.adrian83.robome.web.stage;
 
-import static com.github.adrian83.robome.util.http.HttpMethod.*;
+import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.util.http.HttpMethod.GET;
+import static com.github.adrian83.robome.util.http.HttpMethod.POST;
+import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
+import java.util.concurrent.CompletionStage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
@@ -16,20 +22,24 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.tuple.Tuple2;
 import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
-import com.github.adrian83.robome.web.common.Routes;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
+import com.github.adrian83.robome.web.common.routes.OneParamRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
+import com.github.adrian83.robome.web.common.routes.TwoParamsRoute;
 import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
 import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
 import com.google.inject.Inject;
-import java.util.concurrent.CompletionStage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import akka.http.javadsl.server.AllDirectives;
+import akka.http.javadsl.server.Route;
 
 public class StageController extends AllDirectives {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StageController.class);
+
+  private static final String STAGES_PATH = "/tables/{tableId}/stages/";
+  private static final String STAGE_PATH = "/tables/{tableId}/stages/{stageId}/";
 
   public static final String STAGES = "stages";
 
@@ -42,29 +52,30 @@ public class StageController extends AllDirectives {
   private ExceptionHandler exceptionHandler;
   private Response response;
   private Security security;
-  private Routes routes;
 
   @Inject
   public StageController(
       StageService stageService,
       Response response,
       ExceptionHandler exceptionHandler,
-      Routes routes,
       Security security) {
     this.stageService = stageService;
     this.exceptionHandler = exceptionHandler;
     this.response = response;
-    this.routes = routes;
     this.security = security;
   }
 
   public Route createRoute() {
     return route(
-        get(routes.prefixVarPrefixSlash(PATH_ELEMENTS, this::getTableStagesAction)),
-        get(routes.prefixVarPrefixVarSlash(PATH_ELEMENTS, this::getStageByIdAction)),
-        options(routes.prefixVarPrefixSlash(PATH_ELEMENTS, this::handleOptionsRequest)),
-        delete(routes.prefixVarPrefixVarSlash(PATH_ELEMENTS, this::deleteStageAction)),
-        options(routes.prefixVarPrefixVarSlash(PATH_ELEMENTS, this::handleOptionsRequestWithId)),
+        get(
+            new OneParamRoute(
+                STAGES_PATH, (tabId) -> security.jwtSecured(tabId, this::getTableStages))),
+        get(
+            new TwoParamsRoute(
+                STAGE_PATH, (tabId, stgId) -> security.secured(tabId, stgId, this::getStageById))),
+        delete(
+            new TwoParamsRoute(
+                STAGE_PATH, (tabId, stgId) -> security.secured(tabId, stgId, this::deleteStage))),
         post(
             new OneParamAndFormRoute<NewStage>(
                 new String[] {"bables", "{tableId}", STAGES},
@@ -74,27 +85,12 @@ public class StageController extends AllDirectives {
             new TwoParamsAndFormRoute<UpdatedStage>(
                 new String[] {"tables", "{tableId}", STAGES, "{stageId}"},
                 UpdatedStage.class,
-                (tabId, stgId, clz) -> security.secured(tabId, stgId, clz, this::updateStage))));
-  }
-
-  private Route getTableStagesAction(String tableId) {
-    return security.jwtSecured(tableId, this::getTableStages);
-  }
-
-  private Route getStageByIdAction(String tableId, String stageId) {
-    return security.secured(tableId, stageId, this::getStageById);
-  }
-
-  private Route deleteStageAction(String tableId, String stageId) {
-    return security.secured(tableId, stageId, this::deleteStage);
-  }
-
-  private Route handleOptionsRequestWithId(String tableId, String stageId) {
-    return complete(response.response200(GET, DELETE, PUT));
-  }
-
-  private Route handleOptionsRequest(String tableId) {
-    return complete(response.response200(GET, POST));
+                (tabId, stgId, clz) -> security.secured(tabId, stgId, clz, this::updateStage))),
+        options(
+            new OneParamRoute(STAGES_PATH, (tabId) -> complete(response.response200(GET, POST)))),
+        options(
+            new TwoParamsRoute(
+                STAGE_PATH, (tabId, stgId) -> complete(response.response200(GET, DELETE, PUT)))));
   }
 
   private ListTableStagesRequest toListTableStagesRequest(User user, String tableIdStr) {
