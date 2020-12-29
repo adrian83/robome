@@ -18,7 +18,6 @@ import com.github.adrian83.robome.domain.stage.model.request.NewStageRequest;
 import com.github.adrian83.robome.domain.stage.model.request.UpdateStageRequest;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.model.User;
-import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
@@ -41,18 +40,12 @@ public class StageController extends AllDirectives {
   private static final String STAGE_PATH = "/tables/{tableId}/stages/{stageId}/";
 
   private StageService stageService;
-  private ExceptionHandler exceptionHandler;
   private Response response;
   private Security security;
 
   @Inject
-  public StageController(
-      StageService stageService,
-      Response response,
-      ExceptionHandler exceptionHandler,
-      Security security) {
+  public StageController(StageService stageService, Response response, Security security) {
     this.stageService = stageService;
-    this.exceptionHandler = exceptionHandler;
     this.response = response;
     this.security = security;
   }
@@ -87,16 +80,14 @@ public class StageController extends AllDirectives {
 
   private CompletionStage<HttpResponse> getTableStages(
       CompletionStage<User> userF, String tableIdStr) {
-    var tableKey = TableKey.parse(tableIdStr);
 
-    log.info("New list stages request, tableKey: {}", tableKey);
+    log.info("New list stages request, tableId: {}", tableIdStr);
 
     return userF
         .thenApply(Authorization::canReadStages)
         .thenApply(user -> toListTableStagesRequest(user, tableIdStr))
         .thenCompose(stageService::getTableStages)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> getStageById(
@@ -108,8 +99,7 @@ public class StageController extends AllDirectives {
         .thenApply(Authorization::canReadStages)
         .thenApply(u -> toGetStageRequest(u, tableIdStr, stageIdStr))
         .thenCompose(stageService::getStage)
-        .thenApply(response::jsonFromOptional)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromOptional);
   }
 
   private CompletionStage<HttpResponse> persistStage(
@@ -123,42 +113,42 @@ public class StageController extends AllDirectives {
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toNewStageRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
         .thenCompose(stageService::saveStage)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> updateStage(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, UpdateStage updatedStage) {
-    var stageKey = StageKey.parse(tableIdStr, stageIdStr);
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, UpdateStage form) {
 
-    log.info("New update stage request, stageKey: {}, newStage: {}", stageKey, updatedStage);
+    log.info(
+        "New update stage request, tableId: {}, stageId: {}, data: {}",
+        tableIdStr,
+        stageIdStr,
+        form);
 
     return userF
         .thenApply(Authorization::canWriteStages)
-        .thenApply(user -> new UserAndForm<UpdateStage>(user, updatedStage))
+        .thenApply(user -> new UserAndForm<UpdateStage>(user, form))
         .thenApply(UserAndForm::validate)
         .thenApply(
             uaf -> toUpdateStageRequest(uaf.getUser(), tableIdStr, stageIdStr, uaf.getForm()))
         .thenCompose(stageService::updateStage)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> deleteStage(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
-    var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
-    log.info("New delete stage request, stageKey: {}", stageKey);
+    log.info("New delete stage request, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
     return userF
         .thenApply(Authorization::canWriteStages)
         .thenApply(u -> toDeleteStageRequest(u, tableIdStr, stageIdStr))
         .thenCompose(stageService::deleteStage)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private ListTableStagesRequest toListTableStagesRequest(User user, String tableIdStr) {
+
     return ListTableStagesRequest.builder()
         .userId(user.getId())
         .tableKey(TableKey.parse(tableIdStr))
@@ -166,6 +156,7 @@ public class StageController extends AllDirectives {
   }
 
   private DeleteStageRequest toDeleteStageRequest(User user, String tableIdStr, String stageIdStr) {
+
     return DeleteStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
         .userId(user.getId())
@@ -174,6 +165,7 @@ public class StageController extends AllDirectives {
 
   private UpdateStageRequest toUpdateStageRequest(
       User user, String tableIdStr, String stageIdStr, UpdateStage form) {
+
     return UpdateStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
         .userId(user.getId())
@@ -182,6 +174,7 @@ public class StageController extends AllDirectives {
   }
 
   private NewStageRequest toNewStageRequest(User user, String tableIdStr, NewStage form) {
+
     return NewStageRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
         .userId(user.getId())
@@ -190,6 +183,7 @@ public class StageController extends AllDirectives {
   }
 
   private GetStageRequest toGetStageRequest(User user, String tableIdStr, String stageIdStr) {
+
     return GetStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
         .userId(user.getId())

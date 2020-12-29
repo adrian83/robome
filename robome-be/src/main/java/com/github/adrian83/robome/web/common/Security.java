@@ -2,7 +2,6 @@ package com.github.adrian83.robome.web.common;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller;
 
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -31,62 +30,100 @@ public class Security extends AllDirectives {
 
   protected UserService userService;
   protected Authentication authentication;
+  private ExceptionHandler exceptionHandler;
 
   @Inject
-  public Security(UserService userService, Authentication authentication) {
+  public Security(UserService userService, Authentication authentication, ExceptionHandler exceptionHandler) {
     this.userService = userService;
     this.authentication = authentication;
+    this.exceptionHandler = exceptionHandler;
   }
 
   public RawHeader createAuthHeader(String token) {
     return RawHeader.create(AUTHORIZATION, token);
   }
+  
+  private Route handleExceptions(CompletionStage<HttpResponse> respF) {
+	  return completeWithFuture(respF.exceptionally(exceptionHandler::handle));
+  }
 
   public Route secured(Function<CompletionStage<User>, CompletionStage<HttpResponse>> logic) {
-	  Function<CompletionStage<User>, Route> a = (userF) -> completeWithFuture(logic.apply(userF));
-    return withUserFromAuthHeader(a);
+
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) -> handleExceptions(logic.apply(userF));
+
+    return withUserFromAuthHeader(userFToRoute);
   }
 
-  public <T> Route secured(T param, BiFunction<CompletionStage<User>, T, CompletionStage<HttpResponse>> logic) {
-    Function<CompletionStage<User>, Route> apply = (userF) -> completeWithFuture(logic.apply(userF, param));
-    return withUserFromAuthHeader(apply);
-  }
+  public <T> Route secured(
+      T param, BiFunction<CompletionStage<User>, T, CompletionStage<HttpResponse>> logic) {
 
-  public <T, P> Route secured(T p1, P p2, TriFunction<CompletionStage<User>, T, P, CompletionStage<HttpResponse>> logic) {
-    Function<CompletionStage<User>, Route> apply = (userF) -> completeWithFuture(logic.apply(userF, p1, p2));
-    return withUserFromAuthHeader(apply);
-  }
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) -> handleExceptions(logic.apply(userF, param));
 
-  public <T, P, R> Route secured(
-      T p1, P p2, R p3, TetraFunction<CompletionStage<User>, T, P, R, CompletionStage<HttpResponse>> logic) {
-    Function<CompletionStage<User>, Route> apply = (userF) -> completeWithFuture(logic.apply(userF, p1, p2, p3));
-    return withUserFromAuthHeader(apply);
-  }
-
-  public <T, P, R, S> Route secured(
-      T p1,
-      P p2,
-      R p3,
-      Class<S> clazz,
-      PentaFunction<CompletionStage<User>, T, P, R, S, CompletionStage<HttpResponse>> logic) {
-
-    Function<CompletionStage<User>, Route> apply =
-        (userF) -> entity(unmarshaller(clazz), form -> completeWithFuture(logic.apply(userF, p1, p2, p3, form)));
-
-    return withUserFromAuthHeader(apply);
-  }
-
-  public <T> Route secured(Class<T> clazz, BiFunction<CompletionStage<User>, T, CompletionStage<HttpResponse>> logic) {
-    Function<CompletionStage<User>, Route> apply =
-        (userF) -> entity(unmarshaller(clazz), form -> completeWithFuture(logic.apply(userF, form)));
-    return withUserFromAuthHeader(apply);
+    return withUserFromAuthHeader(userFToRoute);
   }
 
   public <T, P> Route secured(
-      P param, Class<T> clazz, TriFunction<CompletionStage<User>, P, T, CompletionStage<HttpResponse>> logic) {
-    Function<CompletionStage<User>, Route> apply =
-        (userF) -> entity(unmarshaller(clazz), form -> completeWithFuture(logic.apply(userF, param, form)));
-    return withUserFromAuthHeader(apply);
+      T param1,
+      P param2,
+      TriFunction<CompletionStage<User>, T, P, CompletionStage<HttpResponse>> logic) {
+
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) -> handleExceptions(logic.apply(userF, param1, param2));
+
+    return withUserFromAuthHeader(userFToRoute);
+  }
+
+  public <T, P, R> Route secured(
+      T p1,
+      P p2,
+      R p3,
+      TetraFunction<CompletionStage<User>, T, P, R, CompletionStage<HttpResponse>> logic) {
+
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) -> handleExceptions(logic.apply(userF, p1, p2, p3));
+
+    return withUserFromAuthHeader(userFToRoute);
+  }
+
+  public <T, P, R, S> Route secured(
+      T param1,
+      P param2,
+      R param3,
+      Class<S> clazz,
+      PentaFunction<CompletionStage<User>, T, P, R, S, CompletionStage<HttpResponse>> logic) {
+
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) ->
+            entity(
+                unmarshaller(clazz),
+                form -> handleExceptions(logic.apply(userF, param1, param2, param3, form)));
+
+    return withUserFromAuthHeader(userFToRoute);
+  }
+
+  public <T> Route secured(
+      Class<T> clazz, BiFunction<CompletionStage<User>, T, CompletionStage<HttpResponse>> logic) {
+
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) ->
+            entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, form)));
+
+    return withUserFromAuthHeader(userFToRoute);
+  }
+
+  public <T, P> Route secured(
+      P param,
+      Class<T> clazz,
+      TriFunction<CompletionStage<User>, P, T, CompletionStage<HttpResponse>> logic) {
+
+    Function<CompletionStage<User>, Route> userFToRoute =
+        (userF) ->
+            entity(
+                unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, param, form)));
+
+    return withUserFromAuthHeader(userFToRoute);
   }
 
   public <T> Route secured(
@@ -99,30 +136,25 @@ public class Security extends AllDirectives {
     Function<CompletionStage<User>, Route> apply =
         (userF) ->
             entity(
-                unmarshaller(clazz), form -> completeWithFuture(logic.apply(userF, p1, p2, form)));
+                unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, p1, p2, form)));
 
     return withUserFromAuthHeader(apply);
   }
 
   public <T> Route unsecured(Class<T> clazz, Function<T, CompletionStage<HttpResponse>> logic) {
-    return entity(unmarshaller(clazz), form -> completeWithFuture(logic.apply(form)));
+    return entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(form)));
   }
 
-  private Route withUserFromAuthHeader(
-      Function<CompletionStage<User>, Route> inner) {
-    return optionalHeaderValueByName(AUTHORIZATION, maybeToken -> this.hh(maybeToken, inner));
+  private Route withUserFromAuthHeader(Function<CompletionStage<User>, Route> inner) {
+    return optionalHeaderValueByName(
+        AUTHORIZATION,
+        maybeToken ->
+            maybeToken
+                .map((token) -> procedeIfValidToken(token, inner::apply))
+                .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION));
   }
 
-  private Route hh(
-      Optional<String> maybeToken,
-      Function<CompletionStage<User>, Route> inner) {
-    return maybeToken
-        .map((token) -> procedeIfValidToken(token, inner::apply))
-        .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION);
-  }
-
-  private Route procedeIfValidToken(
-      String token, Function<CompletionStage<User>, Route> inner) {
+  private Route procedeIfValidToken(String token, Function<CompletionStage<User>, Route> inner) {
     var userF = authentication.findUserByToken(token);
     return inner.apply(userF);
   }

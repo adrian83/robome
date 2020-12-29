@@ -19,7 +19,6 @@ import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
 import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
 import com.github.adrian83.robome.domain.user.model.User;
-import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.FormRoute;
@@ -51,18 +50,12 @@ public class TableController extends AllDirectives {
       "User: {} issued update table request, tableId: {}, data: {}";
 
   private TableService tableService;
-  private ExceptionHandler exceptionHandler;
   private Response response;
   private Security security;
 
   @Inject
-  public TableController(
-      TableService tableService,
-      ExceptionHandler exceptionHandler,
-      Response response,
-      Security security) {
+  public TableController(TableService tableService, Response response, Security security) {
     this.tableService = tableService;
-    this.exceptionHandler = exceptionHandler;
     this.response = response;
     this.security = security;
   }
@@ -96,8 +89,7 @@ public class TableController extends AllDirectives {
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)
         .thenCompose(tableService::getTables)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> getTableById(
@@ -110,8 +102,7 @@ public class TableController extends AllDirectives {
         .thenApply(Authorization::canReadTables)
         .thenApply(user -> toGetTableRequest(user, tableIdStr))
         .thenCompose(tableService::getTable)
-        .thenApply(response::jsonFromOptional)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromOptional);
   }
 
   private CompletionStage<HttpResponse> deleteTable(
@@ -124,8 +115,7 @@ public class TableController extends AllDirectives {
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
         .thenCompose(tableService::deleteTable)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> updateTable(
@@ -140,8 +130,7 @@ public class TableController extends AllDirectives {
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
         .thenCompose(tableService::updateTable)
-        .thenApply(table -> response.jsonFromObject(table))
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(table -> response.jsonFromObject(table));
   }
 
   private CompletionStage<HttpResponse> persistTable(CompletionStage<User> userF, NewTable form) {
@@ -155,8 +144,7 @@ public class TableController extends AllDirectives {
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
         .thenCompose(tableService::saveTable)
-        .thenApply(table -> response.jsonFromObject(table))
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(table -> response.jsonFromObject(table));
   }
 
   private ListTablesRequest toListTablesRequest(User user) {
@@ -164,6 +152,7 @@ public class TableController extends AllDirectives {
   }
 
   private GetTableRequest toGetTableRequest(User user, String tableIdStr) {
+
     return GetTableRequest.builder()
         .userId(user.getId())
         .tableKey(TableKey.parse(tableIdStr))
@@ -171,6 +160,7 @@ public class TableController extends AllDirectives {
   }
 
   private DeleteTableRequest toDeleteTableRequest(User user, String tableIdStr) {
+
     return DeleteTableRequest.builder()
         .userId(user.getId())
         .tableKey(TableKey.parse(tableIdStr))
@@ -178,6 +168,7 @@ public class TableController extends AllDirectives {
   }
 
   private UpdateTableRequest toUpdateTableRequest(User user, String tableIdStr, UpdateTable form) {
+
     return UpdateTableRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
         .userId(user.getId())
@@ -187,6 +178,7 @@ public class TableController extends AllDirectives {
   }
 
   private NewTableRequest toNewTableRequest(User user, NewTable form) {
+
     return NewTableRequest.builder()
         .userId(user.getId())
         .title(form.getTitle())

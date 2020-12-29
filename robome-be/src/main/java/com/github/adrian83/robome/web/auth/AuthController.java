@@ -10,7 +10,6 @@ import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.util.http.HttpMethod;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
-import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.Validation;
@@ -26,19 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthController extends AllDirectives {
 
-  private ExceptionHandler exceptionHandler;
   private Response response;
   private Security security;
   private Authentication authentication;
 
   @Inject
-  public AuthController(
-      Authentication authentication,
-      ExceptionHandler exceptionHandler,
-      Response response,
-      Security security) {
+  public AuthController(Authentication authentication, Response response, Security security) {
     this.authentication = authentication;
-    this.exceptionHandler = exceptionHandler;
     this.security = security;
     this.response = response;
   }
@@ -69,8 +62,7 @@ public class AuthController extends AllDirectives {
         .thenCompose(authentication::findUserWithPassword)
         .thenApply(authentication::createAuthToken)
         .thenApply(security::createAuthHeader)
-        .thenApply(response::response200)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::response200);
   }
 
   private CompletionStage<HttpResponse> registerUser(Register register) {
@@ -80,14 +72,13 @@ public class AuthController extends AllDirectives {
         .thenApply(Validation::validate)
         .thenApply(v -> toRegisterRequest(register))
         .thenCompose(authentication::registerUser)
-        .thenApply(done -> response.response201())
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(done -> response.response201());
   }
 
   private CompletionStage<HttpResponse> isSignedIn(CompletionStage<User> userF) {
     log.info("Checking if user is logged in");
 
-    return userF.thenApply(user -> response.response200()).exceptionally(exceptionHandler::handle);
+    return userF.thenApply(user -> response.response200());
   }
 
   private LoginRequest toLoginRequest(Login form) {

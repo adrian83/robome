@@ -20,7 +20,6 @@ import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
-import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.ThreeParamsAndFormRoute;
@@ -41,23 +40,13 @@ public class ActivityController extends AllDirectives {
   private static final String ACTIVITY_PATH =
       "/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
 
-  // private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
-  // private static final Validator<UpdateActivity> UPDATE_VALIDATOR = new
-  // UpdatedActivityValidator();
-
   private ActivityService activityService;
-  private ExceptionHandler exceptionHandler;
   private Security security;
   private Response response;
 
   @Inject
-  public ActivityController(
-      ActivityService activityService,
-      ExceptionHandler exceptionHandler,
-      Response response,
-      Security security) {
+  public ActivityController(ActivityService activityService, Response response, Security security) {
     this.activityService = activityService;
-    this.exceptionHandler = exceptionHandler;
     this.security = security;
     this.response = response;
   }
@@ -107,8 +96,7 @@ public class ActivityController extends AllDirectives {
         .thenApply(Authorization::canReadAcivities)
         .thenApply(user -> toListStageActivitiesRequest(user, tableIdStr, stageIdStr))
         .thenCompose(activityService::getStageActivities)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> deleteActivity(
@@ -124,8 +112,7 @@ public class ActivityController extends AllDirectives {
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(u -> toDeleteActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
         .thenCompose(activityService::deleteActivity)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> getActivityById(
@@ -141,8 +128,7 @@ public class ActivityController extends AllDirectives {
         .thenApply(Authorization::canReadAcivities)
         .thenApply(u -> toGetActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
         .thenCompose(activityService::getActivity)
-        .thenApply(response::jsonFromOptional)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromOptional);
   }
 
   private CompletionStage<HttpResponse> persistActivity(
@@ -163,8 +149,7 @@ public class ActivityController extends AllDirectives {
                 toNewActivityRequest(
                     uaf.getUser(), tableIdStr, stageIdStr, uaf.getForm().getName()))
         .thenCompose(activityService::saveActivity)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> updateActivity(
@@ -172,26 +157,25 @@ public class ActivityController extends AllDirectives {
       String tableIdStr,
       String stageIdStr,
       String activityIdStr,
-      UpdateActivity updateActivity) {
+      UpdateActivity form) {
 
     log.info(
         "New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}",
         tableIdStr,
         stageIdStr,
         activityIdStr,
-        updateActivity);
+        form);
 
     return userF
         .thenApply(Authorization::canWriteAcivities)
-        .thenApply(user -> new UserAndForm<UpdateActivity>(user, updateActivity))
+        .thenApply(user -> new UserAndForm<UpdateActivity>(user, form))
         .thenApply(UserAndForm::validate)
         .thenApply(
             uaf ->
                 toUpdateActivityRequest(
                     uaf.getUser(), tableIdStr, stageIdStr, activityIdStr, uaf.getForm()))
         .thenCompose(activityService::updateActivity)
-        .thenApply(response::jsonFromObject)
-        .exceptionally(exceptionHandler::handle);
+        .thenApply(response::jsonFromObject);
   }
 
   private NewActivityRequest toNewActivityRequest(
