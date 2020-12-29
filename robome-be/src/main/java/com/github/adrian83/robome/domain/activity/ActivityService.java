@@ -7,11 +7,11 @@ import java.util.concurrent.CompletionStage;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
-import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
-import com.github.adrian83.robome.domain.activity.model.request.UpdatedActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.DeleteActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.GetActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
+import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.google.inject.Inject;
 
 import akka.actor.ActorSystem;
@@ -52,7 +52,7 @@ public class ActivityService {
     return Source.single(req.getActivityKey()).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<Activity> updateActivity(UpdatedActivityRequest req) {
+  public CompletionStage<Activity> updateActivity(UpdateActivityRequest req) {
     var entity = ActivityEntity.newActivity(req.getActivityKey(), req.getUserId(), req.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =

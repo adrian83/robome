@@ -13,9 +13,8 @@ import lombok.ToString;
 @Builder
 @ToString
 @EqualsAndHashCode
-public class UpdatedActivityRequest {
-	  private String name;
-	  private UUID userId;
-	  private ActivityKey activityKey;
-
+public class UpdateActivityRequest {
+  private String name;
+  private UUID userId;
+  private ActivityKey activityKey;
 }

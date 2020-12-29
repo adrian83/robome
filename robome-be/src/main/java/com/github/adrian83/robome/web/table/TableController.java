@@ -7,9 +7,6 @@ import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.TableService;
@@ -28,24 +25,19 @@ import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamRoute;
 import com.github.adrian83.robome.web.common.routes.PrefixRoute;
 import com.github.adrian83.robome.web.table.model.NewTable;
-import com.github.adrian83.robome.web.table.model.UpdatedTable;
-import com.github.adrian83.robome.web.table.validation.NewTableValidator;
-import com.github.adrian83.robome.web.table.validation.UpdatedTableValidator;
+import com.github.adrian83.robome.web.table.model.UpdateTable;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TableController extends AllDirectives {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
 
   private static final String TABLES_PATH = "/tables/";
   private static final String TABLE_PATH = "/tables/{tableId}/";
-
-  private static final UpdatedTableValidator UPDATE_VALIDATOR = new UpdatedTableValidator();
-  private static final NewTableValidator CREATE_VALIDATOR = new NewTableValidator();
 
   private TableService tableService;
   private ExceptionHandler exceptionHandler;
@@ -74,9 +66,9 @@ public class TableController extends AllDirectives {
             new FormRoute<NewTable>(
                 TABLES_PATH, NewTable.class, (clz) -> security.secured(clz, this::persistTable))),
         put(
-            new OneParamAndFormRoute<UpdatedTable>(
+            new OneParamAndFormRoute<UpdateTable>(
                 TABLE_PATH,
-                UpdatedTable.class,
+                UpdateTable.class,
                 (tabId, clz) -> security.jwtSecured(tabId, clz, this::updateTable))),
         delete(
             new OneParamRoute(
@@ -89,7 +81,7 @@ public class TableController extends AllDirectives {
 
   private Route getTables(CompletionStage<User> userF) {
 
-    LOGGER.info("New list table request");
+    log.info("New list table request");
 
     CompletionStage<HttpResponse> responseF =
         userF
@@ -104,7 +96,7 @@ public class TableController extends AllDirectives {
 
   private Route getTableById(CompletionStage<User> userF, String tableIdStr) {
 
-    LOGGER.info("New find table request, tableId: {}", tableIdStr);
+    log.info("New find table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         userF
@@ -119,7 +111,7 @@ public class TableController extends AllDirectives {
 
   private Route deleteTable(CompletionStage<User> userF, String tableIdStr) {
 
-    LOGGER.info("New delete table request, tableId: {}", tableIdStr);
+    log.info("New delete table request, tableId: {}", tableIdStr);
 
     CompletionStage<HttpResponse> responseF =
         userF
@@ -133,13 +125,14 @@ public class TableController extends AllDirectives {
   }
 
   private Route updateTable(
-      CompletionStage<User> userF, String tableIdStr, UpdatedTable updatedTable) {
-    LOGGER.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
+      CompletionStage<User> userF, String tableIdStr, UpdateTable updatedTable) {
+
+    log.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
 
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canWriteTables)
-            .thenApply(user -> new UserAndForm<UpdatedTable>(user, updatedTable, UPDATE_VALIDATOR))
+            .thenApply(user -> new UserAndForm<UpdateTable>(user, updatedTable))
             .thenApply(UserAndForm::validate)
             .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
             .thenCompose(tableService::updateTable)
@@ -150,12 +143,13 @@ public class TableController extends AllDirectives {
   }
 
   private Route persistTable(CompletionStage<User> userF, NewTable newTable) {
-    LOGGER.info("New persist table request, table: {}", newTable);
+
+    log.info("New persist table request, table: {}", newTable);
 
     CompletionStage<HttpResponse> responseF =
         userF
             .thenApply(Authorization::canWriteTables)
-            .thenApply(user -> new UserAndForm<NewTable>(user, newTable, CREATE_VALIDATOR))
+            .thenApply(user -> new UserAndForm<NewTable>(user, newTable))
             .thenApply(UserAndForm::validate)
             .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
             .thenCompose(tableService::saveTable)
@@ -183,7 +177,7 @@ public class TableController extends AllDirectives {
         .build();
   }
 
-  private UpdateTableRequest toUpdateTableRequest(User user, String tableIdStr, UpdatedTable form) {
+  private UpdateTableRequest toUpdateTableRequest(User user, String tableIdStr, UpdateTable form) {
     return UpdateTableRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
         .userId(user.getId())

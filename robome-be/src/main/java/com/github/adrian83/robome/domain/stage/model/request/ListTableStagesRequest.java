@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.domain.stage.model;
+package com.github.adrian83.robome.domain.stage.model.request;
 
 import java.util.UUID;
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.github.adrian83.robome.web.common.ValidationError;
 
-public interface Validator<T> {
-
-  List<ValidationError> validate(T form);
+@FunctionalInterface
+public interface Validator {
+  List<ValidationError> validate();
 }

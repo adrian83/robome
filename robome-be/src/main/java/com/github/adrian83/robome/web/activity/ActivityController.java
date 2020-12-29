@@ -7,9 +7,6 @@ import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
@@ -17,7 +14,7 @@ import com.github.adrian83.robome.domain.activity.model.request.DeleteActivityRe
 import com.github.adrian83.robome.domain.activity.model.request.GetActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
 import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
-import com.github.adrian83.robome.domain.activity.model.request.UpdatedActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -38,17 +35,17 @@ import com.google.inject.Inject;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ActivityController extends AllDirectives {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
   private static final String ACTIVITIES_PATH = "/tables/{tableId}/stages/{stageId}/activities/";
   private static final String ACTIVITY_PATH =
       "/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
 
-  private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
-  private static final Validator<UpdateActivity> UPDATE_VALIDATOR = new UpdatedActivityValidator();
+  //private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
+  //private static final Validator<UpdateActivity> UPDATE_VALIDATOR = new UpdatedActivityValidator();
 
   private ActivityService activityService;
   private ExceptionHandler exceptionHandler;
@@ -106,7 +103,7 @@ public class ActivityController extends AllDirectives {
   private Route getStageActivities(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
 
-    LOGGER.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
+    log.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
     CompletionStage<HttpResponse> responseF =
         userF
@@ -122,7 +119,7 @@ public class ActivityController extends AllDirectives {
   private Route deleteActivity(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
-    LOGGER.info(
+    log.info(
         "New delete activity request, tableId: {}, stageId: {} activityId: {}",
         tableIdStr,
         stageIdStr,
@@ -142,7 +139,7 @@ public class ActivityController extends AllDirectives {
   private Route getActivityById(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
-    LOGGER.info(
+    log.info(
         "New find activity request, tableId: {}, stageId: {} activityId: {}",
         tableIdStr,
         stageIdStr,
@@ -162,7 +159,7 @@ public class ActivityController extends AllDirectives {
   private Route persistActivity(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity newActivity) {
 
-    LOGGER.info(
+    log.info(
         "New persist activity request, tableId: {}, stageId: {}, activity: {}",
         tableIdStr,
         stageIdStr,
@@ -171,7 +168,7 @@ public class ActivityController extends AllDirectives {
     var responseF =
         userF
             .thenApply(Authorization::canWriteAcivities)
-            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity, CREATE_VALIDATOR))
+            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
             .thenApply(UserAndForm::validate)
             .thenApply(
                 uaf ->
@@ -191,7 +188,7 @@ public class ActivityController extends AllDirectives {
       String activityIdStr,
       UpdateActivity updateActivity) {
 
-    LOGGER.info(
+    log.info(
         "New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}",
         tableIdStr,
         stageIdStr,
@@ -202,11 +199,11 @@ public class ActivityController extends AllDirectives {
         userF
             .thenApply(Authorization::canWriteAcivities)
             .thenApply(
-                user -> new UserAndForm<UpdateActivity>(user, updateActivity, UPDATE_VALIDATOR))
+                user -> new UserAndForm<UpdateActivity>(user, updateActivity))
             .thenApply(UserAndForm::validate)
             .thenApply(
                 uaf ->
-                    toUpdatedActivityRequest(
+                    toUpdateActivityRequest(
                         uaf.getUser(), tableIdStr, stageIdStr, activityIdStr, uaf.getForm()))
             .thenCompose(activityService::updateActivity)
             .thenApply(response::jsonFromObject)
@@ -225,14 +222,14 @@ public class ActivityController extends AllDirectives {
         .build();
   }
 
-  private UpdatedActivityRequest toUpdatedActivityRequest(
+  private UpdateActivityRequest toUpdateActivityRequest(
       User user,
       String tableIdStr,
       String stageIdStr,
       String activityIdStr,
       UpdateActivity updateActivity) {
 
-    return UpdatedActivityRequest.builder()
+    return UpdateActivityRequest.builder()
         .name(updateActivity.getName())
         .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
         .userId(user.getId())

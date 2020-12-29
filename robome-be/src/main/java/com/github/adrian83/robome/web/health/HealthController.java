@@ -4,7 +4,7 @@ import static com.github.adrian83.robome.util.http.HttpMethod.GET;
 import static com.github.adrian83.robome.util.http.HttpMethod.POST;
 
 import com.github.adrian83.robome.web.common.Response;
-import com.github.adrian83.robome.web.common.Routes;
+import com.github.adrian83.robome.web.common.routes.PrefixRoute;
 import com.github.adrian83.robome.web.health.model.AppStatus;
 import com.google.inject.Inject;
 
@@ -17,25 +17,19 @@ public class HealthController extends AllDirectives {
   public static final String OK = "OK";
 
   private Response response;
-  private Routes routes;
 
   @Inject
-  public HealthController(Response response, Routes routes) {
-    this.routes = routes;
+  public HealthController(Response response) {
     this.response = response;
   }
 
   public Route createRoute() {
     return route(
-        get(routes.prefixSlash(HEALTH, createAppStatus())),
-        options(routes.prefixSlash(HEALTH, handleOptionsRequest())));
+        get(new PrefixRoute(HEALTH, createAppStatus())),
+        options(new PrefixRoute(HEALTH, complete(response.response200(GET, POST)))));
   }
 
   private Route createAppStatus() {
     return complete(response.jsonFromObject(new AppStatus(OK)));
-  }
-
-  private Route handleOptionsRequest() {
-    return complete(response.response200(GET, POST));
   }
 }

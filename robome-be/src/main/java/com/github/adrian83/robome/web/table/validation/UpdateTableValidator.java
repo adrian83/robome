@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 
 import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.web.common.ValidationError;
-import com.github.adrian83.robome.web.table.model.UpdatedTable;
+import com.github.adrian83.robome.web.table.model.UpdateTable;
 import com.google.common.base.Strings;
 
-public class UpdatedTableValidator implements Validator<UpdatedTable> {
+public class UpdateTableValidator { //implements Validator<UpdateTable> {
 
   private static final String TITLE_LABEL = "title";
   private static final String EMPTY_TITLE_KEY = "table.update.title.empty";
@@ -27,8 +27,8 @@ public class UpdatedTableValidator implements Validator<UpdatedTable> {
   private static final ValidationError EMPTY_DESCRIPTION =
       new ValidationError(DESC_LABEL, EMPTY_DESC_KEY, EMPTY_DESC_MSG);
 
-  @Override
-  public List<ValidationError> validate(UpdatedTable form) {
+  // @Override
+  public List<ValidationError> validate(UpdateTable form) {
     return Stream.of(
             check(form.getTitle(), EMPTY_TITLE, Strings::isNullOrEmpty),
             check(form.getDescription(), EMPTY_DESCRIPTION, Strings::isNullOrEmpty))

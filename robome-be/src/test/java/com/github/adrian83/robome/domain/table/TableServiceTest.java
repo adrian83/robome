@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.github.adrian83.robome.domain.stage.StageService;
-import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.stage.model.Stage;
+import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;

@@ -12,7 +12,7 @@ import com.github.adrian83.robome.web.common.ValidationError;
 import com.github.adrian83.robome.web.table.model.NewTable;
 import com.google.common.base.Strings;
 
-public class NewTableValidator implements Validator<NewTable> {
+public class NewTableValidator { // implements Validator<NewTable> {
 
   private static final String TITLE_LABEL = "title";
   private static final String EMPTY_TITLE_KEY = "table.create.title.empty";
@@ -27,7 +27,7 @@ public class NewTableValidator implements Validator<NewTable> {
   private static final ValidationError EMPTY_DESCRIPTION =
       new ValidationError(DESC_LABEL, EMPTY_DESC_KEY, EMPTY_DESC_MSG);
 
-  @Override
+  // @Override
   public List<ValidationError> validate(NewTable form) {
     return Stream.of(
             check(form.getTitle(), EMPTY_TITLE, Strings::isNullOrEmpty),

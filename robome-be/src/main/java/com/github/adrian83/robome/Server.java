@@ -1,5 +1,17 @@
 package com.github.adrian83.robome;
 
+import java.util.Arrays;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
+
+import com.github.adrian83.robome.web.activity.ActivityController;
+import com.github.adrian83.robome.web.auth.AuthController;
+import com.github.adrian83.robome.web.health.HealthController;
+import com.github.adrian83.robome.web.stage.StageController;
+import com.github.adrian83.robome.web.table.TableController;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
 import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.http.javadsl.ConnectHttp;
@@ -10,25 +22,10 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.Route;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Flow;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Arrays;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.github.adrian83.robome.web.activity.ActivityController;
-import com.github.adrian83.robome.web.auth.AuthController;
-import com.github.adrian83.robome.web.health.HealthController;
-import com.github.adrian83.robome.web.stage.StageController;
-import com.github.adrian83.robome.web.table.TableController;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-
+@Slf4j
 public class Server {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
   @SafeVarargs
   private static Route createRoutes(Supplier<Route>... controllers) {
@@ -40,7 +37,7 @@ public class Server {
 
   public static void main(String[] args) throws Exception {
 
-    LOGGER.info("starting server");
+    log.info("starting server");
 
     Injector injector = Guice.createInjector(new RobomeModule());
 

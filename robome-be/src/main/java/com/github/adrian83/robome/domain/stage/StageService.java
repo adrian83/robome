@@ -8,14 +8,14 @@ import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
-import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
-import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.stage.model.StageEntity;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
-import com.github.adrian83.robome.domain.table.model.TableKey;
-import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.domain.stage.model.request.DeleteStageRequest;
+import com.github.adrian83.robome.domain.stage.model.request.GetStageRequest;
+import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesRequest;
+import com.github.adrian83.robome.domain.stage.model.request.NewStageRequest;
+import com.github.adrian83.robome.domain.stage.model.request.UpdateStageRequest;
 import com.google.inject.Inject;
 
 import akka.actor.ActorSystem;
@@ -36,11 +36,11 @@ public class StageService {
     this.activityService = activityService;
   }
 
-  public CompletionStage<Optional<Stage>> getStage(User user, StageKey stageKey) {
+  public CompletionStage<Optional<Stage>> getStage(GetStageRequest req) {
     return stageRepository
-        .getById(user.getId(), stageKey)
+        .getById(req.getUserId(), req.getStageKey())
         .map((maybeStage) -> maybeStage.map(this::toStage))
-        .mapAsync(1, (maybeStage) -> fetchStageActivities(user, maybeStage))
+        .mapAsync(1, (maybeStage) -> fetchStageActivities(req.getUserId(), maybeStage))
         .runWith(Sink.head(), actorSystem);
   }
 
@@ -52,8 +52,8 @@ public class StageService {
         .runWith(Sink.seq(), actorSystem);
   }
 
-  public CompletionStage<Stage> saveStage(User user, TableKey tableKey, NewStage newStage) {
-    var entity = new StageEntity(tableKey, user.getId(), newStage.getTitle());
+  public CompletionStage<Stage> saveStage(NewStageRequest req) {
+    var entity = new StageEntity(req.getTableKey(), req.getUserId(), req.getTitle());
     var sink =
         stageRepository
             .saveStage()
@@ -61,8 +61,8 @@ public class StageService {
     return Source.single(entity).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<Stage> updateStage(User user, StageKey key, UpdatedStage updatedStage) {
-    StageEntity entity = StageEntity.newStage(key, user.getId(), updatedStage.getTitle());
+  public CompletionStage<Stage> updateStage(UpdateStageRequest req) {
+    StageEntity entity = StageEntity.newStage(req.getStageKey(), req.getUserId(), req.getTitle());
     Sink<StageEntity, CompletionStage<Stage>> sink =
         stageRepository
             .updateStage()
@@ -71,13 +71,13 @@ public class StageService {
     return Source.single(entity).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<StageKey> deleteStage(User user, StageKey stageKey) {
+  public CompletionStage<StageKey> deleteStage(DeleteStageRequest req) {
     Sink<StageKey, CompletionStage<StageKey>> sink =
         stageRepository
-            .deleteStage(user.getId())
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> stageKey));
+            .deleteStage(req.getUserId())
+            .mapMaterializedValue(doneF -> doneF.thenApply(done -> req.getStageKey()));
 
-    return Source.single(stageKey).runWith(sink, actorSystem);
+    return Source.single(req.getStageKey()).runWith(sink, actorSystem);
   }
 
   private Stage toStage(StageEntity entity) {
@@ -91,14 +91,16 @@ public class StageService {
   }
 
   private CompletionStage<Stage> fetchActivities(UUID userId, Stage stage) {
-	  var listReq = ListStageActivitiesRequest.builder().userId(userId).stageKey(stage.getKey()).build();
+    var listReq =
+        ListStageActivitiesRequest.builder().userId(userId).stageKey(stage.getKey()).build();
     return activityService
         .getStageActivities(listReq)
         .thenApply((activities) -> stage.withActivities(activities));
   }
 
   private CompletionStage<Optional<Stage>> getStageWithActivities(UUID userId, Stage stage) {
-	  var listReq = ListStageActivitiesRequest.builder().userId(userId).stageKey(stage.getKey()).build();
+    var listReq =
+        ListStageActivitiesRequest.builder().userId(userId).stageKey(stage.getKey()).build();
     return activityService
         .getStageActivities(listReq)
         .thenApply((activities) -> stage.withActivities(activities))
@@ -106,9 +108,9 @@ public class StageService {
   }
 
   private CompletionStage<Optional<Stage>> fetchStageActivities(
-      User user, Optional<Stage> maybeStage) {
+      UUID userId, Optional<Stage> maybeStage) {
     return maybeStage
-        .map((stage) -> getStageWithActivities(user.getId(), stage))
+        .map((stage) -> getStageWithActivities(userId, stage))
         .orElse(CompletableFuture.completedFuture(Optional.empty()));
   }
 }

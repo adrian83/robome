@@ -22,15 +22,15 @@ import lombok.ToString;
 @Builder
 @ToString
 @EqualsAndHashCode
-public class NewTable implements Validator {
+public class UpdateTable implements Validator {
 
   private static final String TITLE_LABEL = "title";
-  private static final String EMPTY_TITLE_KEY = "table.create.title.empty";
-  private static final String EMPTY_TITLE_MSG = "Table title cannot be empty";
+  private static final String EMPTY_TITLE_KEY = "table.update.title.empty";
+  private static final String EMPTY_TITLE_MSG = "New table title cannot be empty";
 
   private static final String DESC_LABEL = "description";
-  private static final String EMPTY_DESC_KEY = "table.create.description.empty";
-  private static final String EMPTY_DESC_MSG = "Table description cannot be empty";
+  private static final String EMPTY_DESC_KEY = "table.update.description.empty";
+  private static final String EMPTY_DESC_MSG = "New table description cannot be empty";
 
   private static final ValidationError EMPTY_TITLE =
       new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY, EMPTY_TITLE_MSG);
@@ -41,7 +41,7 @@ public class NewTable implements Validator {
   final String description;
 
   @JsonCreator
-  public NewTable(
+  public UpdateTable(
       @JsonProperty(TITLE_LABEL) String title, @JsonProperty(DESC_LABEL) String description) {
     this.title = title;
     this.description = description;

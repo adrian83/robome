@@ -3,9 +3,6 @@ package com.github.adrian83.robome.web.common;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.exception.UserNotAuthenticatedException;
@@ -14,10 +11,10 @@ import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseExcep
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ExceptionHandler {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHandler.class);
 
   private static final ValidationError INVALID_EMAIL_OR_PASS_ERROR =
       new ValidationError("email", "login.invalid", "Invalida email or password");
@@ -32,7 +29,7 @@ public class ExceptionHandler {
   }
 
   public HttpResponse handle(Throwable ex) {
-    LOGGER.error("Handling exception: {}", ex);
+    log.error("Handling exception: {}", ex);
 
     if (ex instanceof CompletionException) {
       return handle(ex.getCause());

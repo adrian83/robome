@@ -7,19 +7,17 @@ import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
-import com.github.adrian83.robome.domain.stage.model.ListTableStagesRequest;
-import com.github.adrian83.robome.domain.stage.model.NewStage;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.stage.model.UpdatedStage;
+import com.github.adrian83.robome.domain.stage.model.request.DeleteStageRequest;
+import com.github.adrian83.robome.domain.stage.model.request.GetStageRequest;
+import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesRequest;
+import com.github.adrian83.robome.domain.stage.model.request.NewStageRequest;
+import com.github.adrian83.robome.domain.stage.model.request.UpdateStageRequest;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.user.model.User;
-import com.github.adrian83.robome.util.tuple.Tuple2;
 import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
@@ -27,26 +25,19 @@ import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsRoute;
-import com.github.adrian83.robome.web.stage.validation.NewStageValidator;
-import com.github.adrian83.robome.web.stage.validation.UpdatedStageValidator;
+import com.github.adrian83.robome.web.stage.model.NewStage;
+import com.github.adrian83.robome.web.stage.model.UpdateStage;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class StageController extends AllDirectives {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(StageController.class);
 
   private static final String STAGES_PATH = "/tables/{tableId}/stages/";
   private static final String STAGE_PATH = "/tables/{tableId}/stages/{stageId}/";
-
-  public static final String STAGES = "stages";
-
-  public static final Tuple2<String, String> PATH_ELEMENTS = new Tuple2<>("tables", STAGES);
-
-  private static final NewStageValidator CREATE_VALIDATOR = new NewStageValidator();
-  private static final UpdatedStageValidator UPDATE_VALIDATOR = new UpdatedStageValidator();
 
   private StageService stageService;
   private ExceptionHandler exceptionHandler;
@@ -78,13 +69,13 @@ public class StageController extends AllDirectives {
                 STAGE_PATH, (tabId, stgId) -> security.secured(tabId, stgId, this::deleteStage))),
         post(
             new OneParamAndFormRoute<NewStage>(
-                new String[] {"bables", "{tableId}", STAGES},
+                STAGES_PATH,
                 NewStage.class,
                 (tabId, clz) -> security.jwtSecured(tabId, clz, this::persistStage))),
         put(
-            new TwoParamsAndFormRoute<UpdatedStage>(
-                new String[] {"tables", "{tableId}", STAGES, "{stageId}"},
-                UpdatedStage.class,
+            new TwoParamsAndFormRoute<UpdateStage>(
+                STAGE_PATH,
+                UpdateStage.class,
                 (tabId, stgId, clz) -> security.secured(tabId, stgId, clz, this::updateStage))),
         options(
             new OneParamRoute(STAGES_PATH, (tabId) -> complete(response.response200(GET, POST)))),
@@ -93,17 +84,10 @@ public class StageController extends AllDirectives {
                 STAGE_PATH, (tabId, stgId) -> complete(response.response200(GET, DELETE, PUT)))));
   }
 
-  private ListTableStagesRequest toListTableStagesRequest(User user, String tableIdStr) {
-    return ListTableStagesRequest.builder()
-        .userId(user.getId())
-        .tableKey(TableKey.parse(tableIdStr))
-        .build();
-  }
-
   private Route getTableStages(CompletionStage<User> userF, String tableIdStr) {
     var tableKey = TableKey.parse(tableIdStr);
 
-    LOGGER.info("New list stages request, tableKey: {}", tableKey);
+    log.info("New list stages request, tableKey: {}", tableKey);
 
     var responseF =
         userF
@@ -119,12 +103,13 @@ public class StageController extends AllDirectives {
   private Route getStageById(CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
     var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
-    LOGGER.info("New get stage by id request, stageKey: {}", stageKey);
+    log.info("New get stage by id request, stageKey: {}", stageKey);
 
     var responseF =
         userF
             .thenApply(Authorization::canReadStages)
-            .thenCompose(user -> stageService.getStage(user, stageKey))
+            .thenApply(u -> toGetStageRequest(u, tableIdStr, stageIdStr))
+            .thenCompose(stageService::getStage)
             .thenApply(response::jsonFromOptional)
             .exceptionally(exceptionHandler::handle);
 
@@ -134,14 +119,15 @@ public class StageController extends AllDirectives {
   private Route persistStage(CompletionStage<User> userF, String tableIdStr, NewStage newStage) {
     var tableKey = TableKey.parse(tableIdStr);
 
-    LOGGER.info("New persist stage request, tableKey: {}, newStage: {}", tableKey, newStage);
+    log.info("New persist stage request, tableKey: {}, newStage: {}", tableKey, newStage);
 
     var responseF =
         userF
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new UserAndForm<NewStage>(user, newStage, CREATE_VALIDATOR))
+            .thenApply(user -> new UserAndForm<NewStage>(user, newStage))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> stageService.saveStage(uaf.getUser(), tableKey, uaf.getForm()))
+            .thenApply(uaf -> toNewStageRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
+            .thenCompose(stageService::saveStage)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -149,20 +135,19 @@ public class StageController extends AllDirectives {
   }
 
   private Route updateStage(
-      CompletionStage<User> userF,
-      String tableIdStr,
-      String stageIdStr,
-      UpdatedStage updatedStage) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, UpdateStage updatedStage) {
     var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
-    LOGGER.info("New update stage request, stageKey: {}, newStage: {}", stageKey, updatedStage);
+    log.info("New update stage request, stageKey: {}, newStage: {}", stageKey, updatedStage);
 
     var responseF =
         userF
             .thenApply(Authorization::canWriteStages)
-            .thenApply(user -> new UserAndForm<UpdatedStage>(user, updatedStage, UPDATE_VALIDATOR))
+            .thenApply(user -> new UserAndForm<UpdateStage>(user, updatedStage))
             .thenApply(UserAndForm::validate)
-            .thenCompose(uaf -> stageService.updateStage(uaf.getUser(), stageKey, uaf.getForm()))
+            .thenApply(
+                uaf -> toUpdateStageRequest(uaf.getUser(), tableIdStr, stageIdStr, uaf.getForm()))
+            .thenCompose(stageService::updateStage)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
@@ -172,15 +157,54 @@ public class StageController extends AllDirectives {
   private Route deleteStage(CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
     var stageKey = StageKey.parse(tableIdStr, stageIdStr);
 
-    LOGGER.info("New delete stage request, stageKey: {}", stageKey);
+    log.info("New delete stage request, stageKey: {}", stageKey);
 
     var responseF =
         userF
             .thenApply(Authorization::canWriteStages)
-            .thenCompose(user -> stageService.deleteStage(user, stageKey))
+            .thenApply(u -> toDeleteStageRequest(u, tableIdStr, stageIdStr))
+            .thenCompose(stageService::deleteStage)
             .thenApply(response::jsonFromObject)
             .exceptionally(exceptionHandler::handle);
 
     return completeWithFuture(responseF);
+  }
+
+  private ListTableStagesRequest toListTableStagesRequest(User user, String tableIdStr) {
+    return ListTableStagesRequest.builder()
+        .userId(user.getId())
+        .tableKey(TableKey.parse(tableIdStr))
+        .build();
+  }
+
+  private DeleteStageRequest toDeleteStageRequest(User user, String tableIdStr, String stageIdStr) {
+    return DeleteStageRequest.builder()
+        .stageKey(StageKey.parse(tableIdStr, stageIdStr))
+        .userId(user.getId())
+        .build();
+  }
+
+  private UpdateStageRequest toUpdateStageRequest(
+      User user, String tableIdStr, String stageIdStr, UpdateStage form) {
+    return UpdateStageRequest.builder()
+        .stageKey(StageKey.parse(tableIdStr, stageIdStr))
+        .userId(user.getId())
+        .title(form.getTitle())
+        .build();
+  }
+
+  private NewStageRequest toNewStageRequest(User user, String tableIdStr, NewStage form) {
+    return NewStageRequest.builder()
+        .tableKey(TableKey.parse(tableIdStr))
+        .userId(user.getId())
+        .title(form.getTitle())
+        .build();
+  }
+
+  private GetStageRequest toGetStageRequest(User user, String tableIdStr, String stageIdStr) {
+    return GetStageRequest.builder()
+        .stageKey(StageKey.parse(tableIdStr, stageIdStr))
+        .userId(user.getId())
+        .build();
   }
 }

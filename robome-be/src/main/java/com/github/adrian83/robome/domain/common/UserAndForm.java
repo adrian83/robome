@@ -3,21 +3,19 @@ package com.github.adrian83.robome.domain.common;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.common.Validation;
 
-public class UserAndForm<T> {
+public class UserAndForm<T extends Validator> {
 
   private T form;
   private User user;
-  private Validator<T> validator;
 
-  public UserAndForm(User user, T form, Validator<T> validator) {
+  public UserAndForm(User user, T form) {
     this.user = user;
     this.form = form;
-    this.validator = validator;
   }
 
   public UserAndForm<T> validate() {
-    var validated = Validation.validate(form, validator);
-    return new UserAndForm<T>(user, validated, validator);
+    Validation.validate(form);
+    return new UserAndForm<T>(user, form);
   }
 
   public T getForm() {

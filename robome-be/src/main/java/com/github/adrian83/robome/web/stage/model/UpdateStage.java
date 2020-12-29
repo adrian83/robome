@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.web.activity.model;
+package com.github.adrian83.robome.web.stage.model;
 
 import static com.github.adrian83.robome.web.common.Validation.check;
 
@@ -22,26 +22,25 @@ import lombok.ToString;
 @Builder
 @ToString
 @EqualsAndHashCode
-public class UpdateActivity implements Validator {
-
-  private static final String NAME_LABEL = "name";
-  private static final String EMPTY_NAME_KEY = "activity.update.name.empty";
-  private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
+public class UpdateStage implements Validator {
+  private static final String TITLE_LABEL = "title";
+  private static final String EMPTY_TITLE_KEY = "stage.update.title.empty";
+  private static final String EMPTY_TITLE_MSG = "Stage title cannot be empty";
 
   private static final ValidationError EMPTY_NAME =
-      new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
+      new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY, EMPTY_TITLE_MSG);
 
-  private String name;
+  private String title;
 
   @JsonCreator
-  public UpdateActivity(@JsonProperty(NAME_LABEL) String name) {
+  public UpdateStage(@JsonProperty(TITLE_LABEL) String title) {
     super();
-    this.name = name;
+    this.title = title;
   }
 
   @Override
   public List<ValidationError> validate() {
-    return Stream.of(check(name, EMPTY_NAME, Strings::isNullOrEmpty))
+    return Stream.of(check(title, EMPTY_NAME, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());

@@ -4,9 +4,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
@@ -15,9 +12,10 @@ import akka.Done;
 import akka.actor.ActorSystem;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class UserService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
   private UserRepository userRepository;
   private ActorSystem actorSystem;
@@ -29,7 +27,7 @@ public class UserService {
   }
 
   public CompletionStage<Done> saveUser(User newUser) {
-    LOGGER.info("Persisting new user: {}", newUser);
+    log.info("Persisting new user: {}", newUser);
 
     CompletableFuture<User> userFuture = CompletableFuture.completedFuture(newUser);
 
@@ -49,7 +47,7 @@ public class UserService {
   }
 
   public CompletionStage<Optional<User>> findUserByEmail(String email) {
-    LOGGER.info("Looking for a user with email: {}", email);
+    log.info("Looking for a user with email: {}", email);
 
     return userRepository.getByEmail(email).runWith(Sink.head(), actorSystem);
   }

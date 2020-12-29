@@ -12,7 +12,7 @@ import com.github.adrian83.robome.web.activity.model.UpdateActivity;
 import com.github.adrian83.robome.web.common.ValidationError;
 import com.google.common.base.Strings;
 
-public class UpdatedActivityValidator implements Validator<UpdateActivity> {
+public class UpdatedActivityValidator { //implements Validator<UpdateActivity> {
 
   private static final String NAME_LABEL = "name";
   private static final String EMPTY_NAME_KEY = "activity.update.name.empty";
@@ -21,7 +21,7 @@ public class UpdatedActivityValidator implements Validator<UpdateActivity> {
   private static final ValidationError EMPTY_NAME =
       new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
 
-  @Override
+  // @Override
   public List<ValidationError> validate(UpdateActivity form) {
     return Stream.of(check(form.getName(), EMPTY_NAME, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)

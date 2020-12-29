@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.web.table.model;
+package com.github.adrian83.robome.web.stage.model;
 
 import static com.github.adrian83.robome.web.common.Validation.check;
 
@@ -22,36 +22,26 @@ import lombok.ToString;
 @Builder
 @ToString
 @EqualsAndHashCode
-public class NewTable implements Validator {
+public class NewStage implements Validator {
 
   private static final String TITLE_LABEL = "title";
-  private static final String EMPTY_TITLE_KEY = "table.create.title.empty";
-  private static final String EMPTY_TITLE_MSG = "Table title cannot be empty";
-
-  private static final String DESC_LABEL = "description";
-  private static final String EMPTY_DESC_KEY = "table.create.description.empty";
-  private static final String EMPTY_DESC_MSG = "Table description cannot be empty";
+  private static final String EMPTY_TITLE_KEY = "stage.create.title.empty";
+  private static final String EMPTY_TITLE_MSG = "Stage title cannot be empty";
 
   private static final ValidationError EMPTY_TITLE =
       new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY, EMPTY_TITLE_MSG);
-  private static final ValidationError EMPTY_DESCRIPTION =
-      new ValidationError(DESC_LABEL, EMPTY_DESC_KEY, EMPTY_DESC_MSG);
 
-  final String title;
-  final String description;
+  private String title;
 
   @JsonCreator
-  public NewTable(
-      @JsonProperty(TITLE_LABEL) String title, @JsonProperty(DESC_LABEL) String description) {
+  public NewStage(@JsonProperty(TITLE_LABEL) String title) {
+    super();
     this.title = title;
-    this.description = description;
   }
 
   @Override
   public List<ValidationError> validate() {
-    return Stream.of(
-            check(title, EMPTY_TITLE, Strings::isNullOrEmpty),
-            check(description, EMPTY_DESCRIPTION, Strings::isNullOrEmpty))
+    return Stream.of(check(title, EMPTY_TITLE, Strings::isNullOrEmpty))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toList());
