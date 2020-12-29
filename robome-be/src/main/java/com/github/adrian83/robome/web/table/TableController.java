@@ -58,10 +58,8 @@ public class TableController extends AllDirectives {
 
   public Route createRoute() {
     return route(
-        get(new PrefixRoute(TABLES_PATH, security.jwtSecured(this::getTables))),
-        get(
-            new OneParamRoute(
-                TABLE_PATH, (tabId) -> security.jwtSecured(tabId, this::getTableById))),
+        get(new PrefixRoute(TABLES_PATH, security.secured(this::getTables))),
+        get(new OneParamRoute(TABLE_PATH, (tabId) -> security.secured(tabId, this::getTableById))),
         post(
             new FormRoute<NewTable>(
                 TABLES_PATH, NewTable.class, (clz) -> security.secured(clz, this::persistTable))),
@@ -69,94 +67,81 @@ public class TableController extends AllDirectives {
             new OneParamAndFormRoute<UpdateTable>(
                 TABLE_PATH,
                 UpdateTable.class,
-                (tabId, clz) -> security.jwtSecured(tabId, clz, this::updateTable))),
+                (tabId, clz) -> security.secured(tabId, clz, this::updateTable))),
         delete(
-            new OneParamRoute(
-                TABLE_PATH, (tabId) -> security.jwtSecured(tabId, this::deleteTable))),
-        options(new PrefixRoute(TABLES_PATH, complete(response.response200(GET, DELETE)))),
+            new OneParamRoute(TABLE_PATH, (tabId) -> security.secured(tabId, this::deleteTable))),
+        options(new PrefixRoute(TABLES_PATH, complete(response.response200(GET, POST)))),
         options(
             new OneParamRoute(
-                TABLES_PATH, (tabId) -> complete(response.response200(GET, POST, PUT)))));
+                TABLE_PATH, (tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
-  private Route getTables(CompletionStage<User> userF) {
+  private CompletionStage<HttpResponse> getTables(CompletionStage<User> userF) {
 
     log.info("New list table request");
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canReadTables)
-            .thenApply(this::toListTablesRequest)
-            .thenCompose(tableService::getTables)
-            .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canReadTables)
+        .thenApply(this::toListTablesRequest)
+        .thenCompose(tableService::getTables)
+        .thenApply(response::jsonFromObject)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route getTableById(CompletionStage<User> userF, String tableIdStr) {
+  private CompletionStage<HttpResponse> getTableById(
+      CompletionStage<User> userF, String tableIdStr) {
 
     log.info("New find table request, tableId: {}", tableIdStr);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canReadTables)
-            .thenApply(user -> toGetTableRequest(user, tableIdStr))
-            .thenCompose(tableService::getTable)
-            .thenApply(response::jsonFromOptional)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canReadTables)
+        .thenApply(user -> toGetTableRequest(user, tableIdStr))
+        .thenCompose(tableService::getTable)
+        .thenApply(response::jsonFromOptional)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route deleteTable(CompletionStage<User> userF, String tableIdStr) {
+  private CompletionStage<HttpResponse> deleteTable(
+      CompletionStage<User> userF, String tableIdStr) {
 
     log.info("New delete table request, tableId: {}", tableIdStr);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canWriteTables)
-            .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
-            .thenCompose(tableService::deleteTable)
-            .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canWriteTables)
+        .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
+        .thenCompose(tableService::deleteTable)
+        .thenApply(response::jsonFromObject)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route updateTable(
+  private CompletionStage<HttpResponse> updateTable(
       CompletionStage<User> userF, String tableIdStr, UpdateTable updatedTable) {
 
     log.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canWriteTables)
-            .thenApply(user -> new UserAndForm<UpdateTable>(user, updatedTable))
-            .thenApply(UserAndForm::validate)
-            .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
-            .thenCompose(tableService::updateTable)
-            .thenApply(table -> response.jsonFromObject(table))
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canWriteTables)
+        .thenApply(user -> new UserAndForm<UpdateTable>(user, updatedTable))
+        .thenApply(UserAndForm::validate)
+        .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
+        .thenCompose(tableService::updateTable)
+        .thenApply(table -> response.jsonFromObject(table))
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route persistTable(CompletionStage<User> userF, NewTable newTable) {
+  private CompletionStage<HttpResponse> persistTable(
+      CompletionStage<User> userF, NewTable newTable) {
 
     log.info("New persist table request, table: {}", newTable);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canWriteTables)
-            .thenApply(user -> new UserAndForm<NewTable>(user, newTable))
-            .thenApply(UserAndForm::validate)
-            .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
-            .thenCompose(tableService::saveTable)
-            .thenApply(table -> response.jsonFromObject(table))
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canWriteTables)
+        .thenApply(user -> new UserAndForm<NewTable>(user, newTable))
+        .thenApply(UserAndForm::validate)
+        .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
+        .thenCompose(tableService::saveTable)
+        .thenApply(table -> response.jsonFromObject(table))
+        .exceptionally(exceptionHandler::handle);
   }
 
   private ListTablesRequest toListTablesRequest(User user) {

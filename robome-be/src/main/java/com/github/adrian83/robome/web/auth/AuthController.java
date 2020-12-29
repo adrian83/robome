@@ -56,47 +56,38 @@ public class AuthController extends AllDirectives {
                 (clz) -> security.unsecured(clz, this::registerUser))),
         options(
             new PrefixRoute("/auth/register/", complete(response.response200(HttpMethod.POST)))),
-        get(new PrefixRoute("/auth/check/", security.jwtSecured(this::isSignedIn))),
+        get(new PrefixRoute("/auth/check/", security.secured(this::isSignedIn))),
         options(new PrefixRoute("/auth/check/", complete(response.response200(HttpMethod.GET)))));
   }
 
-  private Route loginUser(Login login) {
+  private CompletionStage<HttpResponse> loginUser(Login login) {
     log.info("Signing in user: {}", login);
 
-    CompletableFuture<HttpResponse> responseF =
-        CompletableFuture.completedFuture(login)
-            .thenApply(Validation::validate)
-            .thenApply(v -> toLoginRequest(login))
-            .thenCompose(authentication::findUserWithPassword)
-            .thenApply(authentication::createAuthToken)
-            .thenApply(security::createAuthHeader)
-            .thenApply(response::response200)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return CompletableFuture.completedFuture(login)
+        .thenApply(Validation::validate)
+        .thenApply(v -> toLoginRequest(login))
+        .thenCompose(authentication::findUserWithPassword)
+        .thenApply(authentication::createAuthToken)
+        .thenApply(security::createAuthHeader)
+        .thenApply(response::response200)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route registerUser(Register register) {
+  private CompletionStage<HttpResponse> registerUser(Register register) {
     log.info("Registering new user: {}", register);
 
-    CompletableFuture<HttpResponse> responseF =
-        CompletableFuture.completedFuture(register)
-            .thenApply(Validation::validate)
-            .thenApply(v -> toRegisterRequest(register))
-            .thenCompose(authentication::registerUser)
-            .thenApply(done -> response.response201())
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return CompletableFuture.completedFuture(register)
+        .thenApply(Validation::validate)
+        .thenApply(v -> toRegisterRequest(register))
+        .thenCompose(authentication::registerUser)
+        .thenApply(done -> response.response201())
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route isSignedIn(CompletionStage<User> userF) {
+  private CompletionStage<HttpResponse> isSignedIn(CompletionStage<User> userF) {
     log.info("Checking if user is logged in");
 
-    CompletionStage<HttpResponse> responseF =
-        userF.thenApply(user -> response.response200()).exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF.thenApply(user -> response.response200()).exceptionally(exceptionHandler::handle);
   }
 
   private LoginRequest toLoginRequest(Login form) {

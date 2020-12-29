@@ -16,13 +16,10 @@ import com.github.adrian83.robome.domain.activity.model.request.ListStageActivit
 import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.github.adrian83.robome.domain.common.UserAndForm;
-import com.github.adrian83.robome.domain.common.Validator;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
-import com.github.adrian83.robome.web.activity.validation.NewActivityValidator;
-import com.github.adrian83.robome.web.activity.validation.UpdatedActivityValidator;
 import com.github.adrian83.robome.web.common.ExceptionHandler;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
@@ -44,8 +41,9 @@ public class ActivityController extends AllDirectives {
   private static final String ACTIVITY_PATH =
       "/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
 
-  //private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
-  //private static final Validator<UpdateActivity> UPDATE_VALIDATOR = new UpdatedActivityValidator();
+  // private static final Validator<NewActivity> CREATE_VALIDATOR = new NewActivityValidator();
+  // private static final Validator<UpdateActivity> UPDATE_VALIDATOR = new
+  // UpdatedActivityValidator();
 
   private ActivityService activityService;
   private ExceptionHandler exceptionHandler;
@@ -100,23 +98,20 @@ public class ActivityController extends AllDirectives {
                 (tabId, stgId, actId) -> complete(response.response200(GET, DELETE, PUT)))));
   }
 
-  private Route getStageActivities(
+  private CompletionStage<HttpResponse> getStageActivities(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
 
     log.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canReadAcivities)
-            .thenApply(user -> toListStageActivitiesRequest(user, tableIdStr, stageIdStr))
-            .thenCompose(activityService::getStageActivities)
-            .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canReadAcivities)
+        .thenApply(user -> toListStageActivitiesRequest(user, tableIdStr, stageIdStr))
+        .thenCompose(activityService::getStageActivities)
+        .thenApply(response::jsonFromObject)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route deleteActivity(
+  private CompletionStage<HttpResponse> deleteActivity(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     log.info(
@@ -125,18 +120,15 @@ public class ActivityController extends AllDirectives {
         stageIdStr,
         activityIdStr);
 
-    var responseF =
-        userF
-            .thenApply(Authorization::canWriteAcivities)
-            .thenApply(u -> toDeleteActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
-            .thenCompose(activityService::deleteActivity)
-            .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canWriteAcivities)
+        .thenApply(u -> toDeleteActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
+        .thenCompose(activityService::deleteActivity)
+        .thenApply(response::jsonFromObject)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route getActivityById(
+  private CompletionStage<HttpResponse> getActivityById(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     log.info(
@@ -145,18 +137,15 @@ public class ActivityController extends AllDirectives {
         stageIdStr,
         activityIdStr);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canReadAcivities)
-            .thenApply(u -> toGetActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
-            .thenCompose(activityService::getActivity)
-            .thenApply(response::jsonFromOptional)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canReadAcivities)
+        .thenApply(u -> toGetActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
+        .thenCompose(activityService::getActivity)
+        .thenApply(response::jsonFromOptional)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route persistActivity(
+  private CompletionStage<HttpResponse> persistActivity(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity newActivity) {
 
     log.info(
@@ -165,23 +154,20 @@ public class ActivityController extends AllDirectives {
         stageIdStr,
         newActivity);
 
-    var responseF =
-        userF
-            .thenApply(Authorization::canWriteAcivities)
-            .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
-            .thenApply(UserAndForm::validate)
-            .thenApply(
-                uaf ->
-                    toNewActivityRequest(
-                        uaf.getUser(), tableIdStr, stageIdStr, uaf.getForm().getName()))
-            .thenCompose(activityService::saveActivity)
-            .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canWriteAcivities)
+        .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
+        .thenApply(UserAndForm::validate)
+        .thenApply(
+            uaf ->
+                toNewActivityRequest(
+                    uaf.getUser(), tableIdStr, stageIdStr, uaf.getForm().getName()))
+        .thenCompose(activityService::saveActivity)
+        .thenApply(response::jsonFromObject)
+        .exceptionally(exceptionHandler::handle);
   }
 
-  private Route updateActivity(
+  private CompletionStage<HttpResponse> updateActivity(
       CompletionStage<User> userF,
       String tableIdStr,
       String stageIdStr,
@@ -195,21 +181,17 @@ public class ActivityController extends AllDirectives {
         activityIdStr,
         updateActivity);
 
-    CompletionStage<HttpResponse> responseF =
-        userF
-            .thenApply(Authorization::canWriteAcivities)
-            .thenApply(
-                user -> new UserAndForm<UpdateActivity>(user, updateActivity))
-            .thenApply(UserAndForm::validate)
-            .thenApply(
-                uaf ->
-                    toUpdateActivityRequest(
-                        uaf.getUser(), tableIdStr, stageIdStr, activityIdStr, uaf.getForm()))
-            .thenCompose(activityService::updateActivity)
-            .thenApply(response::jsonFromObject)
-            .exceptionally(exceptionHandler::handle);
-
-    return completeWithFuture(responseF);
+    return userF
+        .thenApply(Authorization::canWriteAcivities)
+        .thenApply(user -> new UserAndForm<UpdateActivity>(user, updateActivity))
+        .thenApply(UserAndForm::validate)
+        .thenApply(
+            uaf ->
+                toUpdateActivityRequest(
+                    uaf.getUser(), tableIdStr, stageIdStr, activityIdStr, uaf.getForm()))
+        .thenCompose(activityService::updateActivity)
+        .thenApply(response::jsonFromObject)
+        .exceptionally(exceptionHandler::handle);
   }
 
   private NewActivityRequest toNewActivityRequest(
