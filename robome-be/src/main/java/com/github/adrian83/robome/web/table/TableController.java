@@ -6,6 +6,8 @@ import static com.github.adrian83.robome.util.http.HttpMethod.POST;
 import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
@@ -38,6 +40,15 @@ public class TableController extends AllDirectives {
 
   private static final String TABLES_PATH = "/tables/";
   private static final String TABLE_PATH = "/tables/{tableId}/";
+
+  private static final String LOG_LIST_TABS = "User: {} issued list tables request";
+  private static final String LOG_CREATE_TAB = "User: {} issued persis table request, data: {}";
+  private static final String LOG_GET_TAB_BY_ID =
+      "User: {} issued get table by id request, tableId: {}";
+  private static final String LOG_DEL_TAB_BY_ID =
+      "User: {} issued delete table by id request, tableId: {}";
+  private static final String LOG_UPDATE_TAB =
+      "User: {} issued update table request, tableId: {}, data: {}";
 
   private TableService tableService;
   private ExceptionHandler exceptionHandler;
@@ -78,9 +89,10 @@ public class TableController extends AllDirectives {
 
   private CompletionStage<HttpResponse> getTables(CompletionStage<User> userF) {
 
-    log.info("New list table request");
+    var cLog = genLog((User user) -> log.info(LOG_LIST_TABS, user.getEmail()));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)
         .thenCompose(tableService::getTables)
@@ -91,9 +103,10 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> getTableById(
       CompletionStage<User> userF, String tableIdStr) {
 
-    log.info("New find table request, tableId: {}", tableIdStr);
+    var cLog = genLog((User user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canReadTables)
         .thenApply(user -> toGetTableRequest(user, tableIdStr))
         .thenCompose(tableService::getTable)
@@ -104,9 +117,10 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> deleteTable(
       CompletionStage<User> userF, String tableIdStr) {
 
-    log.info("New delete table request, tableId: {}", tableIdStr);
+    var cLog = genLog((User user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
         .thenCompose(tableService::deleteTable)
@@ -115,13 +129,14 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateTable(
-      CompletionStage<User> userF, String tableIdStr, UpdateTable updatedTable) {
+      CompletionStage<User> userF, String tableIdStr, UpdateTable form) {
 
-    log.info("New update table request, tableId: {}, update: {}", tableIdStr, updatedTable);
+    var cLog = genLog((User user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteTables)
-        .thenApply(user -> new UserAndForm<UpdateTable>(user, updatedTable))
+        .thenApply(user -> new UserAndForm<UpdateTable>(user, form))
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
         .thenCompose(tableService::updateTable)
@@ -129,14 +144,14 @@ public class TableController extends AllDirectives {
         .exceptionally(exceptionHandler::handle);
   }
 
-  private CompletionStage<HttpResponse> persistTable(
-      CompletionStage<User> userF, NewTable newTable) {
+  private CompletionStage<HttpResponse> persistTable(CompletionStage<User> userF, NewTable form) {
 
-    log.info("New persist table request, table: {}", newTable);
+    var cLog = genLog((User user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteTables)
-        .thenApply(user -> new UserAndForm<NewTable>(user, newTable))
+        .thenApply(user -> new UserAndForm<NewTable>(user, form))
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
         .thenCompose(tableService::saveTable)
@@ -177,5 +192,12 @@ public class TableController extends AllDirectives {
         .title(form.getTitle())
         .description(form.getDescription())
         .build();
+  }
+
+  private Function<User, User> genLog(Consumer<User> c) {
+    return (user) -> {
+      c.accept(user);
+      return user;
+    };
   }
 }
