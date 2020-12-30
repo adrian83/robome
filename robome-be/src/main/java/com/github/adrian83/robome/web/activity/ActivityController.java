@@ -1,9 +1,10 @@
 package com.github.adrian83.robome.web.activity;
 
-import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
-import static com.github.adrian83.robome.util.http.HttpMethod.GET;
-import static com.github.adrian83.robome.util.http.HttpMethod.POST;
-import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
+import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
 
@@ -39,6 +40,17 @@ public class ActivityController extends AllDirectives {
   private static final String ACTIVITIES_PATH = "/tables/{tableId}/stages/{stageId}/activities/";
   private static final String ACTIVITY_PATH =
       "/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
+
+  private static final String LOG_LIST_ACTS =
+      "User: {} issued list stage's activities request, tableId: {}, stageId: {}";
+  private static final String LOG_CREATE_ACT =
+      "User: {} issued persist activity request, tableId: {}, stageId: {}, data: {}";
+  private static final String LOG_GET_ACT_BY_ID =
+      "User: {} issued get activity by id request, tableId: {}, stageId: {}, activityId: {}";
+  private static final String LOG_DEL_ACT_BY_ID =
+      "User: {} issued delete activity by id request, tableId: {}, stageId: {}, activityId: {}";
+  private static final String LOG_UPDATE_ACT =
+      "User: {} issued update activity request, tableId: {}, stageId: {}, activityId: {}, data: {}";
 
   private ActivityService activityService;
   private Security security;
@@ -87,62 +99,16 @@ public class ActivityController extends AllDirectives {
                 (tabId, stgId, actId) -> complete(response.response200(GET, DELETE, PUT)))));
   }
 
-  private CompletionStage<HttpResponse> getStageActivities(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
-
-    log.info("New list stage activities, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
-
-    return userF
-        .thenApply(Authorization::canReadAcivities)
-        .thenApply(user -> toListStageActivitiesRequest(user, tableIdStr, stageIdStr))
-        .thenCompose(activityService::getStageActivities)
-        .thenApply(response::jsonFromObject);
-  }
-
-  private CompletionStage<HttpResponse> deleteActivity(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
-
-    log.info(
-        "New delete activity request, tableId: {}, stageId: {} activityId: {}",
-        tableIdStr,
-        stageIdStr,
-        activityIdStr);
-
-    return userF
-        .thenApply(Authorization::canWriteAcivities)
-        .thenApply(u -> toDeleteActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
-        .thenCompose(activityService::deleteActivity)
-        .thenApply(response::jsonFromObject);
-  }
-
-  private CompletionStage<HttpResponse> getActivityById(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
-
-    log.info(
-        "New find activity request, tableId: {}, stageId: {} activityId: {}",
-        tableIdStr,
-        stageIdStr,
-        activityIdStr);
-
-    return userF
-        .thenApply(Authorization::canReadAcivities)
-        .thenApply(u -> toGetActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
-        .thenCompose(activityService::getActivity)
-        .thenApply(response::jsonFromOptional);
-  }
-
   private CompletionStage<HttpResponse> persistActivity(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity newActivity) {
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity form) {
 
-    log.info(
-        "New persist activity request, tableId: {}, stageId: {}, activity: {}",
-        tableIdStr,
-        stageIdStr,
-        newActivity);
+    var cLog =
+        use((User user) -> log.info(LOG_CREATE_ACT, user.getEmail(), tableIdStr, stageIdStr, form));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteAcivities)
-        .thenApply(user -> new UserAndForm<NewActivity>(user, newActivity))
+        .thenApply(user -> new UserAndForm<NewActivity>(user, form))
         .thenApply(UserAndForm::validate)
         .thenApply(
             uaf ->
@@ -159,14 +125,14 @@ public class ActivityController extends AllDirectives {
       String activityIdStr,
       UpdateActivity form) {
 
-    log.info(
-        "New update activity request, tableId: {}, stageId: {}, activityId: {}, form: {}",
-        tableIdStr,
-        stageIdStr,
-        activityIdStr,
-        form);
+    var cLog =
+        use(
+            (User user) ->
+                log.info(
+                    LOG_UPDATE_ACT, user.getEmail(), tableIdStr, stageIdStr, activityIdStr, form));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(user -> new UserAndForm<UpdateActivity>(user, form))
         .thenApply(UserAndForm::validate)
@@ -175,6 +141,53 @@ public class ActivityController extends AllDirectives {
                 toUpdateActivityRequest(
                     uaf.getUser(), tableIdStr, stageIdStr, activityIdStr, uaf.getForm()))
         .thenCompose(activityService::updateActivity)
+        .thenApply(response::jsonFromObject);
+  }
+
+  private CompletionStage<HttpResponse> deleteActivity(
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
+
+    var cLog =
+        use(
+            (User user) ->
+                log.info(
+                    LOG_DEL_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canWriteAcivities)
+        .thenApply(u -> toDeleteActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
+        .thenCompose(activityService::deleteActivity)
+        .thenApply(response::jsonFromObject);
+  }
+
+  private CompletionStage<HttpResponse> getActivityById(
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
+
+    var cLog =
+        use(
+            (User user) ->
+                log.info(
+                    LOG_GET_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canReadAcivities)
+        .thenApply(u -> toGetActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
+        .thenCompose(activityService::getActivity)
+        .thenApply(response::jsonFromOptional);
+  }
+
+  private CompletionStage<HttpResponse> getStageActivities(
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+
+    var cLog = use((User user) -> log.info(LOG_LIST_ACTS, user.getEmail(), tableIdStr, stageIdStr));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canReadAcivities)
+        .thenApply(user -> toListStageActivitiesRequest(user, tableIdStr, stageIdStr))
+        .thenCompose(activityService::getStageActivities)
         .thenApply(response::jsonFromObject);
   }
 

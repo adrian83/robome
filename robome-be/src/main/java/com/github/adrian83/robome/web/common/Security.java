@@ -8,12 +8,12 @@ import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
+import com.github.adrian83.robome.common.function.PentaFunction;
+import com.github.adrian83.robome.common.function.TetraFunction;
+import com.github.adrian83.robome.common.function.TriFunction;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
-import com.github.adrian83.robome.util.function.PentaFunction;
-import com.github.adrian83.robome.util.function.TetraFunction;
-import com.github.adrian83.robome.util.function.TriFunction;
-import com.github.adrian83.robome.util.http.HttpHeader;
+import com.github.adrian83.robome.web.common.http.HttpHeader;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;

@@ -1,9 +1,10 @@
 package com.github.adrian83.robome.web.stage;
 
-import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
-import static com.github.adrian83.robome.util.http.HttpMethod.GET;
-import static com.github.adrian83.robome.util.http.HttpMethod.POST;
-import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
+import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
 
@@ -38,6 +39,17 @@ public class StageController extends AllDirectives {
 
   private static final String STAGES_PATH = "/tables/{tableId}/stages/";
   private static final String STAGE_PATH = "/tables/{tableId}/stages/{stageId}/";
+
+  private static final String LOG_LIST_STGS =
+      "User: {} issued list stages by table request, tableId: {}";
+  private static final String LOG_CREATE_STG =
+      "User: {} issued persist stage request, tableId: {}, data: {}";
+  private static final String LOG_GET_STG_BY_ID =
+      "User: {} issued get stage by id request, tableId: {}, stageId: {}";
+  private static final String LOG_DEL_STG_BY_ID =
+      "User: {} issued delete stage by id request, tableId: {}, stageId: {}";
+  private static final String LOG_UPDATE_STG =
+      "User: {} issued update stage request, tableId: {}, stageId: {}, data: {}";
 
   private StageService stageService;
   private Response response;
@@ -78,38 +90,15 @@ public class StageController extends AllDirectives {
                 STAGE_PATH, (tabId, stgId) -> complete(response.response200(GET, DELETE, PUT)))));
   }
 
-  private CompletionStage<HttpResponse> getTableStages(
-      CompletionStage<User> userF, String tableIdStr) {
-
-    log.info("New list stages request, tableId: {}", tableIdStr);
-
-    return userF
-        .thenApply(Authorization::canReadStages)
-        .thenApply(user -> toListTableStagesRequest(user, tableIdStr))
-        .thenCompose(stageService::getTableStages)
-        .thenApply(response::jsonFromObject);
-  }
-
-  private CompletionStage<HttpResponse> getStageById(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
-
-    log.info("New get stage by id request, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
-
-    return userF
-        .thenApply(Authorization::canReadStages)
-        .thenApply(u -> toGetStageRequest(u, tableIdStr, stageIdStr))
-        .thenCompose(stageService::getStage)
-        .thenApply(response::jsonFromOptional);
-  }
-
   private CompletionStage<HttpResponse> persistStage(
-      CompletionStage<User> userF, String tableIdStr, NewStage newStage) {
+      CompletionStage<User> userF, String tableIdStr, NewStage form) {
 
-    log.info("New persist stage request, tableId: {}, newStage: {}", tableIdStr, newStage);
+    var cLog = use((User user) -> log.info(LOG_CREATE_STG, user.getEmail(), tableIdStr, form));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteStages)
-        .thenApply(user -> new UserAndForm<NewStage>(user, newStage))
+        .thenApply(user -> new UserAndForm<NewStage>(user, form))
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toNewStageRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
         .thenCompose(stageService::saveStage)
@@ -119,13 +108,11 @@ public class StageController extends AllDirectives {
   private CompletionStage<HttpResponse> updateStage(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr, UpdateStage form) {
 
-    log.info(
-        "New update stage request, tableId: {}, stageId: {}, data: {}",
-        tableIdStr,
-        stageIdStr,
-        form);
+    var cLog =
+        use((User user) -> log.info(LOG_UPDATE_STG, user.getEmail(), tableIdStr, stageIdStr, form));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteStages)
         .thenApply(user -> new UserAndForm<UpdateStage>(user, form))
         .thenApply(UserAndForm::validate)
@@ -138,12 +125,41 @@ public class StageController extends AllDirectives {
   private CompletionStage<HttpResponse> deleteStage(
       CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
 
-    log.info("New delete stage request, tableId: {}, stageId: {}", tableIdStr, stageIdStr);
+    var cLog =
+        use((User user) -> log.info(LOG_DEL_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
 
     return userF
+        .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteStages)
         .thenApply(u -> toDeleteStageRequest(u, tableIdStr, stageIdStr))
         .thenCompose(stageService::deleteStage)
+        .thenApply(response::jsonFromObject);
+  }
+
+  private CompletionStage<HttpResponse> getStageById(
+      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+
+    var cLog =
+        use((User user) -> log.info(LOG_GET_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canReadStages)
+        .thenApply(u -> toGetStageRequest(u, tableIdStr, stageIdStr))
+        .thenCompose(stageService::getStage)
+        .thenApply(response::jsonFromOptional);
+  }
+
+  private CompletionStage<HttpResponse> getTableStages(
+      CompletionStage<User> userF, String tableIdStr) {
+
+    var cLog = use((User user) -> log.info(LOG_LIST_STGS, user.getEmail(), tableIdStr));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canReadStages)
+        .thenApply(user -> toListTableStagesRequest(user, tableIdStr))
+        .thenCompose(stageService::getTableStages)
         .thenApply(response::jsonFromObject);
   }
 

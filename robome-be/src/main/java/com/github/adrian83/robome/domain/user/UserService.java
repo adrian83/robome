@@ -47,7 +47,7 @@ public class UserService {
   }
 
   public CompletionStage<Optional<User>> findUserByEmail(String email) {
-    log.info("Looking for a user with email: {}", email);
+   // log.info("Looking for a user with email: {}", email);
 
     return userRepository.getByEmail(email).runWith(Sink.head(), actorSystem);
   }

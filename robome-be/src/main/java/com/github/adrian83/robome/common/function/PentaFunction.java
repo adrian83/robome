@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.util.function;
+package com.github.adrian83.robome.common.function;
 
 @FunctionalInterface
 public interface PentaFunction<P, R, S, T, U, V> {

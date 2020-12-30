@@ -6,7 +6,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.github.adrian83.robome.util.function.TriFunction;
+import com.github.adrian83.robome.common.function.TriFunction;
 
 import akka.http.javadsl.server.Route;
 

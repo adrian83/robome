@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.util.tuple;
+package com.github.adrian83.robome.common.tuple;
 
 public class Tuple2<T1, T2> {
 

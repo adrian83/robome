@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.util.http;
+package com.github.adrian83.robome.web.common.http;
 
 import akka.http.javadsl.model.headers.RawHeader;
 

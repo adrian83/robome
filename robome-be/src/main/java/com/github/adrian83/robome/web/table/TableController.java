@@ -1,13 +1,12 @@
 package com.github.adrian83.robome.web.table;
 
-import static com.github.adrian83.robome.util.http.HttpMethod.DELETE;
-import static com.github.adrian83.robome.util.http.HttpMethod.GET;
-import static com.github.adrian83.robome.util.http.HttpMethod.POST;
-import static com.github.adrian83.robome.util.http.HttpMethod.PUT;
+import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.PUT;
 
 import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.domain.common.UserAndForm;
@@ -41,7 +40,7 @@ public class TableController extends AllDirectives {
   private static final String TABLE_PATH = "/tables/{tableId}/";
 
   private static final String LOG_LIST_TABS = "User: {} issued list tables request";
-  private static final String LOG_CREATE_TAB = "User: {} issued persis table request, data: {}";
+  private static final String LOG_CREATE_TAB = "User: {} issued persist table request, data: {}";
   private static final String LOG_GET_TAB_BY_ID =
       "User: {} issued get table by id request, tableId: {}";
   private static final String LOG_DEL_TAB_BY_ID =
@@ -80,48 +79,24 @@ public class TableController extends AllDirectives {
                 TABLE_PATH, (tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
-  private CompletionStage<HttpResponse> getTables(CompletionStage<User> userF) {
+  private CompletionStage<HttpResponse> persistTable(CompletionStage<User> userF, NewTable form) {
 
-    var cLog = genLog((User user) -> log.info(LOG_LIST_TABS, user.getEmail()));
-
-    return userF
-        .thenApply(cLog::apply)
-        .thenApply(Authorization::canReadTables)
-        .thenApply(this::toListTablesRequest)
-        .thenCompose(tableService::getTables)
-        .thenApply(response::jsonFromObject);
-  }
-
-  private CompletionStage<HttpResponse> getTableById(
-      CompletionStage<User> userF, String tableIdStr) {
-
-    var cLog = genLog((User user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
-        .thenApply(Authorization::canReadTables)
-        .thenApply(user -> toGetTableRequest(user, tableIdStr))
-        .thenCompose(tableService::getTable)
-        .thenApply(response::jsonFromOptional);
-  }
-
-  private CompletionStage<HttpResponse> deleteTable(
-      CompletionStage<User> userF, String tableIdStr) {
-
-    var cLog = genLog((User user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
+    var cLog = use((User user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
 
     return userF
         .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteTables)
-        .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
-        .thenCompose(tableService::deleteTable)
-        .thenApply(response::jsonFromObject);
+        .thenApply(user -> new UserAndForm<NewTable>(user, form))
+        .thenApply(UserAndForm::validate)
+        .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
+        .thenCompose(tableService::saveTable)
+        .thenApply(table -> response.jsonFromObject(table));
   }
 
   private CompletionStage<HttpResponse> updateTable(
       CompletionStage<User> userF, String tableIdStr, UpdateTable form) {
 
-    var cLog = genLog((User user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
+    var cLog = use((User user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
 
     return userF
         .thenApply(cLog::apply)
@@ -133,18 +108,42 @@ public class TableController extends AllDirectives {
         .thenApply(table -> response.jsonFromObject(table));
   }
 
-  private CompletionStage<HttpResponse> persistTable(CompletionStage<User> userF, NewTable form) {
+  private CompletionStage<HttpResponse> deleteTable(
+      CompletionStage<User> userF, String tableIdStr) {
 
-    var cLog = genLog((User user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
+    var cLog = use((User user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
         .thenApply(cLog::apply)
         .thenApply(Authorization::canWriteTables)
-        .thenApply(user -> new UserAndForm<NewTable>(user, form))
-        .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
-        .thenCompose(tableService::saveTable)
-        .thenApply(table -> response.jsonFromObject(table));
+        .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
+        .thenCompose(tableService::deleteTable)
+        .thenApply(response::jsonFromObject);
+  }
+
+  private CompletionStage<HttpResponse> getTableById(
+      CompletionStage<User> userF, String tableIdStr) {
+
+    var cLog = use((User user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canReadTables)
+        .thenApply(user -> toGetTableRequest(user, tableIdStr))
+        .thenCompose(tableService::getTable)
+        .thenApply(response::jsonFromOptional);
+  }
+
+  private CompletionStage<HttpResponse> getTables(CompletionStage<User> userF) {
+
+    var cLog = use((User user) -> log.info(LOG_LIST_TABS, user.getEmail()));
+
+    return userF
+        .thenApply(cLog::apply)
+        .thenApply(Authorization::canReadTables)
+        .thenApply(this::toListTablesRequest)
+        .thenCompose(tableService::getTables)
+        .thenApply(response::jsonFromObject);
   }
 
   private ListTablesRequest toListTablesRequest(User user) {
@@ -184,12 +183,5 @@ public class TableController extends AllDirectives {
         .title(form.getTitle())
         .description(form.getDescription())
         .build();
-  }
-
-  private Function<User, User> genLog(Consumer<User> c) {
-    return (user) -> {
-      c.accept(user);
-      return user;
-    };
   }
 }

@@ -15,11 +15,11 @@ public class AbsRoute extends AllDirectives {
   }
 
   public AbsRoute(String path) {
-    this.path =
+    this(
         Arrays.stream(path.split("/"))
             .map(String::strip)
             .filter(e -> e.length() > 0)
-            .toArray(String[]::new);
+            .toArray(String[]::new));
   }
 
   private boolean isParam(String pathElem) {
