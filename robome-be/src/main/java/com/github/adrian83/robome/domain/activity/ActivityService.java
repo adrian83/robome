@@ -7,10 +7,11 @@ import java.util.concurrent.CompletionStage;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
-import com.github.adrian83.robome.domain.activity.model.NewActivity;
-import com.github.adrian83.robome.domain.activity.model.UpdatedActivity;
-import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.domain.activity.model.request.DeleteActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.GetActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
+import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
+import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.google.inject.Inject;
 
 import akka.actor.ActorSystem;
@@ -28,32 +29,31 @@ public class ActivityService {
     this.actorSystem = actorSystem;
   }
 
-  public CompletionStage<Optional<Activity>> getActivity(User user, ActivityKey activityKey) {
+  public CompletionStage<Optional<Activity>> getActivity(GetActivityRequest req) {
     return activityRepository
-        .getById(activityKey, user)
+        .getById(req.getActivityKey(), req.getUserId())
         .map((maybeActivity) -> maybeActivity.map(this::toActivity))
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<List<Activity>> getStageActivities(User user, StageKey stageKey) {
+  public CompletionStage<List<Activity>> getStageActivities(ListStageActivitiesRequest req) {
     return activityRepository
-        .getStageActivities(user.getId(), stageKey)
+        .getStageActivities(req.getUserId(), req.getStageKey())
         .map(this::toActivity)
         .runWith(Sink.seq(), actorSystem);
   }
 
-  public CompletionStage<ActivityKey> deleteActivity(User user, ActivityKey activityKey) {
+  public CompletionStage<ActivityKey> deleteActivity(DeleteActivityRequest req) {
     Sink<ActivityKey, CompletionStage<ActivityKey>> sink =
         activityRepository
-            .deleteActivity(user.getId())
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> activityKey));
+            .deleteActivity(req.getUserId())
+            .mapMaterializedValue(doneF -> doneF.thenApply(done -> req.getActivityKey()));
 
-    return Source.single(activityKey).runWith(sink, actorSystem);
+    return Source.single(req.getActivityKey()).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<Activity> updateActivity(
-      User user, ActivityKey key, UpdatedActivity updatedActivity) {
-    var entity = ActivityEntity.newActivity(key, user.getId(), updatedActivity.getName());
+  public CompletionStage<Activity> updateActivity(UpdateActivityRequest req) {
+    var entity = ActivityEntity.newActivity(req.getActivityKey(), req.getUserId(), req.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =
         activityRepository
@@ -63,9 +63,8 @@ public class ActivityService {
     return Source.single(entity).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<Activity> saveActivity(
-      User user, StageKey stageKey, NewActivity newActivity) {
-    var entity = new ActivityEntity(stageKey, user.getId(), newActivity.getName());
+  public CompletionStage<Activity> saveActivity(NewActivityRequest req) {
+    var entity = new ActivityEntity(req.getStageKey(), req.getUserId(), req.getName());
 
     Sink<ActivityEntity, CompletionStage<Activity>> sink =
         activityRepository

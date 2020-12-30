@@ -12,37 +12,37 @@ public final class Authorization {
 
   public static User canReadTables(User user) {
     return Optional.ofNullable(user)
-        .filter((u) -> PermissionChecker.canReadTables(user))
+        .filter(PermissionChecker::canReadTables)
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot read tables"));
   }
 
   public static User canWriteTables(User user) {
     return Optional.ofNullable(user)
-        .filter((u) -> PermissionChecker.canWriteTables(user))
+        .filter(PermissionChecker::canWriteTables)
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot write tables"));
   }
 
   public static User canReadStages(User user) {
     return Optional.ofNullable(user)
-        .filter((u) -> PermissionChecker.canReadStages(user))
+        .filter(PermissionChecker::canReadStages)
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot read stages"));
   }
 
   public static User canWriteStages(User user) {
     return Optional.ofNullable(user)
-        .filter((u) -> PermissionChecker.canWriteStages(user))
+        .filter(PermissionChecker::canWriteStages)
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot write stages"));
   }
 
   public static User canReadAcivities(User user) {
     return Optional.ofNullable(user)
-        .filter((u) -> PermissionChecker.canReadAcivities(user))
+        .filter(PermissionChecker::canReadAcivities)
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot read activities"));
   }
 
   public static User canWriteAcivities(User user) {
     return Optional.ofNullable(user)
-        .filter((u) -> PermissionChecker.canWriteAcivities(user))
+        .filter(PermissionChecker::canWriteAcivities)
         .orElseThrow(() -> new UserNotAuthorizedException("user cannot write activities"));
   }
 }

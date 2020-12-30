@@ -1,8 +1,8 @@
 package com.github.adrian83.robome.web.common;
 
-import static com.github.adrian83.robome.util.http.HttpHeader.AUTHORIZATION;
-import static com.github.adrian83.robome.util.http.HttpHeader.CONTENT_TYPE;
-import static com.github.adrian83.robome.util.http.HttpHeader.LOCATION;
+import static com.github.adrian83.robome.web.common.http.HttpHeader.AUTHORIZATION;
+import static com.github.adrian83.robome.web.common.http.HttpHeader.CONTENT_TYPE;
+import static com.github.adrian83.robome.web.common.http.HttpHeader.LOCATION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,8 +11,8 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.adrian83.robome.util.http.Cors;
-import com.github.adrian83.robome.util.http.HttpMethod;
+import com.github.adrian83.robome.web.common.http.Cors;
+import com.github.adrian83.robome.web.common.http.HttpMethod;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;

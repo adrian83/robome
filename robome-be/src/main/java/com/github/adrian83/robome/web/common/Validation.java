@@ -10,12 +10,12 @@ public final class Validation {
 
   private Validation() {}
 
-  public static <T> T validate(T form, Validator<T> validator) {
-    List<ValidationError> errors = validator.validate(form);
+  public static Validator validate(Validator validator) {
+    List<ValidationError> errors = validator.validate();
     if (!errors.isEmpty()) {
       throw new ValidationException(errors);
     }
-    return form;
+    return validator;
   }
 
   public static <T> Optional<ValidationError> check(

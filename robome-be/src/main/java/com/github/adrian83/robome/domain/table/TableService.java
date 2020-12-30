@@ -2,20 +2,23 @@ package com.github.adrian83.robome.domain.table;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import akka.actor.ActorSystem;
-
 import com.github.adrian83.robome.domain.stage.StageService;
-import com.github.adrian83.robome.domain.table.model.NewTable;
+import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesRequest;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
-import com.github.adrian83.robome.domain.table.model.UpdatedTable;
-import com.github.adrian83.robome.domain.user.model.User;
+import com.github.adrian83.robome.domain.table.model.request.DeleteTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
+import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
 import com.google.inject.Inject;
 
+import akka.actor.ActorSystem;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 
@@ -33,16 +36,16 @@ public class TableService {
     this.actorSystem = actorSystem;
   }
 
-  public CompletionStage<Optional<Table>> getTable(User user, TableKey tableKey) {
+  public CompletionStage<Optional<Table>> getTable(GetTableRequest req) {
     return tableRepository
-        .getById(user.getId(), tableKey.getTableId())
+        .getById(req.getUserId(), req.getTableKey().getTableId())
         .map((maybeEntity) -> maybeEntity.map(this::toTable))
-        .mapAsync(1, (table) -> fetchStages(user, tableKey, table))
+        .mapAsync(1, (table) -> fetchStages(req.getUserId(), req.getTableKey(), table))
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<Table> saveTable(User user, NewTable newTable) {
-    var entity = new TableEntity(user.getId(), newTable.getTitle(), newTable.getDescription());
+  public CompletionStage<Table> saveTable(NewTableRequest req) {
+    var entity = new TableEntity(req.getUserId(), req.getTitle(), req.getDescription());
 
     Sink<TableEntity, CompletionStage<Table>> sink =
         tableRepository
@@ -52,12 +55,11 @@ public class TableService {
     return Source.single(entity).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<Table> updateTable(
-      User user, TableKey tableID, UpdatedTable updatedTable) {
+  public CompletionStage<Table> updateTable(UpdateTableRequest req) {
 
     TableEntity entity =
         TableEntity.newTable(
-            tableID, user.getId(), updatedTable.getTitle(), updatedTable.getDescription());
+            req.getTableKey(), req.getUserId(), req.getTitle(), req.getDescription());
 
     Sink<TableEntity, CompletionStage<Table>> sink =
         tableRepository
@@ -67,20 +69,20 @@ public class TableService {
     return Source.single(entity).runWith(sink, actorSystem);
   }
 
-  public CompletionStage<List<Table>> getTables(User user) {
+  public CompletionStage<List<Table>> getTables(ListTablesRequest req) {
     return tableRepository
-        .getUserTables(user.getId())
+        .getUserTables(req.getUserId())
         .map(this::toTable)
         .runWith(Sink.seq(), actorSystem);
   }
 
-  public CompletionStage<TableKey> deleteTable(User user, TableKey tableKey) {
+  public CompletionStage<TableKey> deleteTable(DeleteTableRequest req) {
     Sink<TableKey, CompletionStage<TableKey>> sink =
         tableRepository
-            .deleteTable(user.getId())
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> tableKey));
+            .deleteTable(req.getUserId())
+            .mapMaterializedValue(doneF -> doneF.thenApply(done -> req.getTableKey()));
 
-    return Source.single(tableKey).runWith(sink, actorSystem);
+    return Source.single(req.getTableKey()).runWith(sink, actorSystem);
   }
 
   private Table toTable(TableEntity entity) {
@@ -94,17 +96,18 @@ public class TableService {
         entity.getModifiedAt());
   }
 
-  private CompletionStage<Optional<Table>> fetchStages(User user, Table table) {
+  private CompletionStage<Optional<Table>> fetchStages(UUID userId, Table table) {
+    var listReq = ListTableStagesRequest.builder().userId(userId).tableKey(table.getKey()).build();
     return stageService
-        .getTableStages(user, table.getKey())
+        .getTableStages(listReq)
         .thenApply((stages) -> table.withStages(stages))
         .thenApply(Optional::ofNullable);
   }
 
   private CompletionStage<Optional<Table>> fetchStages(
-      User user, TableKey tableKey, Optional<Table> maybeTable) {
+      UUID userId, TableKey tableKey, Optional<Table> maybeTable) {
     return maybeTable
-        .map((table) -> fetchStages(user, table))
+        .map((table) -> fetchStages(userId, table))
         .orElse(CompletableFuture.<Optional<Table>>completedFuture(Optional.<Table>empty()));
   }
 }
