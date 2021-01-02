@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.table.model;
 
-import static com.github.adrian83.robome.web.common.Validation.check;
+import static com.github.adrian83.robome.common.validation.Validation.check;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.adrian83.robome.domain.common.Validator;
-import com.github.adrian83.robome.web.common.ValidationError;
+import com.github.adrian83.robome.common.validation.ValidationError;
+import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
 import lombok.Builder;
@@ -33,9 +33,18 @@ public class UpdateTable implements Validator {
   private static final String EMPTY_DESC_MSG = "New table description cannot be empty";
 
   private static final ValidationError EMPTY_TITLE =
-      new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY, EMPTY_TITLE_MSG);
+      ValidationError.builder()
+          .field(TITLE_LABEL)
+          .messageCode(EMPTY_TITLE_KEY)
+          .message(EMPTY_TITLE_MSG)
+          .build();
+
   private static final ValidationError EMPTY_DESCRIPTION =
-      new ValidationError(DESC_LABEL, EMPTY_DESC_KEY, EMPTY_DESC_MSG);
+      ValidationError.builder()
+          .field(DESC_LABEL)
+          .messageCode(EMPTY_DESC_KEY)
+          .message(EMPTY_DESC_MSG)
+          .build();
 
   final String title;
   final String description;

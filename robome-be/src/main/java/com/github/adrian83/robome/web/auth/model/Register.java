@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.auth.model;
 
-import static com.github.adrian83.robome.web.common.Validation.check;
+import static com.github.adrian83.robome.common.validation.Validation.check;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.adrian83.robome.domain.common.Validator;
-import com.github.adrian83.robome.web.common.ValidationError;
+import com.github.adrian83.robome.common.validation.ValidationError;
+import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
 import lombok.Builder;
@@ -37,11 +37,25 @@ public class Register implements Validator {
   private static final String DIFFERENT_PASSWORDS_MSG = "Repeated password cannot be different";
 
   private static final ValidationError EMPTY_EMAIL =
-      new ValidationError(EMAIL_LABEL, EMPTY_EMAIL_KEY, EMPTY_EMAIL_MSG);
+      ValidationError.builder()
+          .field(EMAIL_LABEL)
+          .messageCode(EMPTY_EMAIL_KEY)
+          .message(EMPTY_EMAIL_MSG)
+          .build();
+
   private static final ValidationError EMPTY_PASSWORD_1 =
-      new ValidationError(PASSWORD_1_LABEL, EMPTY_PASSWORD_1_KEY, EMPTY_PASSWORD_1_MSG);
+      ValidationError.builder()
+          .field(PASSWORD_1_LABEL)
+          .messageCode(EMPTY_PASSWORD_1_KEY)
+          .message(EMPTY_PASSWORD_1_MSG)
+          .build();
+
   private static final ValidationError DIFFERENT_PASSWORDS =
-      new ValidationError(PASSWORD_2_LABEL, DIFFERENT_PASSWORDS_KEY, DIFFERENT_PASSWORDS_MSG);
+      ValidationError.builder()
+          .field(PASSWORD_2_LABEL)
+          .messageCode(DIFFERENT_PASSWORDS_KEY)
+          .message(DIFFERENT_PASSWORDS_MSG)
+          .build();
 
   private String email;
   private String password;

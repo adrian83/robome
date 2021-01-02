@@ -1,7 +1,5 @@
 package com.github.adrian83.robome;
 
-import static akka.http.javadsl.ConnectHttp.toHost;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -11,7 +9,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 import akka.actor.ActorSystem;
-import akka.http.javadsl.ConnectHttp;
+import akka.http.javadsl.Http;
+import akka.http.javadsl.ServerBuilder;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.marshalling.Marshaller;
 import akka.stream.alpakka.cassandra.CassandraSessionSettings;
@@ -32,7 +31,7 @@ public class RobomeModule extends AbstractModule {
   @Override
   protected void configure() {
     initializeConfig();
-    initializeConnectHttp();
+    initializeServerBuilder();
     initializeActorSystem();
     initializeCassandraSession();
     initializeObjectMapper();
@@ -45,9 +44,12 @@ public class RobomeModule extends AbstractModule {
     this.bind(Config.class).toInstance(config);
   }
 
-  private void initializeConnectHttp() {
-    var connect = toHost(config.getString(SERVER_HOST_KEY), config.getInt(SERVER_PORT_KEY));
-    this.bind(ConnectHttp.class).toInstance(connect);
+  private void initializeServerBuilder() {
+    final Http http = Http.get(system);
+    var server =
+        http.newServerAt(config.getString(SERVER_HOST_KEY), config.getInt(SERVER_PORT_KEY));
+
+    this.bind(ServerBuilder.class).toInstance(server);
   }
 
   private void initializeActorSystem() {

@@ -1,10 +1,8 @@
-package com.github.adrian83.robome.web.common;
+package com.github.adrian83.robome.common.validation;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
-import com.github.adrian83.robome.domain.common.Validator;
 
 public final class Validation {
 

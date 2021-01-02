@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.auth.model;
 
-import static com.github.adrian83.robome.web.common.Validation.check;
+import static com.github.adrian83.robome.common.validation.Validation.check;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.adrian83.robome.domain.common.Validator;
-import com.github.adrian83.robome.web.common.ValidationError;
+import com.github.adrian83.robome.common.validation.ValidationError;
+import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
 import lombok.Builder;
@@ -33,9 +33,18 @@ public class Login implements Validator {
   private static final String EMPTY_PASSWORD_MSG = "Password cannot be empty";
 
   private static final ValidationError EMPTY_EMAIL =
-      new ValidationError(EMAIL_LABEL, EMPTY_EMAIL_KEY, EMPTY_EMAIL_MSG);
+      ValidationError.builder()
+          .field(EMAIL_LABEL)
+          .messageCode(EMPTY_EMAIL_KEY)
+          .message(EMPTY_EMAIL_MSG)
+          .build();
+
   private static final ValidationError EMPTY_PASSWORD =
-      new ValidationError(PASSWORD_LABEL, EMPTY_PASSWORD_KEY, EMPTY_PASSWORD_MSG);
+      ValidationError.builder()
+          .field(PASSWORD_LABEL)
+          .messageCode(EMPTY_PASSWORD_KEY)
+          .message(EMPTY_PASSWORD_MSG)
+          .build();
 
   private String email;
   private String password;

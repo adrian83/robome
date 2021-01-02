@@ -1,12 +1,17 @@
 package com.github.adrian83.robome.domain.common;
 
+import com.github.adrian83.robome.common.validation.Validation;
+import com.github.adrian83.robome.common.validation.Validator;
 import com.github.adrian83.robome.domain.user.model.User;
-import com.github.adrian83.robome.web.common.Validation;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class UserAndForm<T extends Validator> {
-
-  private T form;
   private User user;
+  private T form;
 
   public UserAndForm(User user, T form) {
     this.user = user;
@@ -16,13 +21,5 @@ public class UserAndForm<T extends Validator> {
   public UserAndForm<T> validate() {
     Validation.validate(form);
     return new UserAndForm<T>(user, form);
-  }
-
-  public T getForm() {
-    return form;
-  }
-
-  public User getUser() {
-    return user;
   }
 }

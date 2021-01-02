@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.web.common;
+package com.github.adrian83.robome.common.validation;
 
 import java.util.List;
 

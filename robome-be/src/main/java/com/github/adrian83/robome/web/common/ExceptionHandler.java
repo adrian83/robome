@@ -7,6 +7,8 @@ import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.exception.UserNotAuthenticatedException;
 import com.github.adrian83.robome.auth.exception.UserNotFoundException;
+import com.github.adrian83.robome.common.validation.ValidationError;
+import com.github.adrian83.robome.common.validation.ValidationException;
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.google.inject.Inject;
 
@@ -17,9 +19,18 @@ import lombok.extern.slf4j.Slf4j;
 public class ExceptionHandler {
 
   private static final ValidationError INVALID_EMAIL_OR_PASS_ERROR =
-      new ValidationError("email", "login.invalid", "Invalida email or password");
+      ValidationError.builder()
+          .field("email")
+          .messageCode("login.invalid")
+          .message("Invalid email or password")
+          .build();
+  
   private static final ValidationError EMAIL_IN_USE_ERROR =
-      new ValidationError("email", "register.invalid", "Email already in use");
+      ValidationError.builder()
+          .field("email")
+          .messageCode("register.invalid")
+          .message("Email already in use")
+          .build();
 
   private Response responseFactory;
 

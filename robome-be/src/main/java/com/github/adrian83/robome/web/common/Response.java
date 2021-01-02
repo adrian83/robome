@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.adrian83.robome.common.validation.ValidationError;
 import com.github.adrian83.robome.web.common.http.Cors;
 import com.github.adrian83.robome.web.common.http.HttpMethod;
 import com.google.common.collect.Lists;

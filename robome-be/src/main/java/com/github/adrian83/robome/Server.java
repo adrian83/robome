@@ -12,16 +12,10 @@ import com.github.adrian83.robome.web.table.TableController;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import akka.NotUsed;
 import akka.actor.ActorSystem;
-import akka.http.javadsl.ConnectHttp;
-import akka.http.javadsl.Http;
 import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
+import akka.http.javadsl.ServerBuilder;
 import akka.http.javadsl.server.Route;
-import akka.stream.Materializer;
-import akka.stream.javadsl.Flow;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -56,14 +50,8 @@ public class Server {
             () -> healthController.createRoute());
 
     ActorSystem system = injector.getInstance(ActorSystem.class);
-    Materializer materializer = Materializer.createMaterializer(system);
-
-    final Http http = Http.get(system);
-    ConnectHttp connect = injector.getInstance(ConnectHttp.class);
-
-    final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = route.flow(system, materializer);
-    final CompletionStage<ServerBinding> binding =
-        http.bindAndHandle(routeFlow, connect, materializer);
+    ServerBuilder server = injector.getInstance(ServerBuilder.class);
+    CompletionStage<ServerBinding> binding = server.bind(route);
 
     Runtime.getRuntime()
         .addShutdownHook(

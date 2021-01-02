@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.activity.model;
 
-import static com.github.adrian83.robome.web.common.Validation.check;
+import static com.github.adrian83.robome.common.validation.Validation.check;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.adrian83.robome.domain.common.Validator;
-import com.github.adrian83.robome.web.common.ValidationError;
+import com.github.adrian83.robome.common.validation.ValidationError;
+import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
 import lombok.Builder;
@@ -29,7 +29,11 @@ public class UpdateActivity implements Validator {
   private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
 
   private static final ValidationError EMPTY_NAME =
-      new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
+      ValidationError.builder()
+          .field(NAME_LABEL)
+          .messageCode(EMPTY_NAME_KEY)
+          .message(EMPTY_NAME_MSG)
+          .build();
 
   private String name;
 

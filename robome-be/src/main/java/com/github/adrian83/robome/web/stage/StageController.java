@@ -1,10 +1,7 @@
 package com.github.adrian83.robome.web.stage;
 
 import static com.github.adrian83.robome.common.function.Functions.use;
-import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
-import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
-import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
-import static com.github.adrian83.robome.web.common.http.HttpMethod.PUT;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 
 import java.util.concurrent.CompletionStage;
 

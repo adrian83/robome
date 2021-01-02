@@ -1,8 +1,6 @@
-package com.github.adrian83.robome.domain.common;
+package com.github.adrian83.robome.common.validation;
 
 import java.util.List;
-
-import com.github.adrian83.robome.web.common.ValidationError;
 
 @FunctionalInterface
 public interface Validator {
