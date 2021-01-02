@@ -3,11 +3,13 @@ package com.github.adrian83.robome.auth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.github.adrian83.robome.auth.exception.UserNotAuthorizedException;
+import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.github.adrian83.robome.domain.user.model.User;
 
@@ -159,6 +161,13 @@ public class AuthorizationTest {
   }
 
   private User userWithRoles(Role... roles) {
-    return new User("johndoe@somedomain.com", "vckhqvwdvqweuy", Arrays.asList(roles));
+    return User.builder()
+        .id(UUID.randomUUID())
+        .email("johndoe@somedomain.com")
+        .passwordHash("fbwyflwegrl")
+        .roles(Arrays.asList(roles))
+        .modifiedAt(Time.utcNow())
+        .createdAt(Time.utcNow())
+        .build();
   }
 }

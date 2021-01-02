@@ -1,6 +1,5 @@
 package com.github.adrian83.robome.domain.activity.model.request;
 
-
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;

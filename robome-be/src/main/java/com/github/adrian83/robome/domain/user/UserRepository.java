@@ -1,27 +1,27 @@
 package com.github.adrian83.robome.domain.user;
 
-import static com.github.adrian83.robome.common.Time.toDate;
+import static akka.stream.alpakka.cassandra.CassandraWriteSettings.defaults;
+import static com.github.adrian83.robome.common.Time.toInstant;
 import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
 import static com.github.adrian83.robome.domain.user.model.Role.fromString;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
-import akka.Done;
 import akka.NotUsed;
-import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
-import akka.stream.javadsl.Sink;
+import akka.japi.Function2;
+import akka.stream.alpakka.cassandra.javadsl.CassandraFlow;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSession;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSource;
+import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Source;
 
 public class UserRepository {
@@ -39,48 +39,41 @@ public class UserRepository {
   private static final String CREATED_AT_COL = "created_at";
   private static final String MODIFIED_AT_COL = "modified_at";
 
-  private Session session;
-
-  private PreparedStatement findByEmailStmt;
-  private PreparedStatement insterUserStmt;
+  private CassandraSession session;
 
   @Inject
-  public UserRepository(Session session) {
+  public UserRepository(CassandraSession session) {
     this.session = session;
-
-    findByEmailStmt = session.prepare(SELECT_USER_BY_EMAIL);
-    insterUserStmt = session.prepare(INSERT_USER_STMT);
   }
 
-  public Source<Optional<User>, NotUsed> getByEmail(String email) {
-    BoundStatement boundStmt = findByEmailStmt.bind(email);
-    ResultSet r = session.execute(boundStmt);
-    return Source.single(Optional.ofNullable(r.one()).map(this::fromRow));
+  public Source<User, NotUsed> getByEmail(String email) {
+    Statement<?> stmt = SimpleStatement.newInstance(SELECT_USER_BY_EMAIL, email);
+
+    return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
-  private User fromRow(Row row) {
-    return new User(
-        row.get(ID_COL, UUID.class),
-        row.getString(EMAIL_COL),
-        row.getString(PASS_HASH_COL),
-        // fromStringList(row.getList("roles", String.class)),
-        fromString(row.getString(ROLES_COL)),
-        toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
-        toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
-  }
-
-  public Sink<User, CompletionStage<Done>> saveUser() {
-    BiFunction<User, PreparedStatement, BoundStatement> statementBinder =
-        (user, statement) ->
-            statement.bind(
+  public Flow<User, User, NotUsed> saveUser() {
+    Function2<User, PreparedStatement, BoundStatement> statementBinder =
+        (user, prepStmt) ->
+            prepStmt.bind(
                 user.getId(),
                 user.getEmail(),
                 user.getPasswordHash(),
-                // toStringList(user.getRoles()),
                 Role.toString(user.getRoles()),
-                toDate(user.getCreatedAt()),
-                toDate(user.getModifiedAt()));
+                toInstant(user.getCreatedAt()),
+                toInstant(user.getModifiedAt()));
 
-    return CassandraSink.create(1, insterUserStmt, statementBinder, session);
+    return CassandraFlow.create(session, defaults(), INSERT_USER_STMT, statementBinder);
+  }
+
+  private User fromRow(Row row) {
+    return User.builder()
+        .id(row.get(ID_COL, UUID.class))
+        .email(row.getString(EMAIL_COL))
+        .passwordHash(row.getString(PASS_HASH_COL))
+        .roles(fromString(row.getString(ROLES_COL)))
+        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
+        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
+        .build();
   }
 }

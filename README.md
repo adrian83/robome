@@ -1,5 +1,5 @@
 # ROBOME
-Simple CRUD application written with: Java (Akka Streams, Akka Http) and JavaScript (React). Apache Cassandra is used as main data storage.
+Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cassandra) and JavaScript (React). Apache Cassandra is used as main data storage.
 
 ## Running
 
@@ -29,7 +29,7 @@ Simple CRUD application written with: Java (Akka Streams, Akka Http) and JavaScr
 
 
 ### Misc
-1.  Backend formatted with [Google Java Format](https://github.com/google/google-java-format)
+1. Backend formatted with [Google Java Format](https://github.com/google/google-java-format)
 2. Backend checked with [PMD](https://pmd.github.io/)
 - Execute `cd robome-be && mvn pmd:check`
 - Open file `robome-be/target/site/pmd.html`

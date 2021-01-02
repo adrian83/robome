@@ -2,8 +2,6 @@ package com.github.adrian83.robome;
 
 import static akka.http.javadsl.ConnectHttp.toHost;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -16,6 +14,9 @@ import akka.actor.ActorSystem;
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.marshalling.Marshaller;
+import akka.stream.alpakka.cassandra.CassandraSessionSettings;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSession;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSessionRegistry;
 
 public class RobomeModule extends AbstractModule {
 
@@ -23,9 +24,6 @@ public class RobomeModule extends AbstractModule {
 
   private static final String SERVER_HOST_KEY = "server.host";
   private static final String SERVER_PORT_KEY = "server.port";
-
-  private static final String CASSANDRA_HOST_KEY = "cassandra.host";
-  private static final String CASSANDRA_PORT_KEY = "cassandra.port";
 
   private final ActorSystem system = ActorSystem.create(ACTOR_SYSTEM_NAME);
 
@@ -57,13 +55,10 @@ public class RobomeModule extends AbstractModule {
   }
 
   private void initializeCassandraSession() {
-    var session =
-        Cluster.builder()
-            .addContactPoint(config.getString(CASSANDRA_HOST_KEY))
-            .withPort(config.getInt(CASSANDRA_PORT_KEY))
-            .build()
-            .connect();
-    this.bind(Session.class).toInstance(session);
+    var sessionSettings = CassandraSessionSettings.create();
+    var cassandraSession = CassandraSessionRegistry.get(system).sessionFor(sessionSettings);
+
+    this.bind(CassandraSession.class).toInstance(cassandraSession);
   }
 
   private void initializeObjectMapper() {

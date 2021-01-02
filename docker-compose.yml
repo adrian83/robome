@@ -12,7 +12,7 @@ services:
 
   cassandra-load-keyspace:
       container_name: cassandra-load-keyspace
-      image: cassandra:latest
+      image: cassandra:3.11.9
       depends_on:
         - cassandra
       volumes:

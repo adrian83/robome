@@ -11,11 +11,11 @@
 
 	<properties>
 		<scala.version>2.12.7</scala.version>
-		<scala.binary.version>2.12</scala.binary.version>
+		<scala.binary.version>2.13</scala.binary.version>
 		<akka.http.version>10.1.12</akka.http.version>
 		<akka.actor.version>2.6.6</akka.actor.version>
 		<akka.stream.version>2.6.6</akka.stream.version>
-		<cassandra.alpakka.version>1.1.2</cassandra.alpakka.version>
+		<cassandra.alpakka.version>2.0.2</cassandra.alpakka.version>
 		<jackson.jsr310.version>2.10.1</jackson.jsr310.version>
 		<jaxb.api.version>2.3.1</jaxb.api.version>
 		<guice.version>4.2.2</guice.version>

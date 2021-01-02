@@ -5,13 +5,14 @@ import java.util.UUID;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @Builder
 @Data
 @ToString
+@EqualsAndHashCode
 public class Activity {
-
   private ActivityKey key;
   private UUID userId;
   private String name;

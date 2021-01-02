@@ -1,29 +1,28 @@
 package com.github.adrian83.robome.domain.activity;
 
-import static com.github.adrian83.robome.common.Time.toDate;
+import static akka.stream.alpakka.cassandra.CassandraWriteSettings.defaults;
+import static com.github.adrian83.robome.common.Time.toInstant;
 import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
 import static com.github.adrian83.robome.domain.activity.model.ActivityState.valueOf;
-import static java.util.stream.Collectors.toList;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.google.inject.Inject;
 
-import akka.Done;
 import akka.NotUsed;
-import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
-import akka.stream.javadsl.Sink;
+import akka.japi.Function2;
+import akka.stream.alpakka.cassandra.javadsl.CassandraFlow;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSession;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSource;
+import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Source;
 
 public class ActivityRepository {
@@ -49,65 +48,73 @@ public class ActivityRepository {
   private static final String CREATED_AT_COL = "created_at";
   private static final String MODIFIED_AT_COL = "modified_at";
 
-  private Session session;
-
-  private Sink<ActivityEntity, CompletionStage<Done>> saveActivitySink;
-  private Sink<ActivityEntity, CompletionStage<Done>> updateActivitySink;
-
-  private PreparedStatement deleteActivityStmt;
-  private PreparedStatement findActivitiesByStageStmt;
-  private PreparedStatement findActivityByIdStmt;
+  private CassandraSession session;
 
   @Inject
-  public ActivityRepository(Session session) {
+  public ActivityRepository(CassandraSession session) {
     this.session = session;
-
-    var saveActivityStmt = session.prepare(INSERT_ACTIVITY_STMT);
-    saveActivitySink = CassandraSink.create(1, saveActivityStmt, this::bindInsertedStage, session);
-
-    var updateActivityStmt = session.prepare(UPDATE_STMT);
-    updateActivitySink =
-        CassandraSink.create(1, updateActivityStmt, this::bindUpdatedStage, session);
-
-    deleteActivityStmt = session.prepare(DELETE_BY_ID_STMT);
-    findActivitiesByStageStmt = session.prepare(SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT);
-    findActivityByIdStmt = session.prepare(SELECT_ACTIVITY_BY_ID_STMT);
   }
 
-  public Sink<ActivityEntity, CompletionStage<Done>> saveActivity() {
-    return saveActivitySink;
+  public Flow<ActivityEntity, ActivityEntity, NotUsed> saveActivity() {
+    Function2<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
+        (activity, prepStmt) ->
+            prepStmt.bind(
+                activity.getKey().getActivityId(),
+                activity.getKey().getStageId(),
+                activity.getKey().getTableId(),
+                activity.getUserId(),
+                activity.getName(),
+                activity.getState().name(),
+                toInstant(activity.getCreatedAt()),
+                toInstant(activity.getModifiedAt()));
+
+    return CassandraFlow.create(session, defaults(), INSERT_ACTIVITY_STMT, statementBinder);
   }
 
-  public Sink<ActivityEntity, CompletionStage<Done>> updateActivity() {
-    return updateActivitySink;
+  public Flow<ActivityEntity, ActivityEntity, NotUsed> updateActivity() {
+    Function2<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
+        (activity, prepStmt) ->
+            prepStmt.bind(
+                activity.getName(),
+                activity.getState().name(),
+                toInstant(activity.getModifiedAt()),
+                activity.getKey().getTableId(),
+                activity.getKey().getStageId(),
+                activity.getKey().getActivityId(),
+                activity.getUserId());
+
+    return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
 
-  public Sink<ActivityKey, CompletionStage<Done>> deleteActivity(UUID userId) {
-    BiFunction<ActivityKey, PreparedStatement, BoundStatement> boundStmt =
-        (key, stmt) -> stmt.bind(key.getTableId(), key.getStageId(), key.getActivityId(), userId);
-    return CassandraSink.create(1, deleteActivityStmt, boundStmt, session);
+  public Flow<ActivityKey, ActivityKey, NotUsed> deleteActivity(UUID userId) {
+    Function2<ActivityKey, PreparedStatement, BoundStatement> statementBinder =
+        (key, prepStmt) ->
+            prepStmt.bind(key.getTableId(), key.getStageId(), key.getActivityId(), userId);
+
+    return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
   }
 
-  public Source<ActivityEntity, NotUsed> getStageActivities(UUID userId, StageKey key) {
-    var bound = findActivitiesByStageStmt.bind(key.getTableId(), key.getStageId(), userId);
-    var entities = session.execute(bound).all().stream().map(this::fromRow).collect(toList());
-    return Source.from(entities);
-  }
-
-  public Source<Optional<ActivityEntity>, NotUsed> getById(ActivityKey activityKey, UUID userId) {
-    BoundStatement bound =
-        findActivityByIdStmt.bind(
+  public Source<ActivityEntity, NotUsed> getById(ActivityKey activityKey, UUID userId) {
+    Statement<?> stmt =
+        SimpleStatement.newInstance(
+            SELECT_ACTIVITY_BY_ID_STMT,
             userId,
             activityKey.getTableId(),
             activityKey.getStageId(),
             activityKey.getActivityId());
 
-    return Optional.ofNullable(session.execute(bound))
-        .map(ResultSet::one)
-        .map(this::fromRow)
-        .map(Optional::of)
-        .map(Source::single)
-        .orElse(Source.single(Optional.empty()));
+    return CassandraSource.create(session, stmt).map(this::fromRow);
+  }
+
+  public Source<ActivityEntity, NotUsed> getStageActivities(StageKey key, UUID userId) {
+    Statement<?> stmt =
+        SimpleStatement.newInstance(
+            SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT,
+            key.getTableId(),
+            key.getStageId(),
+            userId);
+
+    return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
   private ActivityEntity fromRow(Row row) {
@@ -118,35 +125,13 @@ public class ActivityRepository {
             .activityId(row.get(ACTIVITY_ID_COL, UUID.class))
             .build();
 
-    return new ActivityEntity(
-        key,
-        row.get(USER_ID_COL, UUID.class),
-        row.getString(NAME_COL),
-        valueOf(row.getString(STATE_COL)),
-        toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
-        toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
-  }
-
-  private BoundStatement bindInsertedStage(ActivityEntity activity, PreparedStatement statement) {
-    return statement.bind(
-        activity.getKey().getActivityId(),
-        activity.getKey().getStageId(),
-        activity.getKey().getTableId(),
-        activity.getUserId(),
-        activity.getName(),
-        activity.getState().name(),
-        toDate(activity.getCreatedAt()),
-        toDate(activity.getModifiedAt()));
-  }
-
-  private BoundStatement bindUpdatedStage(ActivityEntity activity, PreparedStatement statement) {
-    return statement.bind(
-        activity.getName(),
-        activity.getState().name(),
-        toDate(activity.getModifiedAt()),
-        activity.getKey().getTableId(),
-        activity.getKey().getStageId(),
-        activity.getKey().getActivityId(),
-        activity.getUserId());
+    return ActivityEntity.builder()
+        .key(key)
+        .userId(row.get(USER_ID_COL, UUID.class))
+        .name(row.getString(NAME_COL))
+        .state(valueOf(row.getString(STATE_COL)))
+        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
+        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
+        .build();
   }
 }

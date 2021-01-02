@@ -1,30 +1,27 @@
 package com.github.adrian83.robome.domain.table;
 
-import static com.github.adrian83.robome.common.Time.toDate;
+import static akka.stream.alpakka.cassandra.CassandraWriteSettings.defaults;
+import static com.github.adrian83.robome.common.Time.toInstant;
 import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
 import static com.github.adrian83.robome.domain.table.model.TableState.valueOf;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.Statement;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.google.inject.Inject;
 
-import akka.Done;
 import akka.NotUsed;
-import akka.stream.alpakka.cassandra.javadsl.CassandraSink;
+import akka.japi.Function2;
+import akka.stream.alpakka.cassandra.javadsl.CassandraFlow;
+import akka.stream.alpakka.cassandra.javadsl.CassandraSession;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSource;
-import akka.stream.javadsl.Sink;
+import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Source;
 
 public class TableRepository {
@@ -50,96 +47,76 @@ public class TableRepository {
   private static final String CREATED_AT_COL = "created_at";
   private static final String MODIFIED_AT_COL = "modified_at";
 
-  private Session session;
-
-  private Sink<TableEntity, CompletionStage<Done>> saveTableSink;
-  private Sink<TableEntity, CompletionStage<Done>> updateTableSink;
-
-  private Source<TableEntity, NotUsed> getTablesSource;
-
-  private PreparedStatement deleteTableStmt;
-  private PreparedStatement findTableByIdStmt;
-  private PreparedStatement findUserTablesStmt;
+  private CassandraSession session;
 
   @Inject
-  public TableRepository(Session session) {
+  public TableRepository(CassandraSession session) {
     this.session = session;
-
-    PreparedStatement saveTableStmt = session.prepare(INSERT_TABLE_STMT);
-    saveTableSink = CassandraSink.create(1, saveTableStmt, this::bindInsertedTable, session);
-
-    PreparedStatement updateTableStmt = session.prepare(UPDATE_STMT);
-    updateTableSink = CassandraSink.create(1, updateTableStmt, this::bindUpdatedTable, session);
-
-    Statement preparedStatement = new SimpleStatement(SELECT_ALL_STMT);
-    getTablesSource = CassandraSource.create(preparedStatement, session).map(this::fromRow);
-
-    deleteTableStmt = session.prepare(DELETE_BY_ID_STMT);
-    findTableByIdStmt = session.prepare(SELECT_BY_ID_STMT);
-    findUserTablesStmt = session.prepare(SELECT_BY_EMAIL_STMT);
   }
 
-  public Sink<TableEntity, CompletionStage<Done>> saveTable() {
-    return saveTableSink;
+  public Flow<TableEntity, TableEntity, NotUsed> saveTable() {
+    Function2<TableEntity, PreparedStatement, BoundStatement> statementBinder =
+        (table, prepStmt) ->
+            prepStmt.bind(
+                table.getKey().getTableId(),
+                table.getUserId(),
+                table.getTitle(),
+                table.getDescription(),
+                table.getState().name(),
+                toInstant(table.getCreatedAt()),
+                toInstant(table.getModifiedAt()));
+
+    return CassandraFlow.create(session, defaults(), INSERT_TABLE_STMT, statementBinder);
   }
 
-  public Sink<TableEntity, CompletionStage<Done>> updateTable() {
-    return updateTableSink;
+  public Flow<TableEntity, TableEntity, NotUsed> updateTable() {
+    Function2<TableEntity, PreparedStatement, BoundStatement> statementBinder =
+        (table, prepStmt) ->
+            prepStmt.bind(
+                table.getTitle(),
+                table.getDescription(),
+                table.getState().name(),
+                toInstant(table.getModifiedAt()),
+                table.getKey().getTableId(),
+                table.getUserId());
+
+    return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
 
-  public Source<TableEntity, NotUsed> getAllTables() {
-    return getTablesSource;
+  public Flow<TableKey, TableKey, NotUsed> deleteTable(UUID userId) {
+    Function2<TableKey, PreparedStatement, BoundStatement> statementBinder =
+        (key, prepStmt) -> prepStmt.bind(key.getTableId(), userId);
+
+    return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
   }
 
-  public Sink<TableKey, CompletionStage<Done>> deleteTable(UUID userId) {
-    BiFunction<TableKey, PreparedStatement, BoundStatement> boundStmt =
-        (tabId, stmt) -> stmt.bind(tabId.getTableId(), userId);
-    return CassandraSink.create(1, deleteTableStmt, boundStmt, session);
-  }
+  public Source<TableEntity, NotUsed> getById(UUID userId, UUID tableId) {
+    Statement<?> stmt = SimpleStatement.newInstance(SELECT_BY_ID_STMT, userId, tableId);
 
-  public Source<Optional<TableEntity>, NotUsed> getById(UUID userId, UUID tableId) {
-    BoundStatement boundStmt = findTableByIdStmt.bind(userId, tableId);
-    ResultSet result = session.execute(boundStmt);
-    return Source.single(result)
-        .map(ResultSet::one)
-        .map(Optional::ofNullable)
-        .map(mayneRow -> mayneRow.map(this::fromRow));
+    return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
   public Source<TableEntity, NotUsed> getUserTables(UUID userId) {
-    BoundStatement bound = findUserTablesStmt.bind(userId);
-    return CassandraSource.create(bound, session).map(this::fromRow);
+    Statement<?> stmt = SimpleStatement.newInstance(SELECT_BY_EMAIL_STMT, userId);
+
+    return CassandraSource.create(session, stmt).map(this::fromRow);
+  }
+
+  public Source<TableEntity, NotUsed> getAllTables() {
+    Statement<?> stmt = SimpleStatement.newInstance(SELECT_ALL_STMT);
+
+    return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
   private TableEntity fromRow(Row row) {
-    return new TableEntity(
-        TableKey.builder().tableId(row.get(TABLE_ID_COL, UUID.class)).build(),
-        row.getUUID(USER_ID_COL),
-        row.getString(TITLE_COL),
-        row.getString(DESCRIPTION_COL),
-        valueOf(row.getString(STATE_COL)),
-        toUtcLocalDate(row.getTimestamp(CREATED_AT_COL)),
-        toUtcLocalDate(row.getTimestamp(MODIFIED_AT_COL)));
-  }
-
-  private BoundStatement bindInsertedTable(TableEntity entity, PreparedStatement stmt) {
-    return stmt.bind(
-        entity.getKey().getTableId(),
-        entity.getUserId(),
-        entity.getTitle(),
-        entity.getDescription(),
-        entity.getState().name(),
-        toDate(entity.getCreatedAt()),
-        toDate(entity.getModifiedAt()));
-  }
-
-  private BoundStatement bindUpdatedTable(TableEntity entity, PreparedStatement stmt) {
-    return stmt.bind(
-        entity.getTitle(),
-        entity.getDescription(),
-        entity.getState().name(),
-        toDate(entity.getModifiedAt()),
-        entity.getKey().getTableId(),
-        entity.getUserId());
+    return TableEntity.builder()
+        .key(TableKey.builder().tableId(row.get(TABLE_ID_COL, UUID.class)).build())
+        .userId(row.get(USER_ID_COL, UUID.class))
+        .title(row.getString(TITLE_COL))
+        .description(row.getString(DESCRIPTION_COL))
+        .state(valueOf(row.getString(STATE_COL)))
+        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
+        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
+        .build();
   }
 }

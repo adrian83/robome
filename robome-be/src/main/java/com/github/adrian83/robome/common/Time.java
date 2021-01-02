@@ -24,8 +24,18 @@ public final class Time {
     return zdt.toLocalDateTime();
   }
 
+  public static LocalDateTime toUtcLocalDate(Instant instant) {
+    ZonedDateTime zdt = instant.atZone(UTC_ZONE);
+    return zdt.toLocalDateTime();
+  }
+
   public static Date toDate(LocalDateTime localDateTime) {
     ZonedDateTime zdt = localDateTime.atZone(UTC_ZONE);
     return Date.from(zdt.toInstant());
+  }
+
+  public static Instant toInstant(LocalDateTime localDateTime) {
+    ZonedDateTime zdt = localDateTime.atZone(UTC_ZONE);
+    return zdt.toInstant();
   }
 }

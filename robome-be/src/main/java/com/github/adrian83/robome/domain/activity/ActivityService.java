@@ -1,12 +1,13 @@
 package com.github.adrian83.robome.domain.activity;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
+import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.activity.model.Activity;
 import com.github.adrian83.robome.domain.activity.model.ActivityEntity;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
+import com.github.adrian83.robome.domain.activity.model.ActivityState;
 import com.github.adrian83.robome.domain.activity.model.request.DeleteActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.GetActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.ListStageActivitiesRequest;
@@ -29,49 +30,58 @@ public class ActivityService {
     this.actorSystem = actorSystem;
   }
 
-  public CompletionStage<Optional<Activity>> getActivity(GetActivityRequest req) {
+  public CompletionStage<Activity> saveActivity(NewActivityRequest req) {
+    var entity =
+        ActivityEntity.builder()
+            .key(ActivityKey.randomWithStageKey(req.getStageKey()))
+            .userId(req.getUserId())
+            .name(req.getName())
+            .state(ActivityState.ACTIVE)
+            .modifiedAt(Time.utcNow())
+            .createdAt(Time.utcNow())
+            .build();
+
+    return Source.single(entity)
+        .via(activityRepository.saveActivity())
+        .map(this::toActivity)
+        .runWith(Sink.head(), actorSystem);
+  }
+
+  public CompletionStage<Activity> updateActivity(UpdateActivityRequest req) {
+    var entity =
+        ActivityEntity.builder()
+            .key(req.getActivityKey())
+            .userId(req.getUserId())
+            .name(req.getName())
+            .state(ActivityState.ACTIVE)
+            .modifiedAt(Time.utcNow())
+            .createdAt(Time.utcNow())
+            .build();
+
+    return Source.single(entity)
+        .via(activityRepository.updateActivity())
+        .map(this::toActivity)
+        .runWith(Sink.head(), actorSystem);
+  }
+
+  public CompletionStage<ActivityKey> deleteActivity(DeleteActivityRequest req) {
+    return Source.single(req.getActivityKey())
+        .via(activityRepository.deleteActivity(req.getUserId()))
+        .runWith(Sink.head(), actorSystem);
+  }
+
+  public CompletionStage<Activity> getActivity(GetActivityRequest req) {
     return activityRepository
         .getById(req.getActivityKey(), req.getUserId())
-        .map((maybeActivity) -> maybeActivity.map(this::toActivity))
+        .map(this::toActivity)
         .runWith(Sink.head(), actorSystem);
   }
 
   public CompletionStage<List<Activity>> getStageActivities(ListStageActivitiesRequest req) {
     return activityRepository
-        .getStageActivities(req.getUserId(), req.getStageKey())
+        .getStageActivities(req.getStageKey(), req.getUserId())
         .map(this::toActivity)
         .runWith(Sink.seq(), actorSystem);
-  }
-
-  public CompletionStage<ActivityKey> deleteActivity(DeleteActivityRequest req) {
-    Sink<ActivityKey, CompletionStage<ActivityKey>> sink =
-        activityRepository
-            .deleteActivity(req.getUserId())
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> req.getActivityKey()));
-
-    return Source.single(req.getActivityKey()).runWith(sink, actorSystem);
-  }
-
-  public CompletionStage<Activity> updateActivity(UpdateActivityRequest req) {
-    var entity = ActivityEntity.newActivity(req.getActivityKey(), req.getUserId(), req.getName());
-
-    Sink<ActivityEntity, CompletionStage<Activity>> sink =
-        activityRepository
-            .updateActivity()
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> toActivity(entity)));
-
-    return Source.single(entity).runWith(sink, actorSystem);
-  }
-
-  public CompletionStage<Activity> saveActivity(NewActivityRequest req) {
-    var entity = new ActivityEntity(req.getStageKey(), req.getUserId(), req.getName());
-
-    Sink<ActivityEntity, CompletionStage<Activity>> sink =
-        activityRepository
-            .saveActivity()
-            .mapMaterializedValue(doneF -> doneF.thenApply(done -> toActivity(entity)));
-
-    return Source.single(entity).runWith(sink, actorSystem);
   }
 
   private Activity toActivity(ActivityEntity entity) {

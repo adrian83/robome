@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.github.adrian83.robome.domain.user.model.User;
 
@@ -69,6 +71,13 @@ public class PermissionCheckerTest {
   }
 
   private User userWithRoles(Role... roles) {
-    return new User("johndoe@somedomain.com", "vckhqvwdvqweuy", Arrays.asList(roles));
-  }
+	    return User.builder()
+	        .id(UUID.randomUUID())
+	        .email("johndoe@somedomain.com")
+	        .passwordHash("fbwyflwegrl")
+	        .roles(Arrays.asList(roles))
+	        .modifiedAt(Time.utcNow())
+	        .createdAt(Time.utcNow())
+	        .build();
+	  }
 }

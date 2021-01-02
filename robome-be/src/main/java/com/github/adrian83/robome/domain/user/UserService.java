@@ -1,14 +1,14 @@
 package com.github.adrian83.robome.domain.user;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import static java.util.concurrent.CompletableFuture.completedStage;
+
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
-import akka.Done;
 import akka.actor.ActorSystem;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
@@ -26,28 +26,39 @@ public class UserService {
     this.actorSystem = actorSystem;
   }
 
-  public CompletionStage<Done> saveUser(User newUser) {
+  public CompletionStage<User> saveUser(User newUser) {
     log.info("Persisting new user: {}", newUser);
 
-    CompletableFuture<User> userFuture = CompletableFuture.completedFuture(newUser);
-
-    userRepository
+    return userRepository
         .getByEmail(newUser.getEmail())
         .runWith(Sink.head(), actorSystem)
         .thenApply(
-            (maybeUser) ->
-                maybeUser.map(
-                    (user) ->
-                        userFuture.completeExceptionally(
-                            new EmailAlreadyInUseException("Email already in use"))));
+            (user) -> {
+              throw new EmailAlreadyInUseException("Email already in use");
+            })
+        .exceptionally(
+            t -> {
+              if (t instanceof CompletionException) {
+                var cause = t.getCause();
+                if (cause instanceof EmailAlreadyInUseException) {
+                  throw new EmailAlreadyInUseException("Email already in use");
+                }
+              }
+              return true;
+            })
+        .thenCompose(
+            e -> {
+              var flow =
+                  userRepository
+                      .saveUser()
+                      .mapMaterializedValue(notUsed -> completedStage(newUser));
 
-    Sink<User, CompletionStage<Done>> sink = userRepository.saveUser();
-
-    return Source.lazyCompletionStage(() -> userFuture).runWith(sink, actorSystem);
+              return Source.single(newUser).via(flow).runWith(Sink.head(), actorSystem);
+            });
   }
 
-  public CompletionStage<Optional<User>> findUserByEmail(String email) {
-   // log.info("Looking for a user with email: {}", email);
+  public CompletionStage<User> findUserByEmail(String email) {
+    // log.info("Looking for a user with email: {}", email);
 
     return userRepository.getByEmail(email).runWith(Sink.head(), actorSystem);
   }
