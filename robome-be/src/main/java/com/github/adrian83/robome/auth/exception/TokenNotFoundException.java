@@ -7,4 +7,8 @@ public class TokenNotFoundException extends RuntimeException {
   public TokenNotFoundException(String msg) {
     super(msg);
   }
+
+  public TokenNotFoundException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

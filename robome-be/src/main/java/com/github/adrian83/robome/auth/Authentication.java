@@ -34,7 +34,7 @@ public class Authentication {
         .thenApply(
             user -> {
               var valid = validPassword(req.getPassword(), user.getPasswordHash());
-              if (!valid) throw new InvalidSignInDataException();
+              if (!valid) throw new InvalidSignInDataException("invalid password");
               return UserData.builder()
                   .id(user.getId())
                   .email(user.getEmail())
@@ -66,7 +66,7 @@ public class Authentication {
   }
 
   public CompletionStage<UserData> findUserByToken(String token) {
-    return CompletableFuture.completedFuture(token).thenApply(jwtAuthorizer::emailFromToken);
+    return CompletableFuture.completedFuture(token).thenApply(jwtAuthorizer::userFromToken);
     // throw exception
   }
 

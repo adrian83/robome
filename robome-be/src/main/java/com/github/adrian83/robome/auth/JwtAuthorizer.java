@@ -10,6 +10,8 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
+import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
+import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.google.inject.Inject;
@@ -22,6 +24,7 @@ public class JwtAuthorizer {
   private static final Long EXPIRE_IN_MILLIS = 1000L * 60 * 60 * 2; // 2h
 
   private static final String ISSUER = "robome";
+
   private static final JWTVerifier VERIFIER =
       JWT.require(SECURITY_ALGORITHM).withIssuer(ISSUER).build();
 
@@ -40,12 +43,11 @@ public class JwtAuthorizer {
           .sign(SECURITY_ALGORITHM);
 
     } catch (JWTCreationException ex) {
-      // TODO refactor
-      throw new RuntimeException(ex);
+      throw new InvalidSignInDataException("cannot create jwt token from user data", ex);
     }
   }
 
-  public UserData emailFromToken(String token) {
+  public UserData userFromToken(String token) {
     try {
       DecodedJWT jwt = VERIFIER.verify(token);
       var email = jwt.getSubject();
@@ -59,8 +61,7 @@ public class JwtAuthorizer {
 
       return UserData.builder().id(id).email(email).roles(roles).build();
     } catch (JWTVerificationException ex) {
-      // TODO refactor
-      throw new RuntimeException(ex);
+      throw new TokenNotFoundException("cannot verify jwt token", ex);
     }
   }
 
