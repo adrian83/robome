@@ -6,4 +6,4 @@ function uuidv4() {
     });
 }
 
-export default uuidv4
+export default uuidv4;

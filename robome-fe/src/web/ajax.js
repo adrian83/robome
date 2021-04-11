@@ -1,5 +1,5 @@
 
-import uuidv4 from 'uuid';
+import uuidv4 from './uuid';
 
 export class ResponseError extends Error {
     constructor(status, body, ...params) {
