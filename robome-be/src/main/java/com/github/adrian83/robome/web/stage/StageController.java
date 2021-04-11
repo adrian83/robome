@@ -6,6 +6,7 @@ import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
+import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
@@ -15,7 +16,6 @@ import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesRequ
 import com.github.adrian83.robome.domain.stage.model.request.NewStageRequest;
 import com.github.adrian83.robome.domain.stage.model.request.UpdateStageRequest;
 import com.github.adrian83.robome.domain.table.model.TableKey;
-import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
@@ -88,9 +88,9 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> persistStage(
-      CompletionStage<User> userF, String tableIdStr, NewStage form) {
+      CompletionStage<UserData> userF, String tableIdStr, NewStage form) {
 
-    var cLog = use((User user) -> log.info(LOG_CREATE_STG, user.getEmail(), tableIdStr, form));
+    var cLog = use((UserData user) -> log.info(LOG_CREATE_STG, user.getEmail(), tableIdStr, form));
 
     return userF
         .thenApply(cLog::apply)
@@ -103,10 +103,10 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateStage(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, UpdateStage form) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr, UpdateStage form) {
 
     var cLog =
-        use((User user) -> log.info(LOG_UPDATE_STG, user.getEmail(), tableIdStr, stageIdStr, form));
+        use((UserData user) -> log.info(LOG_UPDATE_STG, user.getEmail(), tableIdStr, stageIdStr, form));
 
     return userF
         .thenApply(cLog::apply)
@@ -120,10 +120,10 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteStage(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr) {
 
     var cLog =
-        use((User user) -> log.info(LOG_DEL_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
+        use((UserData user) -> log.info(LOG_DEL_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
 
     return userF
         .thenApply(cLog::apply)
@@ -134,10 +134,10 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getStageById(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr) {
 
     var cLog =
-        use((User user) -> log.info(LOG_GET_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
+        use((UserData user) -> log.info(LOG_GET_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
 
     return userF
         .thenApply(cLog::apply)
@@ -148,9 +148,9 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getTableStages(
-      CompletionStage<User> userF, String tableIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr) {
 
-    var cLog = use((User user) -> log.info(LOG_LIST_STGS, user.getEmail(), tableIdStr));
+    var cLog = use((UserData user) -> log.info(LOG_LIST_STGS, user.getEmail(), tableIdStr));
 
     return userF
         .thenApply(cLog::apply)
@@ -160,7 +160,7 @@ public class StageController extends AllDirectives {
         .thenApply(response::jsonFromObject);
   }
 
-  private ListTableStagesRequest toListTableStagesRequest(User user, String tableIdStr) {
+  private ListTableStagesRequest toListTableStagesRequest(UserData user, String tableIdStr) {
 
     return ListTableStagesRequest.builder()
         .userId(user.getId())
@@ -168,7 +168,7 @@ public class StageController extends AllDirectives {
         .build();
   }
 
-  private DeleteStageRequest toDeleteStageRequest(User user, String tableIdStr, String stageIdStr) {
+  private DeleteStageRequest toDeleteStageRequest(UserData user, String tableIdStr, String stageIdStr) {
 
     return DeleteStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
@@ -177,7 +177,7 @@ public class StageController extends AllDirectives {
   }
 
   private UpdateStageRequest toUpdateStageRequest(
-      User user, String tableIdStr, String stageIdStr, UpdateStage form) {
+		  UserData user, String tableIdStr, String stageIdStr, UpdateStage form) {
 
     return UpdateStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
@@ -186,7 +186,7 @@ public class StageController extends AllDirectives {
         .build();
   }
 
-  private NewStageRequest toNewStageRequest(User user, String tableIdStr, NewStage form) {
+  private NewStageRequest toNewStageRequest(UserData user, String tableIdStr, NewStage form) {
 
     return NewStageRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
@@ -195,7 +195,7 @@ public class StageController extends AllDirectives {
         .build();
   }
 
-  private GetStageRequest toGetStageRequest(User user, String tableIdStr, String stageIdStr) {
+  private GetStageRequest toGetStageRequest(UserData user, String tableIdStr, String stageIdStr) {
 
     return GetStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))

@@ -1,11 +1,11 @@
-package com.github.adrian83.robome.auth.model;
+package com.github.adrian83.robome.auth.model.command;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class LoginRequest {
+public class RegisterRequest {
 	private String email;
 	private String password;
 }

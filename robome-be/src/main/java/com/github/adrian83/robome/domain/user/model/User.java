@@ -1,7 +1,7 @@
 package com.github.adrian83.robome.domain.user.model;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.Builder;
@@ -19,5 +19,5 @@ public class User {
   private String passwordHash;
   private LocalDateTime createdAt;
   private LocalDateTime modifiedAt;
-  private List<Role> roles;
+  private Set<Role> roles;
 }

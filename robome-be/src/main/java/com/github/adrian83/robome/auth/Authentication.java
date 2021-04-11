@@ -9,9 +9,9 @@ import java.util.concurrent.CompletionStage;
 import org.mindrot.jbcrypt.BCrypt;
 
 import com.github.adrian83.robome.auth.exception.InvalidSignInDataException;
-import com.github.adrian83.robome.auth.exception.UserNotFoundException;
-import com.github.adrian83.robome.auth.model.LoginRequest;
-import com.github.adrian83.robome.auth.model.RegisterRequest;
+import com.github.adrian83.robome.auth.model.UserData;
+import com.github.adrian83.robome.auth.model.command.LoginRequest;
+import com.github.adrian83.robome.auth.model.command.RegisterRequest;
 import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
@@ -28,18 +28,22 @@ public class Authentication {
     this.jwtAuthorizer = jwtAuthorizer;
   }
 
-  public CompletionStage<User> findUserWithPassword(LoginRequest req) {
+  public CompletionStage<UserData> findUserWithPassword(LoginRequest req) {
     return userService
         .findUserByEmail(req.getEmail())
         .thenApply(
             user -> {
               var valid = validPassword(req.getPassword(), user.getPasswordHash());
               if (!valid) throw new InvalidSignInDataException();
-              return user;
+              return UserData.builder()
+                  .id(user.getId())
+                  .email(user.getEmail())
+                  .roles(user.getRoles())
+                  .build();
             });
   }
 
-  public CompletionStage<User> registerUser(RegisterRequest req) {
+  public CompletionStage<UserData> registerUser(RegisterRequest req) {
     var user =
         User.builder()
             .id(UUID.randomUUID())
@@ -50,28 +54,28 @@ public class Authentication {
             .createdAt(Time.utcNow())
             .build();
 
-    return userService.saveUser(user);
+    return userService
+        .saveUser(user)
+        .thenApply(
+            savedUser ->
+                UserData.builder()
+                    .id(savedUser.getId())
+                    .email(savedUser.getEmail())
+                    .roles(savedUser.getRoles())
+                    .build());
   }
 
-  public CompletionStage<User> findUserByToken(String token) {
-    return CompletableFuture.completedFuture(token)
-        .thenApply(this::getEmailFromToken)
-        .thenCompose(userService::findUserByEmail);
+  public CompletionStage<UserData> findUserByToken(String token) {
+    return CompletableFuture.completedFuture(token).thenApply(jwtAuthorizer::emailFromToken);
     // throw exception
   }
 
-  public String createAuthToken(User user) {
+  public String createAuthToken(UserData user) {
     return jwtAuthorizer.createToken(user);
   }
 
   private String hashPassword(String password) {
     return BCrypt.hashpw(password, BCrypt.gensalt());
-  }
-
-  private String getEmailFromToken(String token) {
-    return jwtAuthorizer
-        .emailFromToken(token)
-        .orElseThrow(() -> new UserNotFoundException("user cannot be found"));
   }
 
   private boolean validPassword(String password, String passwordHash) {

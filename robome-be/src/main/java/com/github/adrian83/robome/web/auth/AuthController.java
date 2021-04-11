@@ -6,10 +6,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authentication;
-import com.github.adrian83.robome.auth.model.LoginRequest;
-import com.github.adrian83.robome.auth.model.RegisterRequest;
+import com.github.adrian83.robome.auth.model.UserData;
+import com.github.adrian83.robome.auth.model.command.LoginRequest;
+import com.github.adrian83.robome.auth.model.command.RegisterRequest;
 import com.github.adrian83.robome.common.validation.Validation;
-import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.common.Response;
@@ -88,9 +88,9 @@ public class AuthController extends AllDirectives {
         .thenApply(done -> response.response201());
   }
 
-  private CompletionStage<HttpResponse> isSignedIn(CompletionStage<User> userF) {
+  private CompletionStage<HttpResponse> isSignedIn(CompletionStage<UserData> userF) {
 
-    var cLog = use((User user) -> log.info(LOG_IS_LOGGEDIN, user));
+    var cLog = use((UserData user) -> log.info(LOG_IS_LOGGEDIN, user));
 
     return userF.thenApply(cLog::apply).thenApply(user -> response.response200());
   }

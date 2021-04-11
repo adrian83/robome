@@ -2,15 +2,11 @@ package com.github.adrian83.robome.auth;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Arrays;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
-
-import com.github.adrian83.robome.common.Time;
+import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.user.model.Role;
-import com.github.adrian83.robome.domain.user.model.User;
+import com.google.common.collect.Sets;
 
 public class PermissionCheckerTest {
 
@@ -70,14 +66,11 @@ public class PermissionCheckerTest {
     assertTrue(PermissionChecker.canWriteTables(userWithRole));
   }
 
-  private User userWithRoles(Role... roles) {
-	    return User.builder()
-	        .id(UUID.randomUUID())
-	        .email("johndoe@somedomain.com")
-	        .passwordHash("fbwyflwegrl")
-	        .roles(Arrays.asList(roles))
-	        .modifiedAt(Time.utcNow())
-	        .createdAt(Time.utcNow())
-	        .build();
-	  }
+  private UserData userWithRoles(Role... roles) {
+    return UserData.builder()
+        .id(UUID.randomUUID())
+        .email("johndoe@somedomain.com")
+        .roles(Sets.newHashSet(roles))
+        .build();
+  }
 }

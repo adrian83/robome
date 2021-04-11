@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.common.Time;
 import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.Stage;
@@ -32,7 +33,6 @@ import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.TableState;
 import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
-import com.github.adrian83.robome.domain.user.model.User;
 
 import akka.NotUsed;
 import akka.actor.ActorSystem;
@@ -47,14 +47,11 @@ public class TableServiceTest {
   private TableService tableService =
       new TableService(tableRepositoryMock, stageServiceMock, actorSystem);
 
-  private User user =
-      User.builder()
+  private UserData user =
+		  UserData.builder()
           .id(UUID.randomUUID())
           .email("johndoe@somedomain.com")
-          .passwordHash("fbwyflwegrl")
-          .roles(Collections.emptyList())
-          .modifiedAt(Time.utcNow())
-          .createdAt(Time.utcNow())
+          .roles(Collections.emptySet())
           .build();
 
   private TableKey tableKey1 = TableKey.random();

@@ -6,6 +6,7 @@ import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
+import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.request.DeleteActivityRequest;
@@ -15,7 +16,6 @@ import com.github.adrian83.robome.domain.activity.model.request.NewActivityReque
 import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
-import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
 import com.github.adrian83.robome.web.common.Response;
@@ -97,10 +97,10 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> persistActivity(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, NewActivity form) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr, NewActivity form) {
 
     var cLog =
-        use((User user) -> log.info(LOG_CREATE_ACT, user.getEmail(), tableIdStr, stageIdStr, form));
+        use((UserData user) -> log.info(LOG_CREATE_ACT, user.getEmail(), tableIdStr, stageIdStr, form));
 
     return userF
         .thenApply(cLog::apply)
@@ -116,7 +116,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateActivity(
-      CompletionStage<User> userF,
+      CompletionStage<UserData> userF,
       String tableIdStr,
       String stageIdStr,
       String activityIdStr,
@@ -124,7 +124,7 @@ public class ActivityController extends AllDirectives {
 
     var cLog =
         use(
-            (User user) ->
+            (UserData user) ->
                 log.info(
                     LOG_UPDATE_ACT, user.getEmail(), tableIdStr, stageIdStr, activityIdStr, form));
 
@@ -142,11 +142,11 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteActivity(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     var cLog =
         use(
-            (User user) ->
+            (UserData user) ->
                 log.info(
                     LOG_DEL_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
 
@@ -159,11 +159,11 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getActivityById(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     var cLog =
         use(
-            (User user) ->
+            (UserData user) ->
                 log.info(
                     LOG_GET_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
 
@@ -176,9 +176,9 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getStageActivities(
-      CompletionStage<User> userF, String tableIdStr, String stageIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr) {
 
-    var cLog = use((User user) -> log.info(LOG_LIST_ACTS, user.getEmail(), tableIdStr, stageIdStr));
+    var cLog = use((UserData user) -> log.info(LOG_LIST_ACTS, user.getEmail(), tableIdStr, stageIdStr));
 
     return userF
         .thenApply(cLog::apply)
@@ -189,7 +189,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private NewActivityRequest toNewActivityRequest(
-      User user, String tableIdStr, String stageIdStr, String activityName) {
+		  UserData user, String tableIdStr, String stageIdStr, String activityName) {
 
     return NewActivityRequest.builder()
         .name(activityName)
@@ -199,7 +199,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private UpdateActivityRequest toUpdateActivityRequest(
-      User user,
+		  UserData user,
       String tableIdStr,
       String stageIdStr,
       String activityIdStr,
@@ -213,7 +213,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private GetActivityRequest toGetActivityRequest(
-      User user, String tableIdStr, String stageIdStr, String activityIdStr) {
+		  UserData user, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     return GetActivityRequest.builder()
         .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
@@ -222,7 +222,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private DeleteActivityRequest toDeleteActivityRequest(
-      User user, String tableIdStr, String stageIdStr, String activityIdStr) {
+		  UserData user, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     return DeleteActivityRequest.builder()
         .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
@@ -231,7 +231,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private ListStageActivitiesRequest toListStageActivitiesRequest(
-      User user, String tableIdStr, String stageIdStr) {
+		  UserData user, String tableIdStr, String stageIdStr) {
 
     return ListStageActivitiesRequest.builder()
         .userId(user.getId())

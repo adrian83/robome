@@ -1,48 +1,70 @@
 package com.github.adrian83.robome.auth;
 
-import java.security.Key;
-import java.util.Optional;
+import java.util.Date;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-import javax.crypto.spec.SecretKeySpec;
-
-import com.github.adrian83.robome.domain.user.model.User;
-import com.google.common.collect.ImmutableMap;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
+import com.github.adrian83.robome.auth.model.UserData;
+import com.github.adrian83.robome.domain.user.model.Role;
 import com.google.inject.Inject;
-import com.typesafe.config.Config;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 public class JwtAuthorizer {
 
-  private static final SignatureAlgorithm SECURITY_ALGORITHM = SignatureAlgorithm.HS512;
+  private static final String SECRET = "fa23hgrb23rv2394g0x81hyr275tcgr23gxc2435g43og527x";
+  private static final Algorithm SECURITY_ALGORITHM = Algorithm.HMAC256(SECRET);
 
-  private static final String SECURITY_KEY = "security.key";
-  private static final String USER_EMAIL = "user_email";
+  private static final Long EXPIRE_IN_MILLIS = 1000L * 60 * 60 * 2; // 2h
 
-  private Key securityKey;
+  private static final String ISSUER = "robome";
+  private static final JWTVerifier VERIFIER =
+      JWT.require(SECURITY_ALGORITHM).withIssuer(ISSUER).build();
 
   @Inject
-  public JwtAuthorizer(Config config) {
-    this.securityKey =
-        new SecretKeySpec(config.getString(SECURITY_KEY).getBytes(), SECURITY_ALGORITHM.getValue());
+  public JwtAuthorizer() {}
+
+  public String createToken(UserData user) {
+    try {
+      return JWT.create()
+          .withSubject(user.getEmail())
+          .withClaim("id", user.getId().toString())
+          .withArrayClaim(
+              "roles", user.getRoles().stream().map(r -> r.name()).toArray(String[]::new))
+          .withIssuer(ISSUER)
+          .withExpiresAt(expirationDate())
+          .sign(SECURITY_ALGORITHM);
+
+    } catch (JWTCreationException ex) {
+      // TODO refactor
+      throw new RuntimeException(ex);
+    }
   }
 
-  public String createToken(User user) {
-    return Jwts.builder()
-        .setSubject("UserData")
-        .setClaims(ImmutableMap.of(USER_EMAIL, user.getEmail()))
-        .signWith(SECURITY_ALGORITHM, securityKey)
-        .compact();
+  public UserData emailFromToken(String token) {
+    try {
+      DecodedJWT jwt = VERIFIER.verify(token);
+      var email = jwt.getSubject();
+      var id = UUID.fromString(jwt.getClaim("id").asString());
+      var roles =
+          jwt.getClaim("roles")
+              .asList(String.class)
+              .stream()
+              .map(roleStr -> Role.valueOf(roleStr))
+              .collect(Collectors.toSet());
+
+      return UserData.builder().id(id).email(email).roles(roles).build();
+    } catch (JWTVerificationException ex) {
+      // TODO refactor
+      throw new RuntimeException(ex);
+    }
   }
 
-  public Optional<String> emailFromToken(String token) {
-    Jws<Claims> jwt = Jwts.parser().setSigningKey(securityKey).parseClaimsJws(token);
-    Claims body = jwt.getBody();
-    return Optional.ofNullable(body)
-        .map(c -> c.get(USER_EMAIL))
-        .map((emailObj) -> emailObj.toString());
+  private Date expirationDate() {
+    return new Date(System.currentTimeMillis() + EXPIRE_IN_MILLIS);
   }
 }

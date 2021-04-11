@@ -6,6 +6,7 @@ import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
+import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.table.TableService;
 import com.github.adrian83.robome.domain.table.model.TableKey;
@@ -14,7 +15,6 @@ import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
 import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
-import com.github.adrian83.robome.domain.user.model.User;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.FormRoute;
@@ -76,9 +76,9 @@ public class TableController extends AllDirectives {
                 TABLE_PATH, (tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
-  private CompletionStage<HttpResponse> persistTable(CompletionStage<User> userF, NewTable form) {
+  private CompletionStage<HttpResponse> persistTable(CompletionStage<UserData> userF, NewTable form) {
 
-    var cLog = use((User user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
+    var cLog = use((UserData user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
 
     return userF
         .thenApply(cLog::apply)
@@ -91,9 +91,9 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateTable(
-      CompletionStage<User> userF, String tableIdStr, UpdateTable form) {
+      CompletionStage<UserData> userF, String tableIdStr, UpdateTable form) {
 
-    var cLog = use((User user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
+    var cLog = use((UserData user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
 
     return userF
         .thenApply(cLog::apply)
@@ -106,9 +106,9 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteTable(
-      CompletionStage<User> userF, String tableIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr) {
 
-    var cLog = use((User user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
+    var cLog = use((UserData user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
         .thenApply(cLog::apply)
@@ -119,9 +119,9 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getTableById(
-      CompletionStage<User> userF, String tableIdStr) {
+      CompletionStage<UserData> userF, String tableIdStr) {
 
-    var cLog = use((User user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
+    var cLog = use((UserData user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
         .thenApply(cLog::apply)
@@ -131,9 +131,9 @@ public class TableController extends AllDirectives {
         .thenApply(response::jsonFromObject);
   }
 
-  private CompletionStage<HttpResponse> getTables(CompletionStage<User> userF) {
+  private CompletionStage<HttpResponse> getTables(CompletionStage<UserData> userF) {
 
-    var cLog = use((User user) -> log.info(LOG_LIST_TABS, user.getEmail()));
+    var cLog = use((UserData user) -> log.info(LOG_LIST_TABS, user.getEmail()));
 
     return userF
         .thenApply(cLog::apply)
@@ -143,11 +143,11 @@ public class TableController extends AllDirectives {
         .thenApply(response::jsonFromObject);
   }
 
-  private ListTablesRequest toListTablesRequest(User user) {
+  private ListTablesRequest toListTablesRequest(UserData user) {
     return ListTablesRequest.builder().userId(user.getId()).build();
   }
 
-  private GetTableRequest toGetTableRequest(User user, String tableIdStr) {
+  private GetTableRequest toGetTableRequest(UserData user, String tableIdStr) {
 
     return GetTableRequest.builder()
         .userId(user.getId())
@@ -155,7 +155,7 @@ public class TableController extends AllDirectives {
         .build();
   }
 
-  private DeleteTableRequest toDeleteTableRequest(User user, String tableIdStr) {
+  private DeleteTableRequest toDeleteTableRequest(UserData user, String tableIdStr) {
 
     return DeleteTableRequest.builder()
         .userId(user.getId())
@@ -163,7 +163,7 @@ public class TableController extends AllDirectives {
         .build();
   }
 
-  private UpdateTableRequest toUpdateTableRequest(User user, String tableIdStr, UpdateTable form) {
+  private UpdateTableRequest toUpdateTableRequest(UserData user, String tableIdStr, UpdateTable form) {
 
     return UpdateTableRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
@@ -173,7 +173,7 @@ public class TableController extends AllDirectives {
         .build();
   }
 
-  private NewTableRequest toNewTableRequest(User user, NewTable form) {
+  private NewTableRequest toNewTableRequest(UserData user, NewTable form) {
 
     return NewTableRequest.builder()
         .userId(user.getId())
