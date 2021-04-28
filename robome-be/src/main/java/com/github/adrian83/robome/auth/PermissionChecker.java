@@ -33,6 +33,10 @@ public final class PermissionChecker {
     return hasAnyRole(user, Role.WRITE_ACTIVITIES, Role.ADMIN);
   }
 
+  public static boolean isAdmin(UserData user) {
+    return hasAnyRole(user, Role.ADMIN);
+  }
+
   private static boolean hasAnyRole(UserData user, Role... roles) {
     return Arrays.stream(roles).anyMatch((role) -> user.getRoles().contains(role));
   }

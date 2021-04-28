@@ -18,15 +18,17 @@ import com.google.inject.Inject;
 
 public class JwtAuthorizer {
 
-  private static final String SECRET = "fa23hgrb23rv2394g0x81hyr275tcgr23gxc2435g43og527x";
-  private static final Algorithm SECURITY_ALGORITHM = Algorithm.HMAC256(SECRET);
+  private static final String ID_CLAIM = "id";
+  private static final String ROLES_CLAIM = "roles";
 
-  private static final Long EXPIRE_IN_MILLIS = 1000L * 60 * 60 * 2; // 2h
+  private static final String SECURITY_SECRET = "fa23hgrb23rv2394g0x81hyr275tcgr23gxc2435g43og527x";
+  private static final Algorithm SECURITY_ALGORITHM = Algorithm.HMAC256(SECURITY_SECRET);
 
-  private static final String ISSUER = "robome";
+  private static final Long TOKEN_EXPIRE_IN_MILLIS = 1000L * 60 * 60 * 2; // 2h
+  private static final String TOKEN_ISSUER = "robome";
 
   private static final JWTVerifier VERIFIER =
-      JWT.require(SECURITY_ALGORITHM).withIssuer(ISSUER).build();
+      JWT.require(SECURITY_ALGORITHM).withIssuer(TOKEN_ISSUER).build();
 
   @Inject
   public JwtAuthorizer() {}
@@ -35,10 +37,10 @@ public class JwtAuthorizer {
     try {
       return JWT.create()
           .withSubject(user.getEmail())
-          .withClaim("id", user.getId().toString())
+          .withClaim(ID_CLAIM, user.getId().toString())
           .withArrayClaim(
-              "roles", user.getRoles().stream().map(r -> r.name()).toArray(String[]::new))
-          .withIssuer(ISSUER)
+              ROLES_CLAIM, user.getRoles().stream().map(r -> r.name()).toArray(String[]::new))
+          .withIssuer(TOKEN_ISSUER)
           .withExpiresAt(expirationDate())
           .sign(SECURITY_ALGORITHM);
 
@@ -51,9 +53,9 @@ public class JwtAuthorizer {
     try {
       DecodedJWT jwt = VERIFIER.verify(token);
       var email = jwt.getSubject();
-      var id = UUID.fromString(jwt.getClaim("id").asString());
+      var id = UUID.fromString(jwt.getClaim(ID_CLAIM).asString());
       var roles =
-          jwt.getClaim("roles")
+          jwt.getClaim(ROLES_CLAIM)
               .asList(String.class)
               .stream()
               .map(roleStr -> Role.valueOf(roleStr))
@@ -66,6 +68,6 @@ public class JwtAuthorizer {
   }
 
   private Date expirationDate() {
-    return new Date(System.currentTimeMillis() + EXPIRE_IN_MILLIS);
+    return new Date(System.currentTimeMillis() + TOKEN_EXPIRE_IN_MILLIS);
   }
 }
