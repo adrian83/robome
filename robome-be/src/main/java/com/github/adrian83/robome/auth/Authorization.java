@@ -1,6 +1,5 @@
 package com.github.adrian83.robome.auth;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.exception.UserNotAuthorizedException;
@@ -12,43 +11,43 @@ public final class Authorization {
   private Authorization() {}
 
   public static UserContext canReadTables(UserContext userCtx) {
-	    boolean hasPermision = can(userCtx, PermissionChecker::canReadTables);
-	    if (hasPermision) {
-	      return userCtx;
-	    }
-	    throw new UserNotAuthorizedException("user cannot read tables");
-	  }
-  
-  public static UserData canWriteTables(UserData user) {
-    return Optional.ofNullable(user)
-        .filter(PermissionChecker::canWriteTables)
-        .orElseThrow(() -> new UserNotAuthorizedException("user cannot write tables"));
+    boolean hasPermision = can(userCtx, PermissionChecker::canReadTables);
+    if (hasPermision) {
+      return userCtx;
+    }
+    throw new UserNotAuthorizedException("user cannot read tables");
   }
 
-  public static UserData canReadStages(UserData user) {
-    return Optional.ofNullable(user)
-        .filter(PermissionChecker::canReadStages)
-        .orElseThrow(() -> new UserNotAuthorizedException("user cannot read stages"));
+  public static UserContext canReadStages(UserContext userCtx) {
+    boolean hasPermision = can(userCtx, PermissionChecker::canReadStages);
+    if (hasPermision) {
+      return userCtx;
+    }
+    throw new UserNotAuthorizedException("user cannot read stages");
   }
 
-  public static UserData canWriteStages(UserData user) {
-    return Optional.ofNullable(user)
-        .filter(PermissionChecker::canWriteStages)
-        .orElseThrow(() -> new UserNotAuthorizedException("user cannot write stages"));
+  public static UserContext canWriteStages(UserContext userCtx) {
+    boolean hasPermision = can(userCtx, PermissionChecker::canWriteStages);
+    if (hasPermision) {
+      return userCtx;
+    }
+    throw new UserNotAuthorizedException("user cannot write stages");
   }
 
-  public static UserData canReadAcivities(UserData user) {
-    return Optional.ofNullable(user)
-        .filter(PermissionChecker::canReadAcivities)
-        .orElseThrow(() -> new UserNotAuthorizedException("user cannot read activities"));
+  public static UserContext canReadAcivities(UserContext userCtx) {
+    boolean hasPermision = can(userCtx, PermissionChecker::canReadAcivities);
+    if (hasPermision) {
+      return userCtx;
+    }
+    throw new UserNotAuthorizedException("user cannot read activities");
   }
 
   public static UserContext canWriteAcivities(UserContext userCtx) {
-	    boolean hasPermision = can(userCtx, PermissionChecker::canWriteAcivities);
-	    if (hasPermision) {
-	      return userCtx;
-	    }
-	    throw new UserNotAuthorizedException("user cannot write activities");
+    boolean hasPermision = can(userCtx, PermissionChecker::canWriteAcivities);
+    if (hasPermision) {
+      return userCtx;
+    }
+    throw new UserNotAuthorizedException("user cannot write activities");
   }
 
   public static UserContext canWriteTables(UserContext userCtx) {

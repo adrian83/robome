@@ -136,6 +136,44 @@ public class Security extends AllDirectives {
     return withUserFromAuthHeader(apply);
   }
 
+  public <T> Route secured(
+      String p1,
+      String p2,
+      String p3,
+      Class<T> clazz,
+      PentaFunction<
+              CompletionStage<UserData>, String, String, String, T, CompletionStage<HttpResponse>>
+          logic) {
+
+    Function<CompletionStage<UserData>, Route> apply =
+        (userF) ->
+            entity(
+                unmarshaller(clazz),
+                form -> handleExceptions(logic.apply(userF, p1, p2, p3, form)));
+
+    return withUserFromAuthHeader(apply);
+  }
+
+  public <T> Route secured(
+      String p1,
+      String p2,
+      String p3,
+      String p4,
+      PentaFunction<
+              CompletionStage<UserData>,
+              String,
+              String,
+              String,
+              String,
+              CompletionStage<HttpResponse>>
+          logic) {
+
+    Function<CompletionStage<UserData>, Route> apply =
+        (userF) -> handleExceptions(logic.apply(userF, p1, p2, p3, p4));
+
+    return withUserFromAuthHeader(apply);
+  }
+
   public <T> Route unsecured(Class<T> clazz, Function<T, CompletionStage<HttpResponse>> logic) {
     return entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(form)));
   }

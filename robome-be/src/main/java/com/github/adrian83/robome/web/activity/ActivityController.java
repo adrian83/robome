@@ -3,6 +3,8 @@ package com.github.adrian83.robome.web.activity;
 import static com.github.adrian83.robome.common.function.Functions.use;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
@@ -15,11 +17,13 @@ import com.github.adrian83.robome.domain.activity.model.request.ListStageActivit
 import com.github.adrian83.robome.domain.activity.model.request.NewActivityRequest;
 import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.github.adrian83.robome.domain.common.UserAndForm;
+import com.github.adrian83.robome.domain.common.UserContext;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
+import com.github.adrian83.robome.web.common.routes.FourParamRoute;
 import com.github.adrian83.robome.web.common.routes.ThreeParamsAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.ThreeParamsRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
@@ -34,9 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ActivityController extends AllDirectives {
 
-  private static final String ACTIVITIES_PATH = "/tables/{tableId}/stages/{stageId}/activities/";
+  private static final String ACTIVITIES_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/";
   private static final String ACTIVITY_PATH =
-      "/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
+      "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
 
   private static final String LOG_LIST_ACTS =
       "User: {} issued list stage's activities request, tableId: {}, stageId: {}";
@@ -63,19 +67,19 @@ public class ActivityController extends AllDirectives {
   public Route createRoute() {
     return route(
         get(
-            new TwoParamsRoute(
+            new ThreeParamsRoute(
                 ACTIVITIES_PATH,
-                (tabId, stgId) -> security.secured(tabId, stgId, this::getStageActivities))),
+                (resourceOwnerId, tabId, stgId) -> security.secured(resourceOwnerId, tabId, stgId, this::getStageActivities))),
         get(
-            new ThreeParamsRoute(
+            new FourParamRoute(
                 ACTIVITY_PATH,
-                (tabId, stgId, actId) ->
-                    security.secured(tabId, stgId, actId, this::getActivityById))),
+                (resourceOwnerId, tabId, stgId, actId) ->
+                    security.secured(resourceOwnerId, tabId, stgId, actId, this::getActivityById))),
         delete(
-            new ThreeParamsRoute(
+            new FourParamRoute(
                 ACTIVITY_PATH,
-                (tabId, stgId, actId) ->
-                    security.secured(tabId, stgId, actId, this::deleteActivity))),
+                (resourceOwnerId, tabId, stgId, actId) ->
+                    security.secured(resourceOwnerId, tabId, stgId, actId, this::deleteActivity))),
         put(
             new ThreeParamsAndFormRoute<UpdateActivity>(
                 ACTIVITY_PATH,
@@ -142,7 +146,7 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteActivity(
-      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
+      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     var cLog =
         use(
@@ -151,15 +155,21 @@ public class ActivityController extends AllDirectives {
                     LOG_DEL_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
 
     return userF
-        .thenApply(cLog::apply)
-        .thenApply(Authorization::canWriteAcivities)
-        .thenApply(u -> toDeleteActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
+            .thenApply(cLog::apply)
+            .thenApply(
+                user ->
+                    UserContext.builder()
+                        .loggedInUser(user)
+                        .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
+                        .build())
+            .thenApply(Authorization::canWriteAcivities)
+        .thenApply(userCtx -> toDeleteActivityRequest(userCtx, tableIdStr, stageIdStr, activityIdStr))
         .thenCompose(activityService::deleteActivity)
         .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> getActivityById(
-      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr, String activityIdStr) {
+      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     var cLog =
         use(
@@ -168,15 +178,21 @@ public class ActivityController extends AllDirectives {
                     LOG_GET_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
 
     return userF
-        .thenApply(cLog::apply)
-        .thenApply(Authorization::canReadAcivities)
-        .thenApply(u -> toGetActivityRequest(u, tableIdStr, stageIdStr, activityIdStr))
+            .thenApply(cLog::apply)
+            .thenApply(
+                user ->
+                    UserContext.builder()
+                        .loggedInUser(user)
+                        .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
+                        .build())
+            .thenApply(Authorization::canReadAcivities)
+            .thenApply(userCtx -> toGetActivityRequest(userCtx, tableIdStr, stageIdStr, activityIdStr))
         .thenCompose(activityService::getActivity)
         .thenApply(response::jsonFromObject);
   }
 
   private CompletionStage<HttpResponse> getStageActivities(
-      CompletionStage<UserData> userF, String tableIdStr, String stageIdStr) {
+      CompletionStage<UserData> userF, String resourceOwnerId, String tableIdStr, String stageIdStr) {
 
     var cLog = use((UserData user) -> log.info(LOG_LIST_ACTS, user.getEmail(), tableIdStr, stageIdStr));
 
@@ -213,20 +229,20 @@ public class ActivityController extends AllDirectives {
   }
 
   private GetActivityRequest toGetActivityRequest(
-		  UserData user, String tableIdStr, String stageIdStr, String activityIdStr) {
+		  UserContext userCtx, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     return GetActivityRequest.builder()
         .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
-        .userId(user.getId())
+        .userId(userCtx.resourceOwnerIdOrError())
         .build();
   }
 
   private DeleteActivityRequest toDeleteActivityRequest(
-		  UserData user, String tableIdStr, String stageIdStr, String activityIdStr) {
+		  UserContext userCtx, String tableIdStr, String stageIdStr, String activityIdStr) {
 
     return DeleteActivityRequest.builder()
         .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
-        .userId(user.getId())
+        .userId(userCtx.resourceOwnerIdOrError())
         .build();
   }
 
