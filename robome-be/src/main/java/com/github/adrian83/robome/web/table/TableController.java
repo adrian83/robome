@@ -22,7 +22,6 @@ import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamRoute;
-import com.github.adrian83.robome.web.common.routes.PrefixRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsRoute;
 import com.github.adrian83.robome.web.table.model.NewTable;
@@ -88,10 +87,13 @@ public class TableController extends AllDirectives {
                 TABLE_PATH,
                 (resourceOwnerId, tabId) ->
                     security.secured(resourceOwnerId, tabId, this::deleteTable))),
-        options(new PrefixRoute(TABLES_PATH, complete(response.response200(GET, POST)))),
         options(
             new OneParamRoute(
-                TABLE_PATH, (tabId) -> complete(response.response200(GET, PUT, DELETE)))));
+                TABLES_PATH, (resourceOwnerId) -> complete(response.response200(GET, POST)))),
+        options(
+            new TwoParamsRoute(
+                TABLE_PATH,
+                (resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
   private CompletionStage<HttpResponse> persistTable(
