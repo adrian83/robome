@@ -2,7 +2,6 @@ package com.github.adrian83.robome.web.common.routes;
 
 import static akka.http.javadsl.server.PathMatchers.segment;
 
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
