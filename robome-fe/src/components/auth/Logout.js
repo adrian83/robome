@@ -10,7 +10,8 @@ class Logout extends Base {
 
     static propTypes = {
         authToken: PropTypes.string,
-        onLogout: PropTypes.func
+        onLogout: PropTypes.func,
+        userId: PropTypes.string
     };
 
     componentDidMount() {   
@@ -23,7 +24,10 @@ class Logout extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return { authToken: state.authToken };
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

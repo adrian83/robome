@@ -17,14 +17,16 @@ import { tablesBeUrl, tableBeUrl, editTableUrl, showTableUrl, createTableUrl } f
 class ListTables extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     componentDidMount() {
         const self = this;
         const authToken = self.props.authToken;
+        const userId = self.props.userId;
 
-        securedGet(tablesBeUrl(), authToken)
+        securedGet(tablesBeUrl(userId), authToken)
             .then(response => response.json())
             .then(data => self.setState({tables: data}))
             .catch(error => self.registerError(error));
@@ -32,7 +34,7 @@ class ListTables extends Base {
 
     delete(table) {
         const self = this;
-        const deleteTabUrl = tableBeUrl(table.key.tableId)
+        const deleteTabUrl = tableBeUrl(self.props.userId, table.key.tableId)
 
         return function(event) {
 
@@ -105,7 +107,10 @@ class ListTables extends Base {
 }
 
 const mapStateToProps = (state) =>{
-    return {authToken: state.authToken};
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

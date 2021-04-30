@@ -14,7 +14,8 @@ import { stageBeUrl, showTableUrl } from '../../web/url';
 class UpdateStage extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     constructor(props) { 
@@ -38,9 +39,11 @@ class UpdateStage extends Base {
     handleSubmit(event) {
         const self = this;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
         const stage = this.stageFromState();
 
         const updateStgUrl = stageBeUrl(
+            userId,
             this.props.match.params.tableId,
             this.props.match.params.stageId); 
         
@@ -60,8 +63,10 @@ class UpdateStage extends Base {
     componentDidMount() {
         const self = this;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
         
         const getStgUrl = stageBeUrl(
+            userId,
             this.props.match.params.tableId,
             this.props.match.params.stageId);
 
@@ -111,7 +116,10 @@ class UpdateStage extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

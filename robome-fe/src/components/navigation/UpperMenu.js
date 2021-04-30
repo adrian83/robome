@@ -18,7 +18,8 @@ class UpperMenu extends Base {
 
     static propTypes = {
         authToken: PropTypes.string,
-        invalidateToken: PropTypes.func
+        invalidateToken: PropTypes.func,
+        userId: PropTypes.string
     };
 
     componentDidMount() {
@@ -62,7 +63,10 @@ class UpperMenu extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return { authToken: state.authToken };
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {
