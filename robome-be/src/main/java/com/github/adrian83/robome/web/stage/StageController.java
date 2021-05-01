@@ -1,10 +1,10 @@
 package com.github.adrian83.robome.web.stage;
 
 import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
+import static java.util.UUID.fromString;
 
-import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
@@ -21,7 +21,6 @@ import com.github.adrian83.robome.domain.stage.model.request.UpdateStageRequest;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
-import com.github.adrian83.robome.web.common.routes.OneParamRoute;
 import com.github.adrian83.robome.web.common.routes.ThreeParamsAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.ThreeParamsRoute;
 import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
@@ -68,35 +67,39 @@ public class StageController extends AllDirectives {
         get(
             new TwoParamsRoute(
                 STAGES_PATH,
-                (resourceOwnerIdStr, tabId) ->
-                    security.secured(resourceOwnerIdStr, tabId, this::getTableStages))),
+                (resourceOwnerId, tabId) ->
+                    security.secured(resourceOwnerId, tabId, this::getTableStages))),
         get(
             new ThreeParamsRoute(
                 STAGE_PATH,
-                (resourceOwnerIdStr, tabId, stgId) ->
-                    security.secured(resourceOwnerIdStr, tabId, stgId, this::getStageById))),
+                (resourceOwnerId, tabId, stgId) ->
+                    security.secured(resourceOwnerId, tabId, stgId, this::getStageById))),
         delete(
             new ThreeParamsRoute(
                 STAGE_PATH,
-                (resourceOwnerIdStr, tabId, stgId) ->
-                    security.secured(resourceOwnerIdStr, tabId, stgId, this::deleteStage))),
+                (resourceOwnerId, tabId, stgId) ->
+                    security.secured(resourceOwnerId, tabId, stgId, this::deleteStage))),
         post(
             new TwoParamsAndFormRoute<NewStage>(
                 STAGES_PATH,
                 NewStage.class,
-                (resourceOwnerIdStr, tabId, clz) ->
-                    security.secured(resourceOwnerIdStr, tabId, clz, this::persistStage))),
+                (resourceOwnerId, tabId, clz) ->
+                    security.secured(resourceOwnerId, tabId, clz, this::persistStage))),
         put(
             new ThreeParamsAndFormRoute<UpdateStage>(
                 STAGE_PATH,
                 UpdateStage.class,
-                (resourceOwnerIdStr, tabId, stgId, clz) ->
-                    security.secured(resourceOwnerIdStr, tabId, stgId, clz, this::updateStage))),
-        options(
-            new OneParamRoute(STAGES_PATH, (tabId) -> complete(response.response200(GET, POST)))),
+                (resourceOwnerId, tabId, stgId, clz) ->
+                    security.secured(resourceOwnerId, tabId, stgId, clz, this::updateStage))),
         options(
             new TwoParamsRoute(
-                STAGE_PATH, (tabId, stgId) -> complete(response.response200(GET, DELETE, PUT)))));
+                STAGES_PATH,
+                (resourceOwnerId, tabId) -> complete(response.response200(GET, POST)))),
+        options(
+            new ThreeParamsRoute(
+                STAGE_PATH,
+                (resourceOwnerId, tabId, stgId) ->
+                    complete(response.response200(GET, DELETE, PUT)))));
   }
 
   private CompletionStage<HttpResponse> persistStage(
@@ -109,15 +112,9 @@ public class StageController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
-        .thenApply(
-            userCtx -> UserAndForm.<NewStage>builder().userContext(userCtx).form(form).build())
+        .thenApply(userCtx -> new UserAndForm<NewStage>(userCtx, form))
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toNewStageRequest(uaf.getUserContext(), tableIdStr, uaf.getForm()))
         .thenCompose(stageService::saveStage)
@@ -138,15 +135,9 @@ public class StageController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
-        .thenApply(
-            userCtx -> UserAndForm.<UpdateStage>builder().userContext(userCtx).form(form).build())
+        .thenApply(userCtx -> new UserAndForm<UpdateStage>(userCtx, form))
         .thenApply(UserAndForm::validate)
         .thenApply(
             uaf ->
@@ -168,12 +159,7 @@ public class StageController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> toDeleteStageRequest(userCtx, tableIdStr, stageIdStr))
         .thenCompose(stageService::deleteStage)
@@ -193,12 +179,7 @@ public class StageController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toGetStageRequest(userCtx, tableIdStr, stageIdStr))
         .thenCompose(stageService::getStage)
@@ -212,12 +193,7 @@ public class StageController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            userData ->
-                UserContext.builder()
-                    .loggedInUser(userData)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toListTableStagesRequest(userCtx, tableIdStr))
         .thenCompose(stageService::getTableStages)

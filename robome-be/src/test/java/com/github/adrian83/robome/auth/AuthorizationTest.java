@@ -168,6 +168,6 @@ public class AuthorizationTest {
             .email("johndoe@somedomain.com")
             .roles(Sets.newHashSet(roles))
             .build();
-    return UserContext.builder().loggedInUser(userData).resourceOwner(Optional.empty()).build();
+    return new UserContext(userData, Optional.empty());
   }
 }

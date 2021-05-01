@@ -1,10 +1,10 @@
 package com.github.adrian83.robome.web.table;
 
 import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
+import static java.util.UUID.fromString;
 
-import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
@@ -103,15 +103,9 @@ public class TableController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
-        .thenApply(
-            userCtx -> UserAndForm.<NewTable>builder().userContext(userCtx).form(form).build())
+        .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toNewTableRequest(uaf.getUserContext(), uaf.getForm()))
         .thenCompose(tableService::saveTable)
@@ -128,15 +122,9 @@ public class TableController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
-        .thenApply(
-            userCtx -> UserAndForm.<UpdateTable>builder().userContext(userCtx).form(form).build())
+        .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
         .thenApply(UserAndForm::validate)
         .thenApply(uaf -> toUpdateTableRequest(uaf.getUserContext(), tableIdStr, uaf.getForm()))
         .thenCompose(tableService::updateTable)
@@ -150,12 +138,7 @@ public class TableController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
         .thenCompose(tableService::deleteTable)
@@ -169,12 +152,7 @@ public class TableController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
         .thenCompose(tableService::getTable)
@@ -188,12 +166,7 @@ public class TableController extends AllDirectives {
 
     return userF
         .thenApply(cLog::apply)
-        .thenApply(
-            user ->
-                UserContext.builder()
-                    .loggedInUser(user)
-                    .resourceOwner(Optional.of(UUID.fromString(resourceOwnerIdStr)))
-                    .build())
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)
         .thenCompose(tableService::getTables)

@@ -1,6 +1,8 @@
 package com.github.adrian83.robome.auth;
 
+import java.time.Instant;
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,22 +54,29 @@ public class JwtAuthorizer {
   public UserData userFromToken(String token) {
     try {
       DecodedJWT jwt = VERIFIER.verify(token);
-      var email = jwt.getSubject();
-      var id = UUID.fromString(jwt.getClaim(ID_CLAIM).asString());
-      var roles =
-          jwt.getClaim(ROLES_CLAIM)
-              .asList(String.class)
-              .stream()
-              .map(roleStr -> Role.valueOf(roleStr))
-              .collect(Collectors.toSet());
-
-      return UserData.builder().id(id).email(email).roles(roles).build();
+      return UserData.builder()
+          .id(extractUserId(jwt))
+          .email(jwt.getSubject())
+          .roles(extractRoles(jwt))
+          .build();
     } catch (JWTVerificationException ex) {
       throw new TokenNotFoundException("cannot verify jwt token", ex);
     }
   }
 
+  private Set<Role> extractRoles(DecodedJWT jwt) {
+    return jwt.getClaim(ROLES_CLAIM)
+        .asList(String.class)
+        .stream()
+        .map(roleStr -> Role.valueOf(roleStr))
+        .collect(Collectors.toSet());
+  }
+
+  private UUID extractUserId(DecodedJWT jwt) {
+    return UUID.fromString(jwt.getClaim(ID_CLAIM).asString());
+  }
+
   private Date expirationDate() {
-    return new Date(System.currentTimeMillis() + TOKEN_EXPIRE_IN_MILLIS);
+    return new Date((Instant.now().getEpochSecond() * 1000) + TOKEN_EXPIRE_IN_MILLIS);
   }
 }

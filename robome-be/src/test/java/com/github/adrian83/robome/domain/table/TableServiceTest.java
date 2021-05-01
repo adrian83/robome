@@ -105,21 +105,15 @@ public class TableServiceTest {
 
     // when
     var tableF = tableService.getTable(getTableReq);
-
+    var resultTable = tableF.toCompletableFuture().get(1, SECONDS);
+    
     // then
     verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-
-    // this doesn't for in mockito for now
-    // verify(stageServiceMock).getTableStages(any(User.class), any(TableKey.class));
-
-    var resultTable = tableF.toCompletableFuture().get(5, SECONDS);
+    verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
 
     assertTable(tableEntity1, resultTable);
-
     assertEquals(1, resultTable.getStages().size());
-    var resultStage = resultTable.getStages().get(0);
-
-    assertStage(stage, resultStage);
+    assertStage(stage, resultTable.getStages().get(0));
   }
 
   @Test()
@@ -127,24 +121,23 @@ public class TableServiceTest {
       throws InterruptedException, ExecutionException, TimeoutException {
     // given
     var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
-    Source<TableEntity, NotUsed> tableSource = Source.empty();
     var getTableReq = GetTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build();
 
-    when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
+    when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
     when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
     // when
     var tableF = tableService.getTable(getTableReq);
 
     // then
-    verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-    verify(stageServiceMock, never()).getTableStages(any(ListTableStagesRequest.class));
-
     assertThrows(
         ExecutionException.class,
         () -> {
-          tableF.toCompletableFuture().get(2, SECONDS);
+          tableF.toCompletableFuture().get(1, SECONDS);
         });
+    
+    verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
+    verify(stageServiceMock, never()).getTableStages(any(ListTableStagesRequest.class));
   }
 
   @Test
@@ -159,15 +152,16 @@ public class TableServiceTest {
 
     // when
     var tablesF = tableService.getTables(listTablesReq);
-
+    var tables = tablesF.toCompletableFuture().get(1, SECONDS);
+    
     // then
     verify(tableRepositoryMock).getUserTables(any(UUID.class));
 
-    var tables = tablesF.toCompletableFuture().get(2, SECONDS);
     assertEquals(entities.size(), tables.size());
 
     IntStream.range(0, entities.size()).forEach((i) -> assertTable(entities.get(i), tables.get(i)));
   }
+  
   /*
       @Test
       public void shouldSaveTable() throws InterruptedException, ExecutionException, TimeoutException {
