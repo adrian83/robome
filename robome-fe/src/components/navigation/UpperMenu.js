@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl, isSignedInUrl } from '../../web/url';
-import securedGet from '../../web/ajax';
+import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl } from '../../web/url';
+import extractExpirationTs from '../../web/jwt';
 
 import Base from '../Base';
 
@@ -30,18 +30,27 @@ class UpperMenu extends Base {
             return
         }
 
-        securedGet(isSignedInUrl(), authToken)
-            .then(function(response) { 
-                if(response.status !== 200) {
-                    self.props.invalidateToken();
-                }
-            })
-            .catch(function(error){
-                if(error.status === 401){
-                    self.props.invalidateToken();
-                }
-                self.registerError(error)
-            });
+        //console.log('now', Math.floor(Date.now() / 1000));
+
+        const nowUtc = Math.floor(Date.now() / 1000);
+        const tokenValidTs = extractExpirationTs(authToken);
+
+        if(nowUtc > tokenValidTs) {
+            self.props.invalidateToken();
+        }
+
+        // securedGet(isSignedInUrl(), authToken)
+        //     .then(function(response) { 
+        //         if(response.status !== 200) {
+        //             self.props.invalidateToken();
+        //         }
+        //     })
+        //     .catch(function(error){
+        //         if(error.status === 401){
+        //             self.props.invalidateToken();
+        //         }
+        //         self.registerError(error)
+        //     });
     }
 
     render() {

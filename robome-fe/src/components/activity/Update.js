@@ -41,6 +41,7 @@ class UpdateActivity extends Base {
         const authToken = this.props.authToken;
 
         const updateActUrl = activityBeUrl(
+            this.props.userId,
             this.props.match.params.tableId, 
             this.props.match.params.stageId, 
             this.props.match.params.activityId);
@@ -61,6 +62,7 @@ class UpdateActivity extends Base {
         const authToken = this.props.authToken;
         
         const getActUrl = activityBeUrl(
+            this.props.userId,
             this.props.match.params.tableId,
             this.props.match.params.stageId,
             this.props.match.params.activityId);

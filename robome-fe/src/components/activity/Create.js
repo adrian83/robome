@@ -43,6 +43,7 @@ class CreateActivity extends Base {
         const activity = this.activityFromState();
 
         const editUrl = activitiesBeUrl(
+            this.props.userId,
             this.props.match.params.tableId, 
             this.props.match.params.stageId);
 

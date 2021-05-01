@@ -101,7 +101,11 @@ class ShowTable extends Base {
     deleteActivity(activityKey) {
         const self = this;
         const authToken = self.props.authToken;
-        const delStgUrl = activityBeUrl(activityKey.tableId, activityKey.stageId, activityKey.activityId);
+        const delStgUrl = activityBeUrl(
+            self.props.userId, 
+            activityKey.tableId, 
+            activityKey.stageId, 
+            activityKey.activityId);
 
         return function(event) {
             securedDelete(delStgUrl, authToken)
@@ -135,6 +139,7 @@ class ShowTable extends Base {
             var act = self.state.move;
 
             const editUrl = activitiesBeUrl(
+                self.props.userId,
                 act.key.tableId, 
                 destStage.key.stageId);
     
@@ -144,7 +149,8 @@ class ShowTable extends Base {
                 .then(response => response.json())
                 .then(function(newAct){
 
-                var delActUrl = activityBeUrl(  
+                var delActUrl = activityBeUrl( 
+                    self.props.userId, 
                     act.key.tableId, 
                     act.key.stageId,
                     act.key.activityId);
