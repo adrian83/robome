@@ -1,12 +1,13 @@
 package com.github.adrian83.robome.auth;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.google.common.collect.Sets;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class PermissionCheckerTest {
 
@@ -16,10 +17,10 @@ public class PermissionCheckerTest {
     var admin = userWithRoles(Role.ADMIN);
 
     // when, then
-    assertTrue(PermissionChecker.canReadStages(admin));
-    assertTrue(PermissionChecker.canReadTables(admin));
-    assertTrue(PermissionChecker.canWriteStages(admin));
-    assertTrue(PermissionChecker.canWriteTables(admin));
+    assertThat(PermissionChecker.canReadStages(admin)).isTrue();
+    assertThat(PermissionChecker.canReadTables(admin)).isTrue();
+    assertThat(PermissionChecker.canWriteStages(admin)).isTrue();
+    assertThat(PermissionChecker.canWriteTables(admin)).isTrue();
   }
 
   @Test
@@ -29,8 +30,8 @@ public class PermissionCheckerTest {
     var userWithRole = userWithRoles(Role.READ_STAGES);
 
     // when, then
-    assertFalse(PermissionChecker.canReadStages(userWithoutRole));
-    assertTrue(PermissionChecker.canReadStages(userWithRole));
+    assertThat(PermissionChecker.canReadStages(userWithoutRole)).isFalse();
+    assertThat(PermissionChecker.canReadStages(userWithRole)).isTrue();
   }
 
   @Test
@@ -40,8 +41,8 @@ public class PermissionCheckerTest {
     var userWithRole = userWithRoles(Role.READ_TABLES);
 
     // when, then
-    assertFalse(PermissionChecker.canReadTables(userWithoutRole));
-    assertTrue(PermissionChecker.canReadTables(userWithRole));
+    assertThat(PermissionChecker.canReadTables(userWithoutRole)).isFalse();
+    assertThat(PermissionChecker.canReadTables(userWithRole)).isTrue();
   }
 
   @Test
@@ -51,8 +52,8 @@ public class PermissionCheckerTest {
     var userWithRole = userWithRoles(Role.WRITE_STAGES);
 
     // when, then
-    assertFalse(PermissionChecker.canWriteStages(userWithoutRole));
-    assertTrue(PermissionChecker.canWriteStages(userWithRole));
+    assertThat(PermissionChecker.canWriteStages(userWithoutRole)).isFalse();
+    assertThat(PermissionChecker.canWriteStages(userWithRole)).isTrue();
   }
 
   @Test
@@ -62,8 +63,8 @@ public class PermissionCheckerTest {
     var userWithRole = userWithRoles(Role.WRITE_TABLES);
 
     // when, then
-    assertFalse(PermissionChecker.canWriteTables(userWithoutRole));
-    assertTrue(PermissionChecker.canWriteTables(userWithRole));
+    assertThat(PermissionChecker.canWriteTables(userWithoutRole)).isFalse();
+    assertThat(PermissionChecker.canWriteTables(userWithRole)).isTrue();
   }
 
   private UserData userWithRoles(Role... roles) {

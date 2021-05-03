@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.common.routes;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ public class PrefixRouteTest {
     var prefixRoute = new PrefixRoute("{param}/prefix2/", expectedRoute);
 
     // when & then
-    assertThrows(IllegalStateException.class, () -> prefixRoute.get());
+    assertThatThrownBy(() -> prefixRoute.get()).isInstanceOf(IllegalStateException.class);
   }
 
   private class MyAppFragment extends AllDirectives {

@@ -1,11 +1,8 @@
 package com.github.adrian83.robome.web.common.routes;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbsRouteTest {
 
@@ -15,44 +12,43 @@ public class AbsRouteTest {
     var absRoute = new AbsRoute("/a/b/c/d/");
 
     // then
-    assertArrayEquals(new String[] {"b", "c", "d"}, absRoute.pathTail());
-    assertFalse(absRoute.emptyPath());
-    assertFalse(absRoute.startsWithParameter());
-    assertEquals("a", absRoute.pathHead());
+    assertThat(absRoute.pathTail()).isEqualTo(new String[] {"b", "c", "d"});
+    assertThat(absRoute.emptyPath()).isFalse();
+    assertThat(absRoute.startsWithParameter()).isFalse();
+    assertThat(absRoute.pathHead()).isEqualTo("a");
   }
-  
+
   @Test
   public void testEmptyAbsRouteCase1() {
     // when
     var absRoute = new AbsRoute("/");
 
     // then
-    assertArrayEquals(new String[] {}, absRoute.pathTail());
-    assertTrue(absRoute.emptyPath());
-    assertFalse(absRoute.startsWithParameter());
+    assertThat(absRoute.pathTail()).isEmpty();
+    assertThat(absRoute.emptyPath()).isTrue();
+    assertThat(absRoute.startsWithParameter()).isFalse();
   }
-  
+
   @Test
   public void testEmptyAbsRouteCase2() {
     // when
     var absRoute = new AbsRoute("");
 
     // then
-    assertArrayEquals(new String[] {}, absRoute.pathTail());
-    assertTrue(absRoute.emptyPath());
-    assertFalse(absRoute.startsWithParameter());
+    assertThat(absRoute.pathTail()).isEmpty();
+    assertThat(absRoute.emptyPath()).isTrue();
+    assertThat(absRoute.startsWithParameter()).isFalse();
   }
-  
+
   @Test
   public void testAbsRouteWithPathParameter() {
     // when
     var absRoute = new AbsRoute("/{param}/a/b");
 
     // then
-    assertArrayEquals(new String[] {"a", "b"}, absRoute.pathTail());
-    assertFalse(absRoute.emptyPath());
-    assertTrue(absRoute.startsWithParameter());
-    assertEquals("{param}", absRoute.pathHead());
+    assertThat(absRoute.pathTail()).isEqualTo(new String[] {"a", "b"});
+    assertThat(absRoute.emptyPath()).isFalse();
+    assertThat(absRoute.startsWithParameter()).isTrue();
+    assertThat(absRoute.pathHead()).isEqualTo("{param}");
   }
-  
 }
