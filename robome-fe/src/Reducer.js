@@ -1,4 +1,4 @@
-
+import { extractUserId } from './web/jwt';
 
 const Reducer = (state, action) => {
     console.log("action", action)
@@ -6,9 +6,17 @@ const Reducer = (state, action) => {
     
     switch (action.type) {
         case 'STORE_JWT_TOKEN':
-            return { ...state, authToken: action.authToken };
+            return { 
+                ...state, 
+                authToken: action.authToken,
+                userId: extractUserId(action.authToken)
+            };
         case 'REMOVE_JWT_TOKEN':
-                return { ...state, authToken: null };
+            return { 
+                ...state, 
+                authToken: null,
+                userId: null
+            };
         default:
             return state;
         }

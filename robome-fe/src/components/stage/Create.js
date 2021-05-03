@@ -15,7 +15,8 @@ import { stagesBeUrl, editStageUrl, showTableUrl } from '../../web/url';
 class CreateStage extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     constructor(props) { 
@@ -39,7 +40,8 @@ class CreateStage extends Base {
     handleSubmit(event) {
         const self = this;
         const authToken = this.props.authToken;
-        const editStgUrl = stagesBeUrl(this.props.match.params.tableId);
+        const userId = this.props.userId;
+        const editStgUrl = stagesBeUrl(userId, this.props.match.params.tableId);
         const stage = this.stageFromState();
 
         securedPost(editStgUrl, authToken, stage)
@@ -93,7 +95,10 @@ class CreateStage extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

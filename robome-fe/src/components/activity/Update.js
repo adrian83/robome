@@ -15,7 +15,8 @@ import { activityBeUrl, showTableUrl } from '../../web/url';
 class UpdateActivity extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     constructor(props) { 
@@ -40,6 +41,7 @@ class UpdateActivity extends Base {
         const authToken = this.props.authToken;
 
         const updateActUrl = activityBeUrl(
+            this.props.userId,
             this.props.match.params.tableId, 
             this.props.match.params.stageId, 
             this.props.match.params.activityId);
@@ -60,6 +62,7 @@ class UpdateActivity extends Base {
         const authToken = this.props.authToken;
         
         const getActUrl = activityBeUrl(
+            this.props.userId,
             this.props.match.params.tableId,
             this.props.match.params.stageId,
             this.props.match.params.activityId);
@@ -109,7 +112,10 @@ class UpdateActivity extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

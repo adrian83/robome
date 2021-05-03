@@ -29,7 +29,8 @@ import { listTablesUrl, loginUrl, logoutUrl, registerUrl,
 class Switch extends Component {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     render() {
@@ -60,7 +61,10 @@ class Switch extends Component {
 }
 
 const mapStateToProps = (state) => {
-    return { authToken: state.authToken };
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

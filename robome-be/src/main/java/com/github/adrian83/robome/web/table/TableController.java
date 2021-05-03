@@ -1,13 +1,16 @@
 package com.github.adrian83.robome.web.table;
 
 import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
+import static java.util.UUID.fromString;
 
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.common.UserAndForm;
+import com.github.adrian83.robome.domain.common.UserContext;
 import com.github.adrian83.robome.domain.table.TableService;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.request.DeleteTableRequest;
@@ -17,10 +20,10 @@ import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
-import com.github.adrian83.robome.web.common.routes.FormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
 import com.github.adrian83.robome.web.common.routes.OneParamRoute;
-import com.github.adrian83.robome.web.common.routes.PrefixRoute;
+import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
+import com.github.adrian83.robome.web.common.routes.TwoParamsRoute;
 import com.github.adrian83.robome.web.table.model.NewTable;
 import com.github.adrian83.robome.web.table.model.UpdateTable;
 import com.google.inject.Inject;
@@ -33,8 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TableController extends AllDirectives {
 
-  private static final String TABLES_PATH = "/tables/";
-  private static final String TABLE_PATH = "/tables/{tableId}/";
+  private static final String TABLES_PATH = "/users/{userId}/tables/";
+  private static final String TABLE_PATH = "/users/{userId}/tables/{tableId}/";
 
   private static final String LOG_LIST_TABS = "User: {} issued list tables request";
   private static final String LOG_CREATE_TAB = "User: {} issued persist table request, data: {}";
@@ -58,60 +61,84 @@ public class TableController extends AllDirectives {
 
   public Route createRoute() {
     return route(
-        get(new PrefixRoute(TABLES_PATH, security.secured(this::getTables))),
-        get(new OneParamRoute(TABLE_PATH, (tabId) -> security.secured(tabId, this::getTableById))),
+        get(
+            new OneParamRoute(
+                TABLES_PATH,
+                (resourceOwnerId) -> security.secured(resourceOwnerId, this::getTables))),
+        get(
+            new TwoParamsRoute(
+                TABLE_PATH,
+                (resourceOwnerId, tabId) ->
+                    security.secured(resourceOwnerId, tabId, this::getTableById))),
         post(
-            new FormRoute<NewTable>(
-                TABLES_PATH, NewTable.class, (clz) -> security.secured(clz, this::persistTable))),
+            new OneParamAndFormRoute<NewTable>(
+                TABLES_PATH,
+                NewTable.class,
+                (resourceOwnerId, clz) ->
+                    security.secured(resourceOwnerId, clz, this::persistTable))),
         put(
-            new OneParamAndFormRoute<UpdateTable>(
+            new TwoParamsAndFormRoute<UpdateTable>(
                 TABLE_PATH,
                 UpdateTable.class,
-                (tabId, clz) -> security.secured(tabId, clz, this::updateTable))),
+                (resourceOwnerId, tabId, clz) ->
+                    security.secured(resourceOwnerId, tabId, clz, this::updateTable))),
         delete(
-            new OneParamRoute(TABLE_PATH, (tabId) -> security.secured(tabId, this::deleteTable))),
-        options(new PrefixRoute(TABLES_PATH, complete(response.response200(GET, POST)))),
+            new TwoParamsRoute(
+                TABLE_PATH,
+                (resourceOwnerId, tabId) ->
+                    security.secured(resourceOwnerId, tabId, this::deleteTable))),
         options(
             new OneParamRoute(
-                TABLE_PATH, (tabId) -> complete(response.response200(GET, PUT, DELETE)))));
+                TABLES_PATH, (resourceOwnerId) -> complete(response.response200(GET, POST)))),
+        options(
+            new TwoParamsRoute(
+                TABLE_PATH,
+                (resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
-  private CompletionStage<HttpResponse> persistTable(CompletionStage<UserData> userF, NewTable form) {
+  private CompletionStage<HttpResponse> persistTable(
+      CompletionStage<UserData> userF, String resourceOwnerIdStr, NewTable form) {
 
     var cLog = use((UserData user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
 
     return userF
         .thenApply(cLog::apply)
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
-        .thenApply(user -> new UserAndForm<NewTable>(user, form))
+        .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
         .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toNewTableRequest(uaf.getUser(), uaf.getForm()))
+        .thenApply(uaf -> toNewTableRequest(uaf.getUserContext(), uaf.getForm()))
         .thenCompose(tableService::saveTable)
         .thenApply(table -> response.jsonFromObject(table));
   }
 
   private CompletionStage<HttpResponse> updateTable(
-      CompletionStage<UserData> userF, String tableIdStr, UpdateTable form) {
+      CompletionStage<UserData> userF,
+      String resourceOwnerIdStr,
+      String tableIdStr,
+      UpdateTable form) {
 
     var cLog = use((UserData user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
 
     return userF
         .thenApply(cLog::apply)
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
-        .thenApply(user -> new UserAndForm<UpdateTable>(user, form))
+        .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
         .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toUpdateTableRequest(uaf.getUser(), tableIdStr, uaf.getForm()))
+        .thenApply(uaf -> toUpdateTableRequest(uaf.getUserContext(), tableIdStr, uaf.getForm()))
         .thenCompose(tableService::updateTable)
         .thenApply(table -> response.jsonFromObject(table));
   }
 
   private CompletionStage<HttpResponse> deleteTable(
-      CompletionStage<UserData> userF, String tableIdStr) {
+      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
     var cLog = use((UserData user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
         .thenApply(cLog::apply)
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
         .thenCompose(tableService::deleteTable)
@@ -119,64 +146,65 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getTableById(
-      CompletionStage<UserData> userF, String tableIdStr) {
+      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
     var cLog = use((UserData user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
 
     return userF
         .thenApply(cLog::apply)
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
-        .thenApply(user -> toGetTableRequest(user, tableIdStr))
+        .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
         .thenCompose(tableService::getTable)
         .thenApply(response::jsonFromObject);
   }
 
-  private CompletionStage<HttpResponse> getTables(CompletionStage<UserData> userF) {
+  private CompletionStage<HttpResponse> getTables(
+      CompletionStage<UserData> userF, String resourceOwnerIdStr) {
 
     var cLog = use((UserData user) -> log.info(LOG_LIST_TABS, user.getEmail()));
 
     return userF
         .thenApply(cLog::apply)
+        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)
         .thenCompose(tableService::getTables)
         .thenApply(response::jsonFromObject);
   }
 
-  private ListTablesRequest toListTablesRequest(UserData user) {
-    return ListTablesRequest.builder().userId(user.getId()).build();
+  private ListTablesRequest toListTablesRequest(UserContext userCtx) {
+    return ListTablesRequest.builder().userId(userCtx.resourceOwnerIdOrError()).build();
   }
 
-  private GetTableRequest toGetTableRequest(UserData user, String tableIdStr) {
+  private GetTableRequest toGetTableRequest(UserContext userCtx, String tableIdStr) {
 
     return GetTableRequest.builder()
-        .userId(user.getId())
+        .userId(userCtx.resourceOwnerIdOrError())
         .tableKey(TableKey.parse(tableIdStr))
         .build();
   }
 
-  private DeleteTableRequest toDeleteTableRequest(UserData user, String tableIdStr) {
-
+  private DeleteTableRequest toDeleteTableRequest(UserContext userCtx, String tableIdStr) {
     return DeleteTableRequest.builder()
-        .userId(user.getId())
+        .userId(userCtx.resourceOwnerIdOrError())
         .tableKey(TableKey.parse(tableIdStr))
         .build();
   }
 
-  private UpdateTableRequest toUpdateTableRequest(UserData user, String tableIdStr, UpdateTable form) {
-
+  private UpdateTableRequest toUpdateTableRequest(
+      UserContext userCtx, String tableIdStr, UpdateTable form) {
     return UpdateTableRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
-        .userId(user.getId())
+        .userId(userCtx.resourceOwnerIdOrError())
         .title(form.getTitle())
         .description(form.getDescription())
         .build();
   }
 
-  private NewTableRequest toNewTableRequest(UserData user, NewTable form) {
-
+  private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {
     return NewTableRequest.builder()
-        .userId(user.getId())
+        .userId(userCtx.resourceOwnerIdOrError())
         .title(form.getTitle())
         .description(form.getDescription())
         .build();

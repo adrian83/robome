@@ -17,7 +17,7 @@ Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cas
 
 #### Prerequisites
 - Docker
-- Java 14
+- Java 15
 - Maven
 - Npm
 
@@ -33,3 +33,10 @@ Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cas
 2. Backend checked with [PMD](https://pmd.github.io/)
 - Execute `cd robome-be && mvn pmd:check`
 - Open file `robome-be/target/site/pmd.html`
+
+
+In case of `Error: ENOSPC: System limit for number of file watchers reached, watch...`
+For Linux:
+- edit (as su) `/etc/sysctl.conf`
+- add line `fs.inotify.max_user_watches=524288`
+- save

@@ -1,27 +1,27 @@
 
 
-export function tablesBeUrl() {
-    return `/tables`;
+export function tablesBeUrl(userId) {
+    return `/users/${userId}/tables`;
 }
 
-export function tableBeUrl(tableId) {
-    return `/tables/${tableId}`;
+export function tableBeUrl(userId, tableId) {
+    return `/users/${userId}/tables/${tableId}`;
 }
 
-export function stageBeUrl(tableId, stageId) {
-    return `/tables/${tableId}/stages/${stageId}`;
+export function stageBeUrl(userId, tableId, stageId) {
+    return `/users/${userId}/tables/${tableId}/stages/${stageId}`;
 }
 
-export function stagesBeUrl(tableId) {
-    return `/tables/${tableId}/stages`;
+export function stagesBeUrl(userId, tableId) {
+    return `/users/${userId}/tables/${tableId}/stages`;
 }
 
-export function activityBeUrl(tableId, stageId, activityId) {
-    return `/tables/${tableId}/stages/${stageId}/activities/${activityId}`;
+export function activityBeUrl(userId, tableId, stageId, activityId) {
+    return `/users/${userId}/tables/${tableId}/stages/${stageId}/activities/${activityId}`;
 }
 
-export function activitiesBeUrl(tableId, stageId) {
-    return `/tables/${tableId}/stages/${stageId}/activities`;
+export function activitiesBeUrl(userId, tableId, stageId) {
+    return `/users/${userId}/tables/${tableId}/stages/${stageId}/activities`;
 }
 
 export function loginBeUrl() { 

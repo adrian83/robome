@@ -1,16 +1,18 @@
 package com.github.adrian83.robome.auth;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import java.util.Optional;
 import java.util.UUID;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.github.adrian83.robome.auth.exception.UserNotAuthorizedException;
 import com.github.adrian83.robome.auth.model.UserData;
+import com.github.adrian83.robome.domain.common.UserContext;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.google.common.collect.Sets;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AuthorizationTest {
 
@@ -23,7 +25,7 @@ public class AuthorizationTest {
     var result = Authorization.canReadTables(admin);
 
     // then
-    assertEquals(admin, result);
+    assertThat(admin).isEqualTo(result);
   }
 
   public void shouldAdminReadStages() {
@@ -34,7 +36,7 @@ public class AuthorizationTest {
     var result = Authorization.canReadStages(admin);
 
     // then
-    assertEquals(admin, result);
+    assertThat(admin).isEqualTo(result);
   }
 
   public void shouldAdminWriteTables() {
@@ -45,7 +47,7 @@ public class AuthorizationTest {
     var result = Authorization.canWriteTables(admin);
 
     // then
-    assertEquals(admin, result);
+    assertThat(admin).isEqualTo(result);
   }
 
   public void shouldAdminWriteStages() {
@@ -56,7 +58,7 @@ public class AuthorizationTest {
     var result = Authorization.canWriteStages(admin);
 
     // then
-    assertEquals(admin, result);
+    assertThat(admin).isEqualTo(result);
   }
 
   @Test
@@ -68,7 +70,7 @@ public class AuthorizationTest {
     var result = Authorization.canReadStages(userWithRole);
 
     // then
-    assertEquals(userWithRole, result);
+    assertThat(userWithRole).isEqualTo(result);
   }
 
   @Test
@@ -77,11 +79,8 @@ public class AuthorizationTest {
     var userWithoutRole = userWithRoles();
 
     // when
-    Assertions.assertThrows(
-        UserNotAuthorizedException.class,
-        () -> {
-          Authorization.canReadStages(userWithoutRole);
-        });
+    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+        .isInstanceOf(UserNotAuthorizedException.class);
   }
 
   @Test
@@ -93,7 +92,7 @@ public class AuthorizationTest {
     var result = Authorization.canReadTables(userWithRole);
 
     // then
-    assertEquals(userWithRole, result);
+    assertThat(userWithRole).isEqualTo(result);
   }
 
   @Test
@@ -102,11 +101,8 @@ public class AuthorizationTest {
     var userWithoutRole = userWithRoles();
 
     // when
-    Assertions.assertThrows(
-        UserNotAuthorizedException.class,
-        () -> {
-          Authorization.canReadTables(userWithoutRole);
-        });
+    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+        .isInstanceOf(UserNotAuthorizedException.class);
   }
 
   @Test
@@ -118,7 +114,7 @@ public class AuthorizationTest {
     var result = Authorization.canWriteStages(userWithRole);
 
     // then
-    assertEquals(userWithRole, result);
+    assertThat(userWithRole).isEqualTo(result);
   }
 
   @Test
@@ -127,11 +123,8 @@ public class AuthorizationTest {
     var userWithoutRole = userWithRoles();
 
     // when
-    Assertions.assertThrows(
-        UserNotAuthorizedException.class,
-        () -> {
-          Authorization.canWriteStages(userWithoutRole);
-        });
+    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+        .isInstanceOf(UserNotAuthorizedException.class);
   }
 
   @Test
@@ -143,7 +136,7 @@ public class AuthorizationTest {
     var result = Authorization.canWriteTables(userWithRole);
 
     // then
-    assertEquals(userWithRole, result);
+    assertThat(userWithRole).isEqualTo(result);
   }
 
   @Test
@@ -152,18 +145,17 @@ public class AuthorizationTest {
     var userWithoutRole = userWithRoles();
 
     // when
-    Assertions.assertThrows(
-        UserNotAuthorizedException.class,
-        () -> {
-          Authorization.canWriteTables(userWithoutRole);
-        });
+    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+        .isInstanceOf(UserNotAuthorizedException.class);
   }
 
-  private UserData userWithRoles(Role... roles) {
-    return UserData.builder()
-        .id(UUID.randomUUID())
-        .email("johndoe@somedomain.com")
-        .roles(Sets.newHashSet(roles))
-        .build();
+  private UserContext userWithRoles(Role... roles) {
+    var userData =
+        UserData.builder()
+            .id(UUID.randomUUID())
+            .email("johndoe@somedomain.com")
+            .roles(Sets.newHashSet(roles))
+            .build();
+    return new UserContext(userData, Optional.empty());
   }
 }

@@ -14,7 +14,8 @@ import { tableBeUrl, showTableUrl } from '../../web/url';
 class UpdateTable extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     constructor(props) { 
@@ -43,8 +44,9 @@ class UpdateTable extends Base {
 
     handleSubmit(event) {
         const self = this;
-        const tableId = this.props.match.params.tableId
+        const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
         const table = this.tableFromState();
 
         const updatedTable = {
@@ -52,7 +54,7 @@ class UpdateTable extends Base {
             description: table.description
         };
         
-        securedPut(tableBeUrl(tableId), authToken, updatedTable)
+        securedPut(tableBeUrl(userId, tableId), authToken, updatedTable)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .then(data => self.registerInfo("Table updated"))
@@ -65,8 +67,9 @@ class UpdateTable extends Base {
         const self = this;
         const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
         
-        securedGet(tableBeUrl(tableId), authToken)
+        securedGet(tableBeUrl(userId, tableId), authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .catch(error => self.registerError(error));
@@ -123,7 +126,10 @@ class UpdateTable extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

@@ -15,7 +15,8 @@ import { tablesBeUrl, editTableUrl } from '../../web/url';
 class CreateTable extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     constructor(props) { 
@@ -46,9 +47,10 @@ class CreateTable extends Base {
     handleSubmit(event) {
         const self = this;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
         const table = this.tableFromState();
 
-        securedPost(tablesBeUrl(), authToken, table)
+        securedPost(tablesBeUrl(userId), authToken, table)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .catch(error => self.registerError(error));
@@ -101,7 +103,10 @@ class CreateTable extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return {authToken: state.authToken};
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

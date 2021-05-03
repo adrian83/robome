@@ -9,6 +9,7 @@ import java.util.function.Function;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.model.UserData;
+import com.github.adrian83.robome.common.function.HexaFunction;
 import com.github.adrian83.robome.common.function.PentaFunction;
 import com.github.adrian83.robome.common.function.TetraFunction;
 import com.github.adrian83.robome.common.function.TriFunction;
@@ -135,6 +136,65 @@ public class Security extends AllDirectives {
 
     return withUserFromAuthHeader(apply);
   }
+
+  public <T> Route secured(
+      String p1,
+      String p2,
+      String p3,
+      Class<T> clazz,
+      PentaFunction<
+              CompletionStage<UserData>, String, String, String, T, CompletionStage<HttpResponse>>
+          logic) {
+
+    Function<CompletionStage<UserData>, Route> apply =
+        (userF) ->
+            entity(
+                unmarshaller(clazz),
+                form -> handleExceptions(logic.apply(userF, p1, p2, p3, form)));
+
+    return withUserFromAuthHeader(apply);
+  }
+
+  public <T> Route secured(
+      String p1,
+      String p2,
+      String p3,
+      String p4,
+      PentaFunction<
+              CompletionStage<UserData>,
+              String,
+              String,
+              String,
+              String,
+              CompletionStage<HttpResponse>>
+          logic) {
+	  
+	
+
+    Function<CompletionStage<UserData>, Route> apply =
+        (userF) -> handleExceptions(logic.apply(userF, p1, p2, p3, p4));
+
+    return withUserFromAuthHeader(apply);
+  }
+  
+  public <T> Route secured(
+	      String p1,
+	      String p2,
+	      String p3,
+	      String p4,
+	      Class<T> clazz,
+	      HexaFunction<
+	              CompletionStage<UserData>, String, String, String, String, T, CompletionStage<HttpResponse>>
+	          logic) {
+
+	    Function<CompletionStage<UserData>, Route> apply =
+	        (userF) ->
+	            entity(
+	                unmarshaller(clazz),
+	                form -> handleExceptions(logic.apply(userF, p1, p2, p3, p4, form)));
+
+	    return withUserFromAuthHeader(apply);
+	  }
 
   public <T> Route unsecured(Class<T> clazz, Function<T, CompletionStage<HttpResponse>> logic) {
     return entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(form)));

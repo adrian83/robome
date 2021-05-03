@@ -19,7 +19,8 @@ import { editActivityUrl, createActivityUrl, editStageUrl, tableBeUrl, editTable
 class ShowTable extends Base {
 
     static propTypes = {
-        authToken: PropTypes.string
+        authToken: PropTypes.string,
+        userId: PropTypes.string
     };
 
     constructor(props) { 
@@ -36,8 +37,9 @@ class ShowTable extends Base {
         const self = this;
         const tableId = this.props.match.params.tableId;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
 
-        securedGet(tableBeUrl(tableId), authToken)
+        securedGet(tableBeUrl(userId, tableId), authToken)
             .then(response => response.json())
             .then(data => self.setState({table: data}))
             .catch(error => self.registerError(error));
@@ -81,9 +83,10 @@ class ShowTable extends Base {
     deleteStage(stageKey) {
         const self = this;
         const authToken = this.props.authToken;
+        const userId = this.props.userId;
 
         return function(event) {
-            securedDelete(stageBeUrl(stageKey.tableId, stageKey.stageId), authToken)
+            securedDelete(stageBeUrl(userId, stageKey.tableId, stageKey.stageId), authToken)
                 .then(function(_){
                     var table = self.tableFromState();
                     table.stages = table.stages.filter((stage, index, arr) => stage.key.stageId !== stageKey.stageId);
@@ -98,7 +101,11 @@ class ShowTable extends Base {
     deleteActivity(activityKey) {
         const self = this;
         const authToken = self.props.authToken;
-        const delStgUrl = activityBeUrl(activityKey.tableId, activityKey.stageId, activityKey.activityId);
+        const delStgUrl = activityBeUrl(
+            self.props.userId, 
+            activityKey.tableId, 
+            activityKey.stageId, 
+            activityKey.activityId);
 
         return function(event) {
             securedDelete(delStgUrl, authToken)
@@ -132,6 +139,7 @@ class ShowTable extends Base {
             var act = self.state.move;
 
             const editUrl = activitiesBeUrl(
+                self.props.userId,
                 act.key.tableId, 
                 destStage.key.stageId);
     
@@ -141,7 +149,8 @@ class ShowTable extends Base {
                 .then(response => response.json())
                 .then(function(newAct){
 
-                var delActUrl = activityBeUrl(  
+                var delActUrl = activityBeUrl( 
+                    self.props.userId, 
                     act.key.tableId, 
                     act.key.stageId,
                     act.key.activityId);
@@ -244,8 +253,11 @@ class ShowTable extends Base {
     }
 }
 
-const mapStateToProps = (state) =>{
-    return {authToken: state.authToken};
+const mapStateToProps = (state) => {
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

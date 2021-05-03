@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl, isSignedInUrl } from '../../web/url';
-import securedGet from '../../web/ajax';
+import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl } from '../../web/url';
+import extractExpirationTs from '../../web/jwt';
 
 import Base from '../Base';
 
@@ -18,29 +18,29 @@ class UpperMenu extends Base {
 
     static propTypes = {
         authToken: PropTypes.string,
-        invalidateToken: PropTypes.func
+        invalidateToken: PropTypes.func,
+        userId: PropTypes.string
     };
 
     componentDidMount() {
         const self = this;
         const authToken = this.props.authToken;
 
+        console.log('-- auth token:', authToken);
+
         if(!authToken){
             return
         }
 
-        securedGet(isSignedInUrl(), authToken)
-            .then(function(response) { 
-                if(response.status !== 200) {
-                    self.props.invalidateToken();
-                }
-            })
-            .catch(function(error){
-                if(error.status === 401){
-                    self.props.invalidateToken();
-                }
-                self.registerError(error)
-            });
+        const nowUtc = Math.floor(Date.now() / 1000);
+        const tokenValidTs = extractExpirationTs(authToken);
+
+        console.log('-- now (utc):', nowUtc);
+        console.log('-- token valid until (utc):', tokenValidTs);
+
+        if(nowUtc > tokenValidTs) {
+            self.props.invalidateToken();
+        }
     }
 
     render() {
@@ -62,7 +62,10 @@ class UpperMenu extends Base {
 }
 
 const mapStateToProps = (state) => {
-    return { authToken: state.authToken };
+    return {
+        authToken: state.authToken,
+        userId: state.userId
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {

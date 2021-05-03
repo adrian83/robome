@@ -2,8 +2,8 @@ package com.github.adrian83.robome.domain.table;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,7 +15,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -34,7 +33,6 @@ import com.github.adrian83.robome.domain.table.model.TableState;
 import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
 
-import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.stream.javadsl.Source;
 
@@ -48,7 +46,7 @@ public class TableServiceTest {
       new TableService(tableRepositoryMock, stageServiceMock, actorSystem);
 
   private UserData user =
-		  UserData.builder()
+      UserData.builder()
           .id(UUID.randomUUID())
           .email("johndoe@somedomain.com")
           .roles(Collections.emptySet())
@@ -105,46 +103,36 @@ public class TableServiceTest {
 
     // when
     var tableF = tableService.getTable(getTableReq);
+    var resultTable = tableF.toCompletableFuture().get(1, SECONDS);
 
     // then
     verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-
-    // this doesn't for in mockito for now
-    // verify(stageServiceMock).getTableStages(any(User.class), any(TableKey.class));
-
-    var resultTable = tableF.toCompletableFuture().get(5, SECONDS);
+    verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
 
     assertTable(tableEntity1, resultTable);
-
-    assertEquals(1, resultTable.getStages().size());
-    var resultStage = resultTable.getStages().get(0);
-
-    assertStage(stage, resultStage);
+    assertThat(resultTable.getStages()).hasSize(1);
+    assertStage(stage, resultTable.getStages().get(0));
   }
 
   @Test()
   public void shouldNotReturnTableForGivenKeyAndUser()
       throws InterruptedException, ExecutionException, TimeoutException {
     // given
-    var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
-    Source<TableEntity, NotUsed> tableSource = Source.empty();
+    // var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
     var getTableReq = GetTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build();
 
-    when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
-    when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
+    when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
+    // when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
     // when
     var tableF = tableService.getTable(getTableReq);
 
     // then
+    assertThatThrownBy(() -> tableF.toCompletableFuture().get(1, SECONDS))
+        .isInstanceOf(ExecutionException.class);
+
     verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
     verify(stageServiceMock, never()).getTableStages(any(ListTableStagesRequest.class));
-
-    assertThrows(
-        ExecutionException.class,
-        () -> {
-          tableF.toCompletableFuture().get(2, SECONDS);
-        });
   }
 
   @Test
@@ -159,15 +147,18 @@ public class TableServiceTest {
 
     // when
     var tablesF = tableService.getTables(listTablesReq);
+    var tables = tablesF.toCompletableFuture().get(1, SECONDS);
 
     // then
     verify(tableRepositoryMock).getUserTables(any(UUID.class));
 
-    var tables = tablesF.toCompletableFuture().get(2, SECONDS);
-    assertEquals(entities.size(), tables.size());
+    assertThat(entities).hasSize(tables.size());
 
-    IntStream.range(0, entities.size()).forEach((i) -> assertTable(entities.get(i), tables.get(i)));
+    assertThat(entities)
+        .anySatisfy(
+            tableEntity -> assertThat(tables).anySatisfy(table -> assertTable(tableEntity, table)));
   }
+
   /*
       @Test
       public void shouldSaveTable() throws InterruptedException, ExecutionException, TimeoutException {
@@ -241,21 +232,21 @@ public class TableServiceTest {
       }
     */
   public void assertTable(TableEntity expected, Table actual) {
-    assertEquals(expected.getKey(), actual.getKey());
-    assertEquals(expected.getUserId(), actual.getUserId());
-    assertEquals(expected.getTitle(), actual.getTitle());
-    assertEquals(expected.getDescription(), actual.getDescription());
-    assertEquals(expected.getState(), actual.getState());
-    assertEquals(expected.getCreatedAt(), actual.getCreatedAt());
-    assertEquals(expected.getModifiedAt(), actual.getModifiedAt());
+    assertThat(expected.getKey()).isEqualTo(actual.getKey());
+    assertThat(expected.getUserId()).isEqualTo(actual.getUserId());
+    assertThat(expected.getTitle()).isEqualTo(actual.getTitle());
+    assertThat(expected.getDescription()).isEqualTo(actual.getDescription());
+    assertThat(expected.getState()).isEqualTo(actual.getState());
+    assertThat(expected.getCreatedAt()).isEqualTo(actual.getCreatedAt());
+    assertThat(expected.getModifiedAt()).isEqualTo(actual.getModifiedAt());
   }
 
   public void assertStage(Stage expected, Stage actual) {
-    assertEquals(expected.getKey(), actual.getKey());
-    assertEquals(expected.getUserId(), actual.getUserId());
-    assertEquals(expected.getTitle(), actual.getTitle());
-    assertEquals(expected.getState(), actual.getState());
-    assertEquals(expected.getCreatedAt(), actual.getCreatedAt());
-    assertEquals(expected.getModifiedAt(), actual.getModifiedAt());
+    assertThat(expected.getKey()).isEqualTo(actual.getKey());
+    assertThat(expected.getUserId()).isEqualTo(actual.getUserId());
+    assertThat(expected.getTitle()).isEqualTo(actual.getTitle());
+    assertThat(expected.getState()).isEqualTo(actual.getState());
+    assertThat(expected.getCreatedAt()).isEqualTo(actual.getCreatedAt());
+    assertThat(expected.getModifiedAt()).isEqualTo(actual.getModifiedAt());
   }
 }
