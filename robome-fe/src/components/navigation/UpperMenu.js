@@ -26,31 +26,21 @@ class UpperMenu extends Base {
         const self = this;
         const authToken = this.props.authToken;
 
+        console.log('-- auth token:', authToken);
+
         if(!authToken){
             return
         }
 
-        //console.log('now', Math.floor(Date.now() / 1000));
-
         const nowUtc = Math.floor(Date.now() / 1000);
         const tokenValidTs = extractExpirationTs(authToken);
+
+        console.log('-- now (utc):', nowUtc);
+        console.log('-- token valid until (utc):', tokenValidTs);
 
         if(nowUtc > tokenValidTs) {
             self.props.invalidateToken();
         }
-
-        // securedGet(isSignedInUrl(), authToken)
-        //     .then(function(response) { 
-        //         if(response.status !== 200) {
-        //             self.props.invalidateToken();
-        //         }
-        //     })
-        //     .catch(function(error){
-        //         if(error.status === 401){
-        //             self.props.invalidateToken();
-        //         }
-        //         self.registerError(error)
-        //     });
     }
 
     render() {
