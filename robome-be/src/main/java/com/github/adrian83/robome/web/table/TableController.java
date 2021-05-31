@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.table;
 
-import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.common.Logging.logAction;
 import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 import static java.util.UUID.fromString;
@@ -39,14 +39,11 @@ public class TableController extends AllDirectives {
   private static final String TABLES_PATH = "/users/{userId}/tables/";
   private static final String TABLE_PATH = "/users/{userId}/tables/{tableId}/";
 
-  private static final String LOG_LIST_TABS = "User: {} issued list tables request";
-  private static final String LOG_CREATE_TAB = "User: {} issued persist table request, data: {}";
-  private static final String LOG_GET_TAB_BY_ID =
-      "User: {} issued get table by id request, tableId: {}";
-  private static final String LOG_DEL_TAB_BY_ID =
-      "User: {} issued delete table by id request, tableId: {}";
-  private static final String LOG_UPDATE_TAB =
-      "User: {} issued update table request, tableId: {}, data: {}";
+  private static final String LOG_LIST_TABS = "list tables request";
+  private static final String LOG_CREATE_TAB = "persist table request, data: {}";
+  private static final String LOG_GET_TAB_BY_ID = "get table by id request, tableId: {}";
+  private static final String LOG_DEL_TAB_BY_ID = "delete table by id request, tableId: {}";
+  private static final String LOG_UPDATE_TAB = "update table request, tableId: {}, data: {}";
 
   private TableService tableService;
   private Response response;
@@ -96,13 +93,11 @@ public class TableController extends AllDirectives {
                 (resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
+  
   private CompletionStage<HttpResponse> persistTable(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, NewTable form) {
 
-    var cLog = use((UserData user) -> log.info(LOG_CREATE_TAB, user.getEmail(), form));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_CREATE_TAB, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
@@ -118,10 +113,7 @@ public class TableController extends AllDirectives {
       String tableIdStr,
       UpdateTable form) {
 
-    var cLog = use((UserData user) -> log.info(LOG_UPDATE_TAB, user.getEmail(), tableIdStr, form));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_UPDATE_TAB, tableIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
@@ -134,10 +126,7 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> deleteTable(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
-    var cLog = use((UserData user) -> log.info(LOG_DEL_TAB_BY_ID, user.getEmail(), tableIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_DEL_TAB_BY_ID, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
@@ -148,10 +137,7 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> getTableById(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
-    var cLog = use((UserData user) -> log.info(LOG_GET_TAB_BY_ID, user.getEmail(), tableIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_GET_TAB_BY_ID, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
@@ -162,10 +148,7 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> getTables(
       CompletionStage<UserData> userF, String resourceOwnerIdStr) {
 
-    var cLog = use((UserData user) -> log.info(LOG_LIST_TABS, user.getEmail()));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_LIST_TABS)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)

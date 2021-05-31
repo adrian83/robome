@@ -32,9 +32,7 @@ public class HealthController extends AllDirectives {
   }
 
   private Route createAppStatus() {
-
     log.info("Checking application status: {}", OK);
-
     return complete(response.jsonFromObject(new AppStatus(OK)));
   }
 }
