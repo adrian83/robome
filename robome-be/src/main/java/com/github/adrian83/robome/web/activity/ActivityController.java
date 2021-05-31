@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.activity;
 
-import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.common.Logging.logAction;
 import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 import static java.util.UUID.fromString;
@@ -43,15 +43,15 @@ public class ActivityController extends AllDirectives {
       "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
 
   private static final String LOG_LIST_ACTS =
-      "User: {} issued list stage's activities request, tableId: {}, stageId: {}";
+      "list stage's activities request, tableId: {}, stageId: {}";
   private static final String LOG_CREATE_ACT =
-      "User: {} issued persist activity request, tableId: {}, stageId: {}, data: {}";
+      "persist activity request, tableId: {}, stageId: {}, data: {}";
   private static final String LOG_GET_ACT_BY_ID =
-      "User: {} issued get activity by id request, tableId: {}, stageId: {}, activityId: {}";
+      "get activity by id request, tableId: {}, stageId: {}, activityId: {}";
   private static final String LOG_DEL_ACT_BY_ID =
-      "User: {} issued delete activity by id request, tableId: {}, stageId: {}, activityId: {}";
+      "delete activity by id request, tableId: {}, stageId: {}, activityId: {}";
   private static final String LOG_UPDATE_ACT =
-      "User: {} issued update activity request, tableId: {}, stageId: {}, activityId: {}, data: {}";
+      "update activity request, tableId: {}, stageId: {}, activityId: {}, data: {}";
 
   private ActivityService activityService;
   private Security security;
@@ -112,13 +112,7 @@ public class ActivityController extends AllDirectives {
       String stageIdStr,
       NewActivity form) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(LOG_CREATE_ACT, user.getEmail(), tableIdStr, stageIdStr, form));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_CREATE_ACT, tableIdStr, stageIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<NewActivity>(userCtx, form))
@@ -139,14 +133,7 @@ public class ActivityController extends AllDirectives {
       String activityIdStr,
       UpdateActivity form) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(
-                    LOG_UPDATE_ACT, user.getEmail(), tableIdStr, stageIdStr, activityIdStr, form));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_UPDATE_ACT, tableIdStr, stageIdStr, activityIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form))
@@ -166,14 +153,7 @@ public class ActivityController extends AllDirectives {
       String stageIdStr,
       String activityIdStr) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(
-                    LOG_DEL_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_DEL_ACT_BY_ID, tableIdStr, stageIdStr, activityIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(
@@ -189,14 +169,7 @@ public class ActivityController extends AllDirectives {
       String stageIdStr,
       String activityIdStr) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(
-                    LOG_GET_ACT_BY_ID, user.getEmail(), tableIdStr, stageIdStr, activityIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_GET_ACT_BY_ID, tableIdStr, stageIdStr, activityIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toGetActivityRequest(userCtx, tableIdStr, stageIdStr, activityIdStr))
@@ -210,11 +183,7 @@ public class ActivityController extends AllDirectives {
       String tableIdStr,
       String stageIdStr) {
 
-    var cLog =
-        use((UserData user) -> log.info(LOG_LIST_ACTS, user.getEmail(), tableIdStr, stageIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_LIST_ACTS, tableIdStr, stageIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toListStageActivitiesRequest(userCtx, tableIdStr, stageIdStr))

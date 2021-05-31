@@ -9,6 +9,7 @@ import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.auth.model.command.LoginRequest;
 import com.github.adrian83.robome.auth.model.command.RegisterRequest;
+import com.github.adrian83.robome.common.Logging;
 import com.github.adrian83.robome.common.validation.Validation;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
@@ -33,7 +34,7 @@ public class AuthController extends AllDirectives {
 
   private static final String LOG_LOGIN = "Loging in: {}";
   private static final String LOG_REGISTER = "Registering: {}";
-  private static final String LOG_IS_LOGGEDIN = "User: {} is checking if token is valid";
+  private static final String LOG_IS_LOGGEDIN = "checking if token is valid";
 
   private Response response;
   private Security security;
@@ -89,10 +90,7 @@ public class AuthController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> isSignedIn(CompletionStage<UserData> userF) {
-
-    var cLog = use((UserData user) -> log.info(LOG_IS_LOGGEDIN, user));
-
-    return userF.thenApply(cLog::apply).thenApply(user -> response.response200());
+    return Logging.logAction(log, userF, LOG_IS_LOGGEDIN).thenApply(user -> response.response200());
   }
 
   private LoginRequest toLoginRequest(Login form) {

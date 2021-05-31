@@ -1,6 +1,6 @@
 package com.github.adrian83.robome.web.stage;
 
-import static com.github.adrian83.robome.common.function.Functions.use;
+import static com.github.adrian83.robome.common.Logging.logAction;
 import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
 import static java.util.UUID.fromString;
@@ -40,16 +40,14 @@ public class StageController extends AllDirectives {
   private static final String STAGES_PATH = "/users/{userId}/tables/{tableId}/stages/";
   private static final String STAGE_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/";
 
-  private static final String LOG_LIST_STGS =
-      "User: {} issued list stages by table request, tableId: {}";
-  private static final String LOG_CREATE_STG =
-      "User: {} issued persist stage request, tableId: {}, data: {}";
+  private static final String LOG_LIST_STGS = "list stages by table request, tableId: {}";
+  private static final String LOG_CREATE_STG = "persist stage request, tableId: {}, data: {}";
   private static final String LOG_GET_STG_BY_ID =
-      "User: {} issued get stage by id request, tableId: {}, stageId: {}";
+      "get stage by id request, tableId: {}, stageId: {}";
   private static final String LOG_DEL_STG_BY_ID =
-      "User: {} issued delete stage by id request, tableId: {}, stageId: {}";
+      "delete stage by id request, tableId: {}, stageId: {}";
   private static final String LOG_UPDATE_STG =
-      "User: {} issued update stage request, tableId: {}, stageId: {}, data: {}";
+      "update stage request, tableId: {}, stageId: {}, data: {}";
 
   private StageService stageService;
   private Response response;
@@ -108,10 +106,7 @@ public class StageController extends AllDirectives {
       String tableIdStr,
       NewStage form) {
 
-    var cLog = use((UserData user) -> log.info(LOG_CREATE_STG, user.getEmail(), tableIdStr, form));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_CREATE_STG, tableIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<NewStage>(userCtx, form))
@@ -128,13 +123,7 @@ public class StageController extends AllDirectives {
       String stageIdStr,
       UpdateStage form) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(LOG_UPDATE_STG, user.getEmail(), tableIdStr, stageIdStr, form));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_UPDATE_STG, tableIdStr, stageIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<UpdateStage>(userCtx, form))
@@ -152,13 +141,7 @@ public class StageController extends AllDirectives {
       String tableIdStr,
       String stageIdStr) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(LOG_DEL_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_DEL_STG_BY_ID, tableIdStr, stageIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> toDeleteStageRequest(userCtx, tableIdStr, stageIdStr))
@@ -172,13 +155,7 @@ public class StageController extends AllDirectives {
       String tableIdStr,
       String stageIdStr) {
 
-    var cLog =
-        use(
-            (UserData user) ->
-                log.info(LOG_GET_STG_BY_ID, user.getEmail(), tableIdStr, stageIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_GET_STG_BY_ID, tableIdStr, stageIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toGetStageRequest(userCtx, tableIdStr, stageIdStr))
@@ -189,10 +166,7 @@ public class StageController extends AllDirectives {
   private CompletionStage<HttpResponse> getTableStages(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
-    var cLog = use((UserData user) -> log.info(LOG_LIST_STGS, user.getEmail(), tableIdStr));
-
-    return userF
-        .thenApply(cLog::apply)
+    return logAction(log, userF, LOG_LIST_STGS, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toListTableStagesRequest(userCtx, tableIdStr))
