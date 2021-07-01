@@ -1,9 +1,12 @@
 import jwt_decode from "jwt-decode";
 
 function extractClaim(jwtToken, claim) {
+    console.log("claim", claim, "jwtToken", jwtToken);
     var decoded = jwt_decode(jwtToken);
-    //console.log('decoded', decoded);
-    return decoded[claim];
+    console.log('decoded', decoded);
+    var j = decoded[claim];
+    console.log("claim", claim, "value", j);
+    return j;
 }
 
 export function extractUserId(jwtToken){

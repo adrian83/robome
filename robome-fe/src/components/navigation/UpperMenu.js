@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import { listTablesUrl, loginUrl, logoutUrl, registerUrl, healthUrl } from '../../web/url';
-import extractExpirationTs from '../../web/jwt';
+import { extractExpirationTs } from '../../web/jwt';
 
 import Base from '../Base';
 
@@ -26,17 +26,12 @@ class UpperMenu extends Base {
         const self = this;
         const authToken = this.props.authToken;
 
-        console.log('-- auth token:', authToken);
-
         if(!authToken){
             return
         }
 
         const nowUtc = Math.floor(Date.now() / 1000);
         const tokenValidTs = extractExpirationTs(authToken);
-
-        console.log('-- now (utc):', nowUtc);
-        console.log('-- token valid until (utc):', tokenValidTs);
 
         if(nowUtc > tokenValidTs) {
             self.props.invalidateToken();
