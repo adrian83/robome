@@ -40,8 +40,7 @@ public class JwtAuthorizer {
       return JWT.create()
           .withSubject(user.getEmail())
           .withClaim(ID_CLAIM, user.getId().toString())
-          .withArrayClaim(
-              ROLES_CLAIM, user.getRoles().stream().map(r -> r.name()).toArray(String[]::new))
+          .withArrayClaim(ROLES_CLAIM, user.roleName())
           .withIssuer(TOKEN_ISSUER)
           .withExpiresAt(expirationDate())
           .sign(SECURITY_ALGORITHM);

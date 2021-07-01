@@ -4,12 +4,9 @@ import static com.github.adrian83.robome.common.function.Functions.use;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-
 import com.github.adrian83.robome.auth.Authentication;
-import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.auth.model.command.LoginRequest;
 import com.github.adrian83.robome.auth.model.command.RegisterRequest;
-import com.github.adrian83.robome.common.Logging;
 import com.github.adrian83.robome.common.validation.Validation;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
@@ -19,7 +16,6 @@ import com.github.adrian83.robome.web.common.http.HttpMethod;
 import com.github.adrian83.robome.web.common.routes.FormRoute;
 import com.github.adrian83.robome.web.common.routes.PrefixRoute;
 import com.google.inject.Inject;
-
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
@@ -30,11 +26,9 @@ public class AuthController extends AllDirectives {
 
   private static final String LOGIN_PATH = "/auth/login/";
   private static final String REGISTER_PATH = "/auth/register/";
-  private static final String CHECK_PATH = "/auth/check/";
 
   private static final String LOG_LOGIN = "Loging in: {}";
   private static final String LOG_REGISTER = "Registering: {}";
-  private static final String LOG_IS_LOGGEDIN = "checking if token is valid";
 
   private Response response;
   private Security security;
@@ -58,9 +52,7 @@ public class AuthController extends AllDirectives {
                 REGISTER_PATH,
                 Register.class,
                 (clz) -> security.unsecured(clz, this::registerUser))),
-        options(new PrefixRoute(REGISTER_PATH, complete(response.response200(HttpMethod.POST)))),
-        get(new PrefixRoute(CHECK_PATH, security.secured(this::isSignedIn))),
-        options(new PrefixRoute(CHECK_PATH, complete(response.response200(HttpMethod.GET)))));
+        options(new PrefixRoute(REGISTER_PATH, complete(response.response200(HttpMethod.POST)))));
   }
 
   private CompletionStage<HttpResponse> loginUser(Login login) {
@@ -87,10 +79,6 @@ public class AuthController extends AllDirectives {
         .thenApply(v -> toRegisterRequest(register))
         .thenCompose(authentication::registerUser)
         .thenApply(done -> response.response201());
-  }
-
-  private CompletionStage<HttpResponse> isSignedIn(CompletionStage<UserData> userF) {
-    return Logging.logAction(log, userF, LOG_IS_LOGGEDIN).thenApply(user -> response.response200());
   }
 
   private LoginRequest toLoginRequest(Login form) {

@@ -14,4 +14,8 @@ public class UserData {
   private UUID id;
   private String email;
   private Set<Role> roles;
+
+  public String[] roleName() {
+    return roles.stream().map(Role::name).toArray(String[]::new);
+  }
 }

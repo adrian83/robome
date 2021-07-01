@@ -92,6 +92,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-actor-testkit-typed_${scala.binary.version}</artifactId>
+			<version>${akka.stream.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>${guice.version}</version>
@@ -188,12 +195,12 @@
 			<scope>test</scope>
 		</dependency>
 
-<dependency>
-    <groupId>org.assertj</groupId>
-    <artifactId>assertj-core</artifactId>
-    <version>${assertj.version}</version>
-    <scope>test</scope>
-</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>${assertj.version}</version>
+			<scope>test</scope>
+		</dependency>
 
 
 	</dependencies>
