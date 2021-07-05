@@ -3,6 +3,7 @@ package com.github.adrian83.robome.domain.stage;
 import static java.util.Collections.emptyList;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.common.Time;
@@ -79,12 +80,12 @@ public class StageService {
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<Stage> getStage(GetStageRequest req) {
+  public CompletionStage<Optional<Stage>> getStage(GetStageRequest req) {
     return stageRepository
         .getById(req.getStageKey(), req.getUserId())
         .map(this::toStage)
         .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
-        .runWith(Sink.head(), actorSystem);
+        .runWith(Sink.headOption(), actorSystem);
   }
 
   public CompletionStage<List<Stage>> getTableStages(ListTableStagesRequest req) {

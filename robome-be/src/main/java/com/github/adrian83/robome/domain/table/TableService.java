@@ -2,6 +2,7 @@ package com.github.adrian83.robome.domain.table;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.common.Time;
@@ -80,12 +81,12 @@ public class TableService {
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<Table> getTable(GetTableRequest req) {
+  public CompletionStage<Optional<Table>> getTable(GetTableRequest req) {
     return tableRepository
         .getById(req.getUserId(), req.getTableKey().getTableId())
         .map(this::toTable)
         .mapAsync(DEFAULT_PARALLERISM, this::getTableWithStages)
-        .runWith(Sink.head(), actorSystem);
+        .runWith(Sink.headOption(), actorSystem);
   }
 
   public CompletionStage<List<Table>> getTables(ListTablesRequest req) {

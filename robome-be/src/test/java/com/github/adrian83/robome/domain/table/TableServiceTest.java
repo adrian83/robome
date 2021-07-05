@@ -102,16 +102,20 @@ public class TableServiceTest {
     when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
     // when
-    var tableF = tableService.getTable(getTableReq);
-    var resultTable = tableF.toCompletableFuture().get(1, SECONDS);
+    var maybeTableF = tableService.getTable(getTableReq);
+    var maybeTable = maybeTableF.toCompletableFuture().get(1, SECONDS);
 
     // then
     verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
     verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
 
-    assertTable(tableEntity1, resultTable);
-    assertThat(resultTable.getStages()).hasSize(1);
-    assertStage(stage, resultTable.getStages().get(0));
+    assertThat(maybeTable).isNotEmpty();
+    
+    var table = maybeTable.get();
+    
+    assertTable(tableEntity1, table);
+    assertThat(table.getStages()).hasSize(1);
+    assertStage(stage, table.getStages().get(0));
   }
 
   @Test()
@@ -125,14 +129,11 @@ public class TableServiceTest {
     // when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
     // when
-    var tableF = tableService.getTable(getTableReq);
+    var maybeTableF = tableService.getTable(getTableReq);
+    var maybeTable = maybeTableF.toCompletableFuture().get(1, SECONDS);
 
     // then
-    assertThatThrownBy(() -> tableF.toCompletableFuture().get(1, SECONDS))
-        .isInstanceOf(ExecutionException.class);
-
-    verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-    verify(stageServiceMock, never()).getTableStages(any(ListTableStagesRequest.class));
+    assertThat(maybeTable).isEmpty();
   }
 
   @Test

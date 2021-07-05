@@ -1,6 +1,7 @@
 package com.github.adrian83.robome.domain.activity;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import com.github.adrian83.robome.common.Time;
@@ -70,11 +71,11 @@ public class ActivityService {
         .runWith(Sink.head(), actorSystem);
   }
 
-  public CompletionStage<Activity> getActivity(GetActivityRequest req) {
+  public CompletionStage<Optional<Activity>> getActivity(GetActivityRequest req) {
     return activityRepository
         .getById(req.getActivityKey(), req.getUserId())
         .map(this::toActivity)
-        .runWith(Sink.head(), actorSystem);
+        .runWith(Sink.headOption(), actorSystem);
   }
 
   public CompletionStage<List<Activity>> getStageActivities(ListStageActivitiesRequest req) {
