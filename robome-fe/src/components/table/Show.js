@@ -46,35 +46,42 @@ class ShowTable extends Base {
     }
 
     render() {
-        var table = this.tableFromState();
-        if(!table.title) {
-            return (<div>waiting for table data</div>);
-        }
-
-        var tableData = this.renderTable(table);
-        return (<div>{tableData}</div>);
-    }
-
-    renderTable(table) {
         var self = this;
 
-        var editTabUrl = editTableUrl(table.key.tableId);
-        var newStgUrl = createStageUrl(table.key.tableId);
+        var table = this.tableFromState();
 
-        var stages = table.stages.map(stage => self.renderStage(stage));
+        var stages = [];
+        var title = (<div></div>);
+        var editTabLink = (<div></div>);
+        var newStgLink = (<div></div>);
+
+
+        if(table.key){
+            title = (<Title title={this.state.table.title} description={this.state.table.description} ></Title>);
+
+            var editTabUrl = editTableUrl(table.key.tableId);
+            editTabLink = (<EditLink to={editTabUrl} text="edit table"></EditLink>);
+
+            var newStgUrl = createStageUrl(table.key.tableId);
+            newStgLink = (<CreateLink to={newStgUrl} text="new stage"></CreateLink>);
+    
+            stages = table.stages ? table.stages.map(stage => self.renderStage(stage)) : [];
+        }
 
         return (
             <div>
-                <Title title={this.state.table.title} description={this.state.table.description} ></Title>
+                {title}
                 
                 <Error errors={this.errors()} hideError={this.hideError} ></Error>
                 <Info info={this.info()} hideInfo={this.hideInfo} ></Info>
                 
                 <div>
-                    <EditLink to={editTabUrl} text="edit table"></EditLink>
-                    <CreateLink to={newStgUrl} text="new stage"></CreateLink>
+                    {editTabLink}
+                    {newStgLink}
                 </div>
+
                 <br/><br/>
+
                 {stages}
             </div>
             );
@@ -83,13 +90,17 @@ class ShowTable extends Base {
     deleteStage(stageKey) {
         const self = this;
         const authToken = this.props.authToken;
-        const userId = this.props.userId;
+
+        const delStageUrl = stageBeUrl(
+            this.props.userId, 
+            stageKey.tableId, 
+            stageKey.stageId);
 
         return function(event) {
-            securedDelete(stageBeUrl(userId, stageKey.tableId, stageKey.stageId), authToken)
+            securedDelete(delStageUrl, authToken)
                 .then(function(_){
                     var table = self.tableFromState();
-                    table.stages = table.stages.filter((stage, index, arr) => stage.key.stageId !== stageKey.stageId);
+                    table.stages = table.stages.filter(stage => stage.key.stageId !== stageKey.stageId);
                     self.setState({table: table});
                 })
                 .catch(error => self.registerError(error));
@@ -101,18 +112,19 @@ class ShowTable extends Base {
     deleteActivity(activityKey) {
         const self = this;
         const authToken = self.props.authToken;
-        const delStgUrl = activityBeUrl(
+
+        const delActivityUrl = activityBeUrl(
             self.props.userId, 
             activityKey.tableId, 
             activityKey.stageId, 
             activityKey.activityId);
 
         return function(event) {
-            securedDelete(delStgUrl, authToken)
-                .then(function(response){
+            securedDelete(delActivityUrl, authToken)
+                .then(function(_){
                     var table = self.tableFromState();
-                    table.stages.forEach(function(stage, index){
-                        stage.activities = stage.activities.filter((activity, index, arr) => activity.key.activityId !== activityKey.activityId);
+                    table.stages.forEach(function(stage, _){
+                        stage.activities = stage.activities.filter(activity => activity.key.activityId !== activityKey.activityId);
                     })
                     self.setState({table: table});
                 })
@@ -165,7 +177,7 @@ class ShowTable extends Base {
                     stage.activities.push(newAct);
                     
                     var sourceStage = table.stages.find(s => s.key.stageId === sourceStageId);
-                    var activities = sourceStage.activities.filter((activity, index, arr) => activity.key.activityId !== act.key.activityId);
+                    var activities = sourceStage.activities.filter(activity => activity.key.activityId !== act.key.activityId);
                     sourceStage.activities = activities;
 
                     self.setState({table: table});
@@ -175,13 +187,16 @@ class ShowTable extends Base {
             })
             .catch(error => self.registerError(error));
     
-
             event.preventDefault();
         }
     }
 
     renderStagesDropdown(stageId) {
-        var stagesLinks = this.state.table.stages.filter((stage, index, arr) => stage.key.stageId !== stageId).map(stage => (<span key={stage.key.stageId} className="dropdown-item" onClick={this.moveActivity(stage)}>{stage.title}</span>));
+        var stagesLinks = this.state
+            .table
+            .stages
+            .filter((stage, index, arr) => stage.key.stageId !== stageId)
+            .map(stage => (<span key={stage.key.stageId} className="dropdown-item" onClick={this.moveActivity(stage)}>{stage.title}</span>));
 
         return (
             <div className="btn-group">
@@ -228,11 +243,21 @@ class ShowTable extends Base {
 
     renderActivity(activity) {
         const actKey = activity.key;
-        const updateActUrl = editActivityUrl(actKey.tableId, actKey.stageId, actKey.activityId);
 
+        const updateActUrl = editActivityUrl(
+            actKey.tableId, 
+            actKey.stageId, 
+            actKey.activityId);
 
-        var h = (this.state && this.state.move && (this.state.move.key.activityId === actKey.activityId)) ? this.renderStagesDropdown(this.state.move.key.stageId) : "";
+        const stages = this.state.table.stages;
 
+        var stagesDropdown = "";
+        var moveActLink = "";
+
+        if(stages.length > 1) {
+            stagesDropdown = (this.state && this.state.move && (this.state.move.key.activityId === actKey.activityId)) ? this.renderStagesDropdown(this.state.move.key.stageId) : "";
+            moveActLink = (<MoveActLink onClick={this.selectActivity(activity)}></MoveActLink>);
+        }
 
         return (
             <span className="badge badge-light" 
@@ -243,8 +268,8 @@ class ShowTable extends Base {
                     &nbsp;&nbsp;&nbsp;&nbsp;
                     {activity.name}
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    {h}
-                    <MoveActLink onClick={this.selectActivity(activity)}></MoveActLink>
+                    {stagesDropdown}
+                    {moveActLink}
                     <EditLink to={updateActUrl}></EditLink>
                     <DeleteLink onClick={this.deleteActivity(actKey)}></DeleteLink>
                 </div>

@@ -39,18 +39,14 @@ class Error extends Component {
         var self = this;
         var errors = this.props.errors.map(function(error){ 
             if(error.status) {
-                if(error.status === 500) {
-                    return self.renderError(error.id, error.body);
-                } else if(error.status === 400) {
+                 if(error.status === 400) {
                     var msgs = error.body.map(v => v.message);
                     return self.renderError(error.id, "Invalida data", msgs);
-                }  else if(error.status === 401) {
-                    return self.renderError(error.id, error.body);
-                }
+                } 
 
                 return self.renderError(error.id, error.body);
             }
-            console.log('error: ', JSON.stringify(error))
+            console.log('error: ', JSON.stringify(error));
             return self.renderError(uuidv4(), "Unknown error, please try again later");
         });
     

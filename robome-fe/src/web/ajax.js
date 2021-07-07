@@ -1,4 +1,3 @@
-
 import uuidv4 from './uuid';
 
 export class ResponseError extends Error {
@@ -50,13 +49,14 @@ function handleServerSideError(response) {
         return response.json().then(data => new ResponseWithBody(response, data));
     } else if(response.status === 401){
         throw new ResponseError(response.status, "unauthorized");
+    } else if(response.status === 404){
+        throw new ResponseError(response.status, "not found");
     } else {
         throw new ResponseError(response.status, "unknown response");
     }
 }
 
 function handleBadRequestResponse(responseWithBody){
-    
     if(responseWithBody.ok){
         return responseWithBody;
     }
@@ -126,5 +126,3 @@ export function unsecuredGet(url) {
     .then(handleServerSideError)
     .then(handleBadRequestResponse);
 }
-
-
