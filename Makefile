@@ -13,7 +13,6 @@ deps:
 	echo "starting cassandra image (version 3.11.9)"
 	docker rm robome_cassandra ||:
 	docker run -d -p 9042:9042 --name=robome_cassandra cassandra:3.11.9
-	sleep 5
 	docker cp robome-be/src/main/resources/cassandra.cql robome_cassandra:/schema.cql
 	sleep 15
 	docker exec robome_cassandra cqlsh -f /schema.cql
