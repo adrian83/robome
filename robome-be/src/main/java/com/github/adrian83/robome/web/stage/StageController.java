@@ -160,7 +160,7 @@ public class StageController extends AllDirectives {
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toGetStageRequest(userCtx, tableIdStr, stageIdStr))
         .thenCompose(stageService::getStage)
-        .thenApply(response::jsonFromObject);
+        .thenApply(response::jsonFromOptional);
   }
 
   private CompletionStage<HttpResponse> getTableStages(

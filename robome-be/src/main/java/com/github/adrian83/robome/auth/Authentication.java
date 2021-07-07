@@ -31,6 +31,7 @@ public class Authentication {
   public CompletionStage<UserData> findUserWithPassword(LoginRequest req) {
     return userService
         .findUserByEmail(req.getEmail())
+        .thenApply(maybeUser -> maybeUser.orElseThrow(() -> new InvalidSignInDataException("invalid password or email")))
         .thenApply(
             user -> {
               var valid = validPassword(req.getPassword(), user.getPasswordHash());

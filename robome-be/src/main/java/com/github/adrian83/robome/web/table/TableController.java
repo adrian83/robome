@@ -142,7 +142,7 @@ public class TableController extends AllDirectives {
         .thenApply(Authorization::canReadTables)
         .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
         .thenCompose(tableService::getTable)
-        .thenApply(response::jsonFromObject);
+        .thenApply(response::jsonFromOptional);
   }
 
   private CompletionStage<HttpResponse> getTables(

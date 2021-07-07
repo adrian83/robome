@@ -2,6 +2,7 @@ package com.github.adrian83.robome.domain.user;
 
 import static java.util.concurrent.CompletableFuture.completedStage;
 
+import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
@@ -57,9 +58,9 @@ public class UserService {
             });
   }
 
-  public CompletionStage<User> findUserByEmail(String email) {
+  public CompletionStage<Optional<User>> findUserByEmail(String email) {
     // log.info("Looking for a user with email: {}", email);
 
-    return userRepository.getByEmail(email).runWith(Sink.head(), actorSystem);
+    return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
   }
 }

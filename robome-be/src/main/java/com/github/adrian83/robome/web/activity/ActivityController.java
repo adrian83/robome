@@ -167,7 +167,7 @@ public class ActivityController extends AllDirectives {
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toGetActivityRequest(userCtx, tableId, stageId, activityId))
         .thenCompose(activityService::getActivity)
-        .thenApply(response::jsonFromObject);
+        .thenApply(response::jsonFromOptional);
   }
 
   private CompletionStage<HttpResponse> getStageActivities(
