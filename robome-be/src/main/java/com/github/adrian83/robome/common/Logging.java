@@ -14,7 +14,7 @@ public final class Logging {
       Logger log, CompletionStage<UserData> userF, String patter, Object... params) {
     return userF.thenApply(
         userData -> {
-          var email = String.format("[user: {%s}], ", userData.getEmail());
+          var email = String.format("[user: {%s}], ", userData.email());
           log.info(email + patter, params);
           return userData;
         });

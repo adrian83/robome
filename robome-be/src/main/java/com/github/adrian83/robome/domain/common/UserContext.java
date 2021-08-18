@@ -23,7 +23,7 @@ public class UserContext {
   }
 
   public boolean userOwnsResource() {
-    return resourceOwner.map(userId -> loggedInUser.getId().equals(userId)).orElse(true);
+    return resourceOwner.map(userId -> loggedInUser.id().equals(userId)).orElse(true);
   }
 
   public UUID resourceOwnerIdOrError() {

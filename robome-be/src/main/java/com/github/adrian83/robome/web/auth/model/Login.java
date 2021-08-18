@@ -33,18 +33,10 @@ public class Login implements Validator {
   private static final String EMPTY_PASSWORD_MSG = "Password cannot be empty";
 
   private static final ValidationError EMPTY_EMAIL =
-      ValidationError.builder()
-          .field(EMAIL_LABEL)
-          .messageCode(EMPTY_EMAIL_KEY)
-          .message(EMPTY_EMAIL_MSG)
-          .build();
+      new ValidationError(EMAIL_LABEL, EMPTY_EMAIL_KEY, EMPTY_EMAIL_MSG);
 
   private static final ValidationError EMPTY_PASSWORD =
-      ValidationError.builder()
-          .field(PASSWORD_LABEL)
-          .messageCode(EMPTY_PASSWORD_KEY)
-          .message(EMPTY_PASSWORD_MSG)
-          .build();
+      new ValidationError(PASSWORD_LABEL, EMPTY_PASSWORD_KEY, EMPTY_PASSWORD_MSG);
 
   private String email;
   private String password;

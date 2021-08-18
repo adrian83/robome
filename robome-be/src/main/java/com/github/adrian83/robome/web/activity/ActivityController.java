@@ -190,7 +190,7 @@ public class ActivityController extends AllDirectives {
       final String stageIdStr) {
 
     return NewActivityRequest.builder()
-        .name(userAndForm.getForm().getName())
+        .name(userAndForm.getForm().name())
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
         .userId(userAndForm.getUserContext().resourceOwnerIdOrError())
         .build();
@@ -203,7 +203,7 @@ public class ActivityController extends AllDirectives {
       final String activityIdStr) {
 
     return UpdateActivityRequest.builder()
-        .name(userAndForm.getForm().getName())
+        .name(userAndForm.getForm().name())
         .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
         .userId(userAndForm.getUserContext().resourceOwnerIdOrError())
         .build();

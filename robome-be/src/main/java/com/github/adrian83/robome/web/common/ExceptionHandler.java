@@ -19,18 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 public class ExceptionHandler {
 
   private static final ValidationError INVALID_EMAIL_OR_PASS_ERROR =
-      ValidationError.builder()
-          .field("email")
-          .messageCode("login.invalid")
-          .message("Invalid email or password")
-          .build();
+      new ValidationError("email","login.invalid","Invalid email or password");
   
   private static final ValidationError EMAIL_IN_USE_ERROR =
-      ValidationError.builder()
-          .field("email")
-          .messageCode("register.invalid")
-          .message("Email already in use")
-          .build();
+      new ValidationError("email","register.invalid","Email already in use");
 
   private Response responseFactory;
 

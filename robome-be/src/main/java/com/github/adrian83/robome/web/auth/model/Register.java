@@ -37,25 +37,13 @@ public class Register implements Validator {
   private static final String DIFFERENT_PASSWORDS_MSG = "Repeated password cannot be different";
 
   private static final ValidationError EMPTY_EMAIL =
-      ValidationError.builder()
-          .field(EMAIL_LABEL)
-          .messageCode(EMPTY_EMAIL_KEY)
-          .message(EMPTY_EMAIL_MSG)
-          .build();
+      new ValidationError(EMAIL_LABEL, EMPTY_EMAIL_KEY, EMPTY_EMAIL_MSG);
 
   private static final ValidationError EMPTY_PASSWORD_1 =
-      ValidationError.builder()
-          .field(PASSWORD_1_LABEL)
-          .messageCode(EMPTY_PASSWORD_1_KEY)
-          .message(EMPTY_PASSWORD_1_MSG)
-          .build();
+      new ValidationError(PASSWORD_1_LABEL, EMPTY_PASSWORD_1_KEY, EMPTY_PASSWORD_1_MSG);
 
   private static final ValidationError DIFFERENT_PASSWORDS =
-      ValidationError.builder()
-          .field(PASSWORD_2_LABEL)
-          .messageCode(DIFFERENT_PASSWORDS_KEY)
-          .message(DIFFERENT_PASSWORDS_MSG)
-          .build();
+      new ValidationError(PASSWORD_2_LABEL, DIFFERENT_PASSWORDS_KEY, DIFFERENT_PASSWORDS_MSG);
 
   private String email;
   private String password;

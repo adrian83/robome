@@ -1,4 +1,4 @@
-FROM maven:3.8-openjdk-15-slim
+FROM maven:3.8-openjdk-16-slim
 
 ADD . /robome-be
 WORKDIR /robome-be

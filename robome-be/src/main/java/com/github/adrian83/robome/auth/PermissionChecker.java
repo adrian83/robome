@@ -38,6 +38,6 @@ public final class PermissionChecker {
   }
 
   private static boolean hasAnyRole(UserData user, Role... roles) {
-    return Arrays.stream(roles).anyMatch((role) -> user.getRoles().contains(role));
+    return Arrays.stream(roles).anyMatch((role) -> user.roles().contains(role));
   }
 }

@@ -68,10 +68,6 @@ public class PermissionCheckerTest {
   }
 
   private UserData userWithRoles(Role... roles) {
-    return UserData.builder()
-        .id(UUID.randomUUID())
-        .email("johndoe@somedomain.com")
-        .roles(Sets.newHashSet(roles))
-        .build();
+    return new UserData(UUID.randomUUID(), "johndoe@somedomain.com", Sets.newHashSet(roles));
   }
 }

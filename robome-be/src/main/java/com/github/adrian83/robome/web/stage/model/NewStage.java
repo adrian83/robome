@@ -29,11 +29,7 @@ public class NewStage implements Validator {
   private static final String EMPTY_TITLE_MSG = "Stage title cannot be empty";
 
   private static final ValidationError EMPTY_TITLE =
-      ValidationError.builder()
-          .field(TITLE_LABEL)
-          .messageCode(EMPTY_TITLE_KEY)
-          .message(EMPTY_TITLE_MSG)
-          .build();
+      new ValidationError(TITLE_LABEL,EMPTY_TITLE_KEY,EMPTY_TITLE_MSG);
 
   private String title;
 

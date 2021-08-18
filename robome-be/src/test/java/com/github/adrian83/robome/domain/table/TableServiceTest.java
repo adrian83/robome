@@ -46,11 +46,7 @@ public class TableServiceTest {
       new TableService(tableRepositoryMock, stageServiceMock, actorSystem);
 
   private UserData user =
-      UserData.builder()
-          .id(UUID.randomUUID())
-          .email("johndoe@somedomain.com")
-          .roles(Collections.emptySet())
-          .build();
+      new UserData(UUID.randomUUID(), "johndoe@somedomain.com", Collections.emptySet());
 
   private TableKey tableKey1 = TableKey.random();
   private TableKey tableKey2 = TableKey.random();
@@ -58,7 +54,7 @@ public class TableServiceTest {
   private TableEntity tableEntity1 =
       TableEntity.builder()
           .key(tableKey1)
-          .userId(user.getId())
+          .userId(user.id())
           .title("test 1")
           .description("test table 1")
           .state(TableState.ACTIVE)
@@ -69,7 +65,7 @@ public class TableServiceTest {
   private TableEntity tableEntity2 =
       TableEntity.builder()
           .key(tableKey2)
-          .userId(user.getId())
+          .userId(user.id())
           .title("test 2")
           .description("test table 2")
           .state(TableState.ACTIVE)
@@ -80,7 +76,7 @@ public class TableServiceTest {
   private Stage stage =
       Stage.builder()
           .key(StageKey.randomWithTableKey(tableKey1))
-          .userId(user.getId())
+          .userId(user.id())
           .title("stage 1")
           .state(StageState.ACTIVE)
           .modifiedAt(Time.utcNow())
@@ -94,7 +90,7 @@ public class TableServiceTest {
     // given
     var stages = newArrayList(stage);
     var stagesF = CompletableFuture.<List<Stage>>completedFuture(stages);
-    var getTableReq = GetTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build();
+    var getTableReq = GetTableRequest.builder().userId(user.id()).tableKey(tableKey1).build();
 
     var tableSource = Source.lazySingle(() -> tableEntity1);
 
@@ -123,7 +119,7 @@ public class TableServiceTest {
       throws InterruptedException, ExecutionException, TimeoutException {
     // given
     // var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
-    var getTableReq = GetTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build();
+    var getTableReq = GetTableRequest.builder().userId(user.id()).tableKey(tableKey1).build();
 
     when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
     // when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
@@ -142,7 +138,7 @@ public class TableServiceTest {
     // given
     var entities = newArrayList(tableEntity1, tableEntity2);
     var tablesSource = Source.from(entities);
-    var listTablesReq = ListTablesRequest.builder().userId(user.getId()).build();
+    var listTablesReq = ListTablesRequest.builder().userId(user.id()).build();
 
     when(tableRepositoryMock.getUserTables(any(UUID.class))).thenReturn(tablesSource);
 

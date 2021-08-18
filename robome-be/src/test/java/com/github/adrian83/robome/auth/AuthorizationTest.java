@@ -150,12 +150,11 @@ public class AuthorizationTest {
   }
 
   private UserContext userWithRoles(Role... roles) {
-    var userData =
-        UserData.builder()
-            .id(UUID.randomUUID())
-            .email("johndoe@somedomain.com")
-            .roles(Sets.newHashSet(roles))
-            .build();
+    var userData = new UserData(
+    		UUID.randomUUID(), 
+    		"johndoe@somedomain.com",
+            Sets.newHashSet(roles));
+    
     return new UserContext(userData, Optional.empty());
   }
 }
