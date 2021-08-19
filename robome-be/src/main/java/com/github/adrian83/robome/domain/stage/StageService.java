@@ -97,12 +97,7 @@ public class StageService {
   }
 
   private CompletionStage<Stage> getStageWithActivities(Stage stage) {
-    var listReq =
-        ListStageActivitiesRequest.builder()
-            .userId(stage.getUserId())
-            .stageKey(stage.getKey())
-            .build();
-
+    var listReq = new ListStageActivitiesRequest(stage.getUserId(), stage.getKey());
     return activityService.getStageActivities(listReq).thenApply(stage::copyWithActivities);
   }
 

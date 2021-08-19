@@ -197,7 +197,7 @@ public class StageController extends AllDirectives {
     return UpdateStageRequest.builder()
         .stageKey(StageKey.parse(tableIdStr, stageIdStr))
         .userId(userCtx.resourceOwnerIdOrError())
-        .title(form.getTitle())
+        .title(form.title())
         .build();
   }
 
@@ -206,7 +206,7 @@ public class StageController extends AllDirectives {
     return NewStageRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
         .userId(userCtx.resourceOwnerIdOrError())
-        .title(form.getTitle())
+        .title(form.title())
         .build();
   }
 

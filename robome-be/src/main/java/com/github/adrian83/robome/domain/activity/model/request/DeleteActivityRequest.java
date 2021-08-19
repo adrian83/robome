@@ -1,10 +1,7 @@
 package com.github.adrian83.robome.domain.activity.model.request;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import java.util.UUID;
 
-@SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-public class DeleteActivityRequest extends GetActivityRequest {}
+import com.github.adrian83.robome.domain.activity.model.ActivityKey;
+
+public record DeleteActivityRequest(UUID userId, ActivityKey activityKey) {}
