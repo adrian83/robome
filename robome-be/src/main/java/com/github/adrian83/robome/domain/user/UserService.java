@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.domain.common.exception.EmailAlreadyInUseException;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
@@ -13,10 +16,10 @@ import com.google.inject.Inject;
 import akka.actor.ActorSystem;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class UserService {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
   private UserRepository userRepository;
   private ActorSystem actorSystem;
@@ -28,7 +31,7 @@ public class UserService {
   }
 
   public CompletionStage<User> saveUser(User newUser) {
-    log.info("Persisting new user: {}", newUser);
+    LOGGER.info("Persisting new user: {}", newUser);
 
     return userRepository
         .getByEmail(newUser.email())

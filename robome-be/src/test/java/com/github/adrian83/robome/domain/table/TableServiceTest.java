@@ -3,9 +3,7 @@ package com.github.adrian83.robome.domain.table;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,37 +50,34 @@ public class TableServiceTest {
   private TableKey tableKey2 = TableKey.random();
 
   private TableEntity tableEntity1 =
-      TableEntity.builder()
-          .key(tableKey1)
-          .userId(user.id())
-          .title("test 1")
-          .description("test table 1")
-          .state(TableState.ACTIVE)
-          .modifiedAt(Time.utcNow())
-          .createdAt(Time.utcNow())
-          .build();
+      new TableEntity(
+          tableKey1,
+          user.id(),
+          "test 1",
+          "test table 1",
+          TableState.ACTIVE,
+          Time.utcNow(),
+          Time.utcNow());
 
   private TableEntity tableEntity2 =
-      TableEntity.builder()
-          .key(tableKey2)
-          .userId(user.id())
-          .title("test 2")
-          .description("test table 2")
-          .state(TableState.ACTIVE)
-          .modifiedAt(Time.utcNow())
-          .createdAt(Time.utcNow())
-          .build();
+      new TableEntity(
+          tableKey2,
+          user.id(),
+          "test 2",
+          "test table 2",
+          TableState.ACTIVE,
+          Time.utcNow(),
+          Time.utcNow());
 
   private Stage stage =
-      Stage.builder()
-          .key(StageKey.randomWithTableKey(tableKey1))
-          .userId(user.id())
-          .title("stage 1")
-          .state(StageState.ACTIVE)
-          .modifiedAt(Time.utcNow())
-          .createdAt(Time.utcNow())
-          .activities(Collections.emptyList())
-          .build(); // user.getId(), "stage");
+      new Stage(
+          StageKey.randomWithTableKey(tableKey1),
+          user.id(),
+          "stage 1",
+          StageState.ACTIVE,
+          Time.utcNow(),
+          Time.utcNow(),
+          Collections.emptyList());
 
   @Test
   public void shouldReturnTableForGivenKeyAndUser()
@@ -90,7 +85,7 @@ public class TableServiceTest {
     // given
     var stages = newArrayList(stage);
     var stagesF = CompletableFuture.<List<Stage>>completedFuture(stages);
-    var getTableReq = GetTableRequest.builder().userId(user.id()).tableKey(tableKey1).build();
+    var getTableReq = new GetTableRequest(user.id(), tableKey1);
 
     var tableSource = Source.lazySingle(() -> tableEntity1);
 
@@ -106,12 +101,12 @@ public class TableServiceTest {
     verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
 
     assertThat(maybeTable).isNotEmpty();
-    
+
     var table = maybeTable.get();
-    
+
     assertTable(tableEntity1, table);
-    assertThat(table.getStages()).hasSize(1);
-    assertStage(stage, table.getStages().get(0));
+    assertThat(table.stages()).hasSize(1);
+    assertStage(stage, table.stages().get(0));
   }
 
   @Test()
@@ -119,7 +114,7 @@ public class TableServiceTest {
       throws InterruptedException, ExecutionException, TimeoutException {
     // given
     // var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
-    var getTableReq = GetTableRequest.builder().userId(user.id()).tableKey(tableKey1).build();
+    var getTableReq = new GetTableRequest(user.id(), tableKey1);
 
     when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
     // when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
@@ -138,7 +133,7 @@ public class TableServiceTest {
     // given
     var entities = newArrayList(tableEntity1, tableEntity2);
     var tablesSource = Source.from(entities);
-    var listTablesReq = ListTablesRequest.builder().userId(user.id()).build();
+    var listTablesReq = new ListTablesRequest(user.id());
 
     when(tableRepositoryMock.getUserTables(any(UUID.class))).thenReturn(tablesSource);
 
@@ -229,21 +224,21 @@ public class TableServiceTest {
       }
     */
   public void assertTable(TableEntity expected, Table actual) {
-    assertThat(expected.getKey()).isEqualTo(actual.getKey());
-    assertThat(expected.getUserId()).isEqualTo(actual.getUserId());
-    assertThat(expected.getTitle()).isEqualTo(actual.getTitle());
-    assertThat(expected.getDescription()).isEqualTo(actual.getDescription());
-    assertThat(expected.getState()).isEqualTo(actual.getState());
-    assertThat(expected.getCreatedAt()).isEqualTo(actual.getCreatedAt());
-    assertThat(expected.getModifiedAt()).isEqualTo(actual.getModifiedAt());
+    assertThat(expected.key()).isEqualTo(actual.key());
+    assertThat(expected.userId()).isEqualTo(actual.userId());
+    assertThat(expected.title()).isEqualTo(actual.title());
+    assertThat(expected.description()).isEqualTo(actual.description());
+    assertThat(expected.state()).isEqualTo(actual.state());
+    assertThat(expected.createdAt()).isEqualTo(actual.createdAt());
+    assertThat(expected.modifiedAt()).isEqualTo(actual.modifiedAt());
   }
 
   public void assertStage(Stage expected, Stage actual) {
-    assertThat(expected.getKey()).isEqualTo(actual.getKey());
-    assertThat(expected.getUserId()).isEqualTo(actual.getUserId());
-    assertThat(expected.getTitle()).isEqualTo(actual.getTitle());
-    assertThat(expected.getState()).isEqualTo(actual.getState());
-    assertThat(expected.getCreatedAt()).isEqualTo(actual.getCreatedAt());
-    assertThat(expected.getModifiedAt()).isEqualTo(actual.getModifiedAt());
+    assertThat(expected.key()).isEqualTo(actual.key());
+    assertThat(expected.userId()).isEqualTo(actual.userId());
+    assertThat(expected.title()).isEqualTo(actual.title());
+    assertThat(expected.state()).isEqualTo(actual.state());
+    assertThat(expected.createdAt()).isEqualTo(actual.createdAt());
+    assertThat(expected.modifiedAt()).isEqualTo(actual.modifiedAt());
   }
 }

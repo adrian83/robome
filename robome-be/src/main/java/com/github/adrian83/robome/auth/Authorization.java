@@ -59,7 +59,7 @@ public final class Authorization {
   }
 
   private static boolean can(UserContext userCtx, Function<UserData, Boolean> hasPermision) {
-    return PermissionChecker.isAdmin(userCtx.getLoggedInUser())
-        || (hasPermision.apply(userCtx.getLoggedInUser()) && userCtx.userOwnsResource());
+    return PermissionChecker.isAdmin(userCtx.loggedInUser())
+        || (hasPermision.apply(userCtx.loggedInUser()) && userCtx.userOwnsResource());
   }
 }

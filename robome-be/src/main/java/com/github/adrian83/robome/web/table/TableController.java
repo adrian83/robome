@@ -7,6 +7,9 @@ import static java.util.UUID.fromString;
 
 import java.util.concurrent.CompletionStage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.common.UserAndForm;
@@ -31,10 +34,10 @@ import com.google.inject.Inject;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class TableController extends AllDirectives {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
 
   private static final String TABLES_PATH = "/users/{userId}/tables/";
   private static final String TABLE_PATH = "/users/{userId}/tables/{tableId}/";
@@ -93,16 +96,15 @@ public class TableController extends AllDirectives {
                 (resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))));
   }
 
-  
   private CompletionStage<HttpResponse> persistTable(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, NewTable form) {
 
-    return logAction(log, userF, LOG_CREATE_TAB, form)
+    return logAction(LOGGER, userF, LOG_CREATE_TAB, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
         .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toNewTableRequest(uaf.getUserContext(), uaf.getForm()))
+        .thenApply(uaf -> toNewTableRequest(uaf.userContext(), uaf.form()))
         .thenCompose(tableService::saveTable)
         .thenApply(table -> response.jsonFromObject(table));
   }
@@ -113,12 +115,12 @@ public class TableController extends AllDirectives {
       String tableIdStr,
       UpdateTable form) {
 
-    return logAction(log, userF, LOG_UPDATE_TAB, tableIdStr, form)
+    return logAction(LOGGER, userF, LOG_UPDATE_TAB, tableIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
         .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toUpdateTableRequest(uaf.getUserContext(), tableIdStr, uaf.getForm()))
+        .thenApply(uaf -> toUpdateTableRequest(uaf.userContext(), tableIdStr, uaf.form()))
         .thenCompose(tableService::updateTable)
         .thenApply(table -> response.jsonFromObject(table));
   }
@@ -126,7 +128,7 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> deleteTable(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
-    return logAction(log, userF, LOG_DEL_TAB_BY_ID, tableIdStr)
+    return logAction(LOGGER, userF, LOG_DEL_TAB_BY_ID, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
@@ -137,7 +139,7 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> getTableById(
       CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
 
-    return logAction(log, userF, LOG_GET_TAB_BY_ID, tableIdStr)
+    return logAction(LOGGER, userF, LOG_GET_TAB_BY_ID, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
@@ -148,7 +150,7 @@ public class TableController extends AllDirectives {
   private CompletionStage<HttpResponse> getTables(
       CompletionStage<UserData> userF, String resourceOwnerIdStr) {
 
-    return logAction(log, userF, LOG_LIST_TABS)
+    return logAction(LOGGER, userF, LOG_LIST_TABS)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)
@@ -157,39 +159,27 @@ public class TableController extends AllDirectives {
   }
 
   private ListTablesRequest toListTablesRequest(UserContext userCtx) {
-    return ListTablesRequest.builder().userId(userCtx.resourceOwnerIdOrError()).build();
+    return new ListTablesRequest(userCtx.resourceOwnerIdOrError());
   }
 
   private GetTableRequest toGetTableRequest(UserContext userCtx, String tableIdStr) {
-
-    return GetTableRequest.builder()
-        .userId(userCtx.resourceOwnerIdOrError())
-        .tableKey(TableKey.parse(tableIdStr))
-        .build();
+    return new GetTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(tableIdStr));
   }
 
   private DeleteTableRequest toDeleteTableRequest(UserContext userCtx, String tableIdStr) {
-    return DeleteTableRequest.builder()
-        .userId(userCtx.resourceOwnerIdOrError())
-        .tableKey(TableKey.parse(tableIdStr))
-        .build();
+    return new DeleteTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(tableIdStr));
   }
 
   private UpdateTableRequest toUpdateTableRequest(
       UserContext userCtx, String tableIdStr, UpdateTable form) {
-    return UpdateTableRequest.builder()
-        .tableKey(TableKey.parse(tableIdStr))
-        .userId(userCtx.resourceOwnerIdOrError())
-        .title(form.title())
-        .description(form.description())
-        .build();
+    return new UpdateTableRequest(
+        form.title(),
+        form.description(),
+        userCtx.resourceOwnerIdOrError(),
+        TableKey.parse(tableIdStr));
   }
 
   private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {
-    return NewTableRequest.builder()
-        .userId(userCtx.resourceOwnerIdOrError())
-        .title(form.title())
-        .description(form.description())
-        .build();
+    return new NewTableRequest(form.title(), form.description(), userCtx.resourceOwnerIdOrError());
   }
 }

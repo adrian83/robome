@@ -4,6 +4,10 @@ import static com.github.adrian83.robome.common.function.Functions.use;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.model.command.LoginRequest;
 import com.github.adrian83.robome.auth.model.command.RegisterRequest;
@@ -19,10 +23,10 @@ import com.google.inject.Inject;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class AuthController extends AllDirectives {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
   private static final String LOGIN_PATH = "/auth/login/";
   private static final String REGISTER_PATH = "/auth/register/";
@@ -57,7 +61,7 @@ public class AuthController extends AllDirectives {
 
   private CompletionStage<HttpResponse> loginUser(Login login) {
 
-    var cLog = use((Login form) -> log.info(LOG_LOGIN, form));
+    var cLog = use((Login form) -> LOGGER.info(LOG_LOGIN, form));
 
     return CompletableFuture.completedFuture(login)
         .thenApply(cLog::apply)
@@ -71,7 +75,7 @@ public class AuthController extends AllDirectives {
 
   private CompletionStage<HttpResponse> registerUser(Register register) {
 
-    var cLog = use((Register form) -> log.info(LOG_REGISTER, form));
+    var cLog = use((Register form) -> LOGGER.info(LOG_REGISTER, form));
 
     return CompletableFuture.completedFuture(register)
         .thenApply(cLog::apply)

@@ -41,15 +41,14 @@ public class TableService {
 
   public CompletionStage<Table> saveTable(NewTableRequest req) {
     var entity =
-        TableEntity.builder()
-            .key(TableKey.random())
-            .userId(req.getUserId())
-            .title(req.getTitle())
-            .description(req.getDescription())
-            .state(TableState.ACTIVE)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new TableEntity(
+            TableKey.random(),
+            req.userId(),
+            req.title(),
+            req.description(),
+            TableState.ACTIVE,
+            Time.utcNow(),
+            Time.utcNow());
 
     return Source.single(entity)
         .via(tableRepository.saveTable())
@@ -59,15 +58,14 @@ public class TableService {
 
   public CompletionStage<Table> updateTable(UpdateTableRequest req) {
     var entity =
-        TableEntity.builder()
-            .key(req.getTableKey())
-            .userId(req.getUserId())
-            .title(req.getTitle())
-            .description(req.getDescription())
-            .state(TableState.ACTIVE)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new TableEntity(
+            req.tableKey(),
+            req.userId(),
+            req.title(),
+            req.description(),
+            TableState.ACTIVE,
+            Time.utcNow(),
+            Time.utcNow());
 
     return Source.single(entity)
         .via(tableRepository.updateTable())
@@ -76,14 +74,14 @@ public class TableService {
   }
 
   public CompletionStage<TableKey> deleteTable(DeleteTableRequest req) {
-    return Source.single(req.getTableKey())
-        .via(tableRepository.deleteTable(req.getUserId()))
+    return Source.single(req.tableKey())
+        .via(tableRepository.deleteTable(req.userId()))
         .runWith(Sink.head(), actorSystem);
   }
 
   public CompletionStage<Optional<Table>> getTable(GetTableRequest req) {
     return tableRepository
-        .getById(req.getUserId(), req.getTableKey().getTableId())
+        .getById(req.userId(), req.tableKey().tableId())
         .map(this::toTable)
         .mapAsync(DEFAULT_PARALLERISM, this::getTableWithStages)
         .runWith(Sink.headOption(), actorSystem);
@@ -91,28 +89,25 @@ public class TableService {
 
   public CompletionStage<List<Table>> getTables(ListTablesRequest req) {
     return tableRepository
-        .getUserTables(req.getUserId())
+        .getUserTables(req.userId())
         .map(this::toTable)
         .runWith(Sink.seq(), actorSystem);
   }
 
   private CompletionStage<Table> getTableWithStages(Table table) {
-    var listReq =
-        ListTableStagesRequest.builder().userId(table.getUserId()).tableKey(table.getKey()).build();
-
+    var listReq = new ListTableStagesRequest(table.userId(), table.key());
     return stageService.getTableStages(listReq).thenApply(table::copyWithStages);
   }
 
   private Table toTable(TableEntity entity) {
-    return Table.builder()
-        .key(entity.getKey())
-        .userId(entity.getUserId())
-        .title(entity.getTitle())
-        .description(entity.getDescription())
-        .state(entity.getState())
-        .modifiedAt(entity.getModifiedAt())
-        .createdAt(entity.getCreatedAt())
-        .stages(Collections.emptyList())
-        .build();
+    return new Table(
+        entity.key(),
+        entity.userId(),
+        entity.title(),
+        entity.description(),
+        entity.state(),
+        entity.createdAt(),
+        entity.modifiedAt(),
+        Collections.emptyList());
   }
 }

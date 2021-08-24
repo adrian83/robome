@@ -1,10 +1,7 @@
 package com.github.adrian83.robome.domain.table.model.request;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import java.util.UUID;
 
-@SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-public class DeleteTableRequest extends GetTableRequest {}
+import com.github.adrian83.robome.domain.table.model.TableKey;
+
+public record DeleteTableRequest(UUID userId, TableKey tableKey) {}

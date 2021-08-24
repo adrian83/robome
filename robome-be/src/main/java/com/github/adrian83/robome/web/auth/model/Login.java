@@ -7,11 +7,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.adrian83.robome.common.validation.ValidationError;
 import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonSerialize
 public record Login(
     @JsonProperty(EMAIL_LABEL) String email, @JsonProperty(PASSWORD_LABEL) String password)
     implements Validator {

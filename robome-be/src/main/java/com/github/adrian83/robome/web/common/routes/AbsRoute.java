@@ -3,9 +3,7 @@ package com.github.adrian83.robome.web.common.routes;
 import java.util.Arrays;
 
 import akka.http.javadsl.server.AllDirectives;
-import lombok.Getter;
 
-@Getter
 public class AbsRoute extends AllDirectives {
 
   private String[] path;
