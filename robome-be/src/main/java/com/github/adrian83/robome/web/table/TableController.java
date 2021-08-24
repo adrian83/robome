@@ -180,16 +180,16 @@ public class TableController extends AllDirectives {
     return UpdateTableRequest.builder()
         .tableKey(TableKey.parse(tableIdStr))
         .userId(userCtx.resourceOwnerIdOrError())
-        .title(form.getTitle())
-        .description(form.getDescription())
+        .title(form.title())
+        .description(form.description())
         .build();
   }
 
   private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {
     return NewTableRequest.builder()
         .userId(userCtx.resourceOwnerIdOrError())
-        .title(form.getTitle())
-        .description(form.getDescription())
+        .title(form.title())
+        .description(form.description())
         .build();
   }
 }

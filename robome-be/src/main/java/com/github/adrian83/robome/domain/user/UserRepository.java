@@ -56,24 +56,23 @@ public class UserRepository {
     Function2<User, PreparedStatement, BoundStatement> statementBinder =
         (user, prepStmt) ->
             prepStmt.bind(
-                user.getId(),
-                user.getEmail(),
-                user.getPasswordHash(),
-                Role.toString(user.getRoles()),
-                toInstant(user.getCreatedAt()),
-                toInstant(user.getModifiedAt()));
+                user.id(),
+                user.email(),
+                user.passwordHash(),
+                Role.toString(user.roles()),
+                toInstant(user.createdAt()),
+                toInstant(user.modifiedAt()));
 
     return CassandraFlow.create(session, defaults(), INSERT_USER_STMT, statementBinder);
   }
 
   private User fromRow(Row row) {
-    return User.builder()
-        .id(row.get(ID_COL, UUID.class))
-        .email(row.getString(EMAIL_COL))
-        .passwordHash(row.getString(PASS_HASH_COL))
-        .roles(fromString(row.getString(ROLES_COL)))
-        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
-        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
-        .build();
+    return new User(
+    		row.get(ID_COL, UUID.class), 
+    		row.getString(EMAIL_COL), 
+    		row.getString(PASS_HASH_COL), 
+    		toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)), 
+    		toUtcLocalDate(row.getInstant(CREATED_AT_COL)), 
+    		fromString(row.getString(ROLES_COL)));
   }
 }

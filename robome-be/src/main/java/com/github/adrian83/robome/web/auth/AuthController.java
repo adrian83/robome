@@ -82,10 +82,10 @@ public class AuthController extends AllDirectives {
   }
 
   private LoginRequest toLoginRequest(Login form) {
-    return LoginRequest.builder().email(form.getEmail()).password(form.getPassword()).build();
+    return new LoginRequest(form.email(), form.password());
   }
 
   private RegisterRequest toRegisterRequest(Register form) {
-    return RegisterRequest.builder().email(form.getEmail()).password(form.getPassword()).build();
+    return new RegisterRequest(form.email(), form.password());
   }
 }

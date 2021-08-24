@@ -4,20 +4,12 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@Data
-@Builder
-@ToString
-@EqualsAndHashCode
-public class User {
-  private UUID id;
-  private String email;
-  private String passwordHash;
-  private LocalDateTime createdAt;
-  private LocalDateTime modifiedAt;
-  private Set<Role> roles;
-}
+public record User(
+   UUID id,
+   String email,
+   String passwordHash,
+   LocalDateTime createdAt,
+   LocalDateTime modifiedAt,
+   Set<Role> roles
+   ) {}

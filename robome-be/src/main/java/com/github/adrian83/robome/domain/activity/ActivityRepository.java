@@ -59,14 +59,14 @@ public class ActivityRepository {
     Function2<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
         (activity, prepStmt) ->
             prepStmt.bind(
-                activity.getKey().getActivityId(),
-                activity.getKey().getStageId(),
-                activity.getKey().getTableId(),
-                activity.getUserId(),
-                activity.getName(),
-                activity.getState().name(),
-                toInstant(activity.getCreatedAt()),
-                toInstant(activity.getModifiedAt()));
+                activity.key().activityId(),
+                activity.key().stageId(),
+                activity.key().tableId(),
+                activity.userId(),
+                activity.name(),
+                activity.state().name(),
+                toInstant(activity.createdAt()),
+                toInstant(activity.modifiedAt()));
 
     return CassandraFlow.create(session, defaults(), INSERT_ACTIVITY_STMT, statementBinder);
   }
@@ -75,21 +75,20 @@ public class ActivityRepository {
     Function2<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
         (activity, prepStmt) ->
             prepStmt.bind(
-                activity.getName(),
-                activity.getState().name(),
-                toInstant(activity.getModifiedAt()),
-                activity.getKey().getTableId(),
-                activity.getKey().getStageId(),
-                activity.getKey().getActivityId(),
-                activity.getUserId());
+                activity.name(),
+                activity.state().name(),
+                toInstant(activity.modifiedAt()),
+                activity.key().tableId(),
+                activity.key().stageId(),
+                activity.key().activityId(),
+                activity.userId());
 
     return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
 
   public Flow<ActivityKey, ActivityKey, NotUsed> deleteActivity(UUID userId) {
     Function2<ActivityKey, PreparedStatement, BoundStatement> statementBinder =
-        (key, prepStmt) ->
-            prepStmt.bind(key.getTableId(), key.getStageId(), key.getActivityId(), userId);
+        (key, prepStmt) -> prepStmt.bind(key.tableId(), key.stageId(), key.activityId(), userId);
 
     return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
   }
@@ -99,9 +98,9 @@ public class ActivityRepository {
         SimpleStatement.newInstance(
             SELECT_ACTIVITY_BY_ID_STMT,
             userId,
-            activityKey.getTableId(),
-            activityKey.getStageId(),
-            activityKey.getActivityId());
+            activityKey.tableId(),
+            activityKey.stageId(),
+            activityKey.activityId());
 
     return CassandraSource.create(session, stmt).map(this::fromRow);
   }
@@ -119,19 +118,17 @@ public class ActivityRepository {
 
   private ActivityEntity fromRow(Row row) {
     var key =
-        ActivityKey.builder()
-            .tableId(row.get(TABLE_ID_COL, UUID.class))
-            .stageId(row.get(STAGE_ID_COL, UUID.class))
-            .activityId(row.get(ACTIVITY_ID_COL, UUID.class))
-            .build();
+        new ActivityKey(
+            row.get(TABLE_ID_COL, UUID.class),
+            row.get(STAGE_ID_COL, UUID.class),
+            row.get(ACTIVITY_ID_COL, UUID.class));
 
-    return ActivityEntity.builder()
-        .key(key)
-        .userId(row.get(USER_ID_COL, UUID.class))
-        .name(row.getString(NAME_COL))
-        .state(valueOf(row.getString(STATE_COL)))
-        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
-        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
-        .build();
+    return new ActivityEntity(
+        key,
+        row.get(USER_ID_COL, UUID.class),
+        row.getString(NAME_COL),
+        valueOf(row.getString(STATE_COL)),
+        toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)),
+        toUtcLocalDate(row.getInstant(CREATED_AT_COL)));
   }
 }

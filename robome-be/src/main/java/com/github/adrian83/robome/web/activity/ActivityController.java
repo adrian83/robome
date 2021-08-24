@@ -189,11 +189,10 @@ public class ActivityController extends AllDirectives {
       final String tableIdStr,
       final String stageIdStr) {
 
-    return NewActivityRequest.builder()
-        .name(userAndForm.getForm().getName())
-        .stageKey(StageKey.parse(tableIdStr, stageIdStr))
-        .userId(userAndForm.getUserContext().resourceOwnerIdOrError())
-        .build();
+    return new NewActivityRequest(
+        userAndForm.getForm().name(),
+        userAndForm.getUserContext().resourceOwnerIdOrError(),
+        StageKey.parse(tableIdStr, stageIdStr));
   }
 
   private UpdateActivityRequest toUpdateActivityRequest(
@@ -202,11 +201,10 @@ public class ActivityController extends AllDirectives {
       final String stageIdStr,
       final String activityIdStr) {
 
-    return UpdateActivityRequest.builder()
-        .name(userAndForm.getForm().getName())
-        .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
-        .userId(userAndForm.getUserContext().resourceOwnerIdOrError())
-        .build();
+    return new UpdateActivityRequest(
+        userAndForm.getForm().name(),
+        userAndForm.getUserContext().resourceOwnerIdOrError(),
+        ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
   }
 
   private GetActivityRequest toGetActivityRequest(
@@ -215,10 +213,8 @@ public class ActivityController extends AllDirectives {
       final String stageIdStr,
       final String activityIdStr) {
 
-    return GetActivityRequest.builder()
-        .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
-        .userId(userCtx.resourceOwnerIdOrError())
-        .build();
+    return new GetActivityRequest(
+        userCtx.resourceOwnerIdOrError(), ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
   }
 
   private DeleteActivityRequest toDeleteActivityRequest(
@@ -227,18 +223,14 @@ public class ActivityController extends AllDirectives {
       final String stageIdStr,
       final String activityIdStr) {
 
-    return DeleteActivityRequest.builder()
-        .activityKey(ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr))
-        .userId(userCtx.resourceOwnerIdOrError())
-        .build();
+    return new DeleteActivityRequest(
+        userCtx.resourceOwnerIdOrError(), ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
   }
 
   private ListStageActivitiesRequest toListStageActivitiesRequest(
       final UserContext userCtx, final String tableIdStr, final String stageIdStr) {
 
-    return ListStageActivitiesRequest.builder()
-        .userId(userCtx.resourceOwnerIdOrError())
-        .stageKey(StageKey.parse(tableIdStr, stageIdStr))
-        .build();
+    return new ListStageActivitiesRequest(
+        userCtx.resourceOwnerIdOrError(), StageKey.parse(tableIdStr, stageIdStr));
   }
 }

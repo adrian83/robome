@@ -7,22 +7,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.adrian83.robome.common.validation.ValidationError;
 import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@Data
-@Builder
-@ToString(exclude = {"password", "repeatedPassword"})
-@EqualsAndHashCode
-public class Register implements Validator {
+public record Register( @JsonProperty(EMAIL_LABEL)  String email,
+		@JsonProperty(PASSWORD_1_LABEL) String password,
+		@JsonProperty(PASSWORD_2_LABEL)  String repeatedPassword) implements Validator {
 
   private static final String EMAIL_LABEL = "email";
   private static final String EMPTY_EMAIL_KEY = "user.register.email.empty";
@@ -37,40 +30,13 @@ public class Register implements Validator {
   private static final String DIFFERENT_PASSWORDS_MSG = "Repeated password cannot be different";
 
   private static final ValidationError EMPTY_EMAIL =
-      ValidationError.builder()
-          .field(EMAIL_LABEL)
-          .messageCode(EMPTY_EMAIL_KEY)
-          .message(EMPTY_EMAIL_MSG)
-          .build();
+      new ValidationError(EMAIL_LABEL, EMPTY_EMAIL_KEY, EMPTY_EMAIL_MSG);
 
   private static final ValidationError EMPTY_PASSWORD_1 =
-      ValidationError.builder()
-          .field(PASSWORD_1_LABEL)
-          .messageCode(EMPTY_PASSWORD_1_KEY)
-          .message(EMPTY_PASSWORD_1_MSG)
-          .build();
+      new ValidationError(PASSWORD_1_LABEL, EMPTY_PASSWORD_1_KEY, EMPTY_PASSWORD_1_MSG);
 
   private static final ValidationError DIFFERENT_PASSWORDS =
-      ValidationError.builder()
-          .field(PASSWORD_2_LABEL)
-          .messageCode(DIFFERENT_PASSWORDS_KEY)
-          .message(DIFFERENT_PASSWORDS_MSG)
-          .build();
-
-  private String email;
-  private String password;
-  private String repeatedPassword;
-
-  @JsonCreator
-  public Register(
-      @JsonProperty(EMAIL_LABEL) String email,
-      @JsonProperty(PASSWORD_1_LABEL) String password,
-      @JsonProperty(PASSWORD_2_LABEL) String repeatedPassword) {
-    super();
-    this.email = email;
-    this.password = password;
-    this.repeatedPassword = repeatedPassword;
-  }
+      new ValidationError(PASSWORD_2_LABEL, DIFFERENT_PASSWORDS_KEY, DIFFERENT_PASSWORDS_MSG);
 
   @Override
   public List<ValidationError> validate() {

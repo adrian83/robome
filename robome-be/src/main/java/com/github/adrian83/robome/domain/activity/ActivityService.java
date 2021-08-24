@@ -33,14 +33,13 @@ public class ActivityService {
 
   public CompletionStage<Activity> saveActivity(NewActivityRequest req) {
     var entity =
-        ActivityEntity.builder()
-            .key(ActivityKey.randomWithStageKey(req.getStageKey()))
-            .userId(req.getUserId())
-            .name(req.getName())
-            .state(ActivityState.ACTIVE)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new ActivityEntity(
+            ActivityKey.randomWithStageKey(req.stageKey()),
+            req.userId(),
+            req.name(),
+            ActivityState.ACTIVE,
+            Time.utcNow(),
+            Time.utcNow());
 
     return Source.single(entity)
         .via(activityRepository.saveActivity())
@@ -50,14 +49,13 @@ public class ActivityService {
 
   public CompletionStage<Activity> updateActivity(UpdateActivityRequest req) {
     var entity =
-        ActivityEntity.builder()
-            .key(req.getActivityKey())
-            .userId(req.getUserId())
-            .name(req.getName())
-            .state(ActivityState.ACTIVE)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new ActivityEntity(
+            req.activityKey(),
+            req.userId(),
+            req.name(),
+            ActivityState.ACTIVE,
+            Time.utcNow(),
+            Time.utcNow());
 
     return Source.single(entity)
         .via(activityRepository.updateActivity())
@@ -66,33 +64,32 @@ public class ActivityService {
   }
 
   public CompletionStage<ActivityKey> deleteActivity(DeleteActivityRequest req) {
-    return Source.single(req.getActivityKey())
-        .via(activityRepository.deleteActivity(req.getUserId()))
+    return Source.single(req.activityKey())
+        .via(activityRepository.deleteActivity(req.userId()))
         .runWith(Sink.head(), actorSystem);
   }
 
   public CompletionStage<Optional<Activity>> getActivity(GetActivityRequest req) {
     return activityRepository
-        .getById(req.getActivityKey(), req.getUserId())
+        .getById(req.activityKey(), req.userId())
         .map(this::toActivity)
         .runWith(Sink.headOption(), actorSystem);
   }
 
   public CompletionStage<List<Activity>> getStageActivities(ListStageActivitiesRequest req) {
     return activityRepository
-        .getStageActivities(req.getStageKey(), req.getUserId())
+        .getStageActivities(req.stageKey(), req.userId())
         .map(this::toActivity)
         .runWith(Sink.seq(), actorSystem);
   }
 
   private Activity toActivity(ActivityEntity entity) {
-    return Activity.builder()
-        .key(entity.getKey())
-        .userId(entity.getUserId())
-        .name(entity.getName())
-        .state(entity.getState())
-        .createdAt(entity.getCreatedAt())
-        .modifiedAt(entity.getModifiedAt())
-        .build();
+    return new Activity(
+        entity.key(),
+        entity.userId(),
+        entity.name(),
+        entity.state(),
+        entity.createdAt(),
+        entity.modifiedAt());
   }
 }

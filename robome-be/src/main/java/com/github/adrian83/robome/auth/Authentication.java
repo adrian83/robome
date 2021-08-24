@@ -30,40 +30,32 @@ public class Authentication {
 
   public CompletionStage<UserData> findUserWithPassword(LoginRequest req) {
     return userService
-        .findUserByEmail(req.getEmail())
-        .thenApply(maybeUser -> maybeUser.orElseThrow(() -> new InvalidSignInDataException("invalid password or email")))
+        .findUserByEmail(req.email())
+        .thenApply(
+            maybeUser ->
+                maybeUser.orElseThrow(
+                    () -> new InvalidSignInDataException("invalid password or email")))
         .thenApply(
             user -> {
-              var valid = validPassword(req.getPassword(), user.getPasswordHash());
+              var valid = validPassword(req.password(), user.passwordHash());
               if (!valid) throw new InvalidSignInDataException("invalid password");
-              return UserData.builder()
-                  .id(user.getId())
-                  .email(user.getEmail())
-                  .roles(user.getRoles())
-                  .build();
+              return new UserData(user.id(), user.email(), user.roles());
             });
   }
 
   public CompletionStage<UserData> registerUser(RegisterRequest req) {
     var user =
-        User.builder()
-            .id(UUID.randomUUID())
-            .email(req.getEmail())
-            .passwordHash(hashPassword(req.getPassword()))
-            .roles(DEFAULT_USER_ROLES)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new User(
+            UUID.randomUUID(),
+            req.email(),
+            hashPassword(req.password()),
+            Time.utcNow(),
+            Time.utcNow(),
+            DEFAULT_USER_ROLES);
 
     return userService
         .saveUser(user)
-        .thenApply(
-            savedUser ->
-                UserData.builder()
-                    .id(savedUser.getId())
-                    .email(savedUser.getEmail())
-                    .roles(savedUser.getRoles())
-                    .build());
+        .thenApply(savedUser -> new UserData(savedUser.id(), savedUser.email(), savedUser.roles()));
   }
 
   public CompletionStage<UserData> findUserByToken(String token) {

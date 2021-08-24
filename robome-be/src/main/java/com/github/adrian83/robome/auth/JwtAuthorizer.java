@@ -38,8 +38,8 @@ public class JwtAuthorizer {
   public String createToken(UserData user) {
     try {
       return JWT.create()
-          .withSubject(user.getEmail())
-          .withClaim(ID_CLAIM, user.getId().toString())
+          .withSubject(user.email())
+          .withClaim(ID_CLAIM, user.id().toString())
           .withArrayClaim(ROLES_CLAIM, user.roleName())
           .withIssuer(TOKEN_ISSUER)
           .withExpiresAt(expirationDate())
@@ -53,20 +53,14 @@ public class JwtAuthorizer {
   public UserData userFromToken(String token) {
     try {
       DecodedJWT jwt = VERIFIER.verify(token);
-      return UserData.builder()
-          .id(extractUserId(jwt))
-          .email(jwt.getSubject())
-          .roles(extractRoles(jwt))
-          .build();
+      return new UserData(extractUserId(jwt), jwt.getSubject(), extractRoles(jwt));
     } catch (JWTVerificationException ex) {
       throw new TokenNotFoundException("cannot verify jwt token", ex);
     }
   }
 
   private Set<Role> extractRoles(DecodedJWT jwt) {
-    return jwt.getClaim(ROLES_CLAIM)
-        .asList(String.class)
-        .stream()
+    return jwt.getClaim(ROLES_CLAIM).asList(String.class).stream()
         .map(roleStr -> Role.valueOf(roleStr))
         .collect(Collectors.toSet());
   }

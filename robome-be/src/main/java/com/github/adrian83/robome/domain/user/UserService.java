@@ -31,7 +31,7 @@ public class UserService {
     log.info("Persisting new user: {}", newUser);
 
     return userRepository
-        .getByEmail(newUser.getEmail())
+        .getByEmail(newUser.email())
         .runWith(Sink.head(), actorSystem)
         .thenApply(
             (user) -> {
