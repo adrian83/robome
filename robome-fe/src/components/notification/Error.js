@@ -11,18 +11,14 @@ class Error extends Component {
     }
 
     hideError(errId){
-        console.log("close ", errId);
         const self = this;
         return function(event) {
-            console.log("close2 ", errId);
             self.props.hideError(errId);
-            console.log("close3 ", errId);
             event.preventDefault();
         }
     }
 
     renderError(id, message, details=[]){
-        console.log("render ", id, details);
         var detailsList = details.map(msg => (<div key={uuidv4()}>{msg}</div>));
 
         return (
@@ -51,7 +47,7 @@ class Error extends Component {
                 return self.renderError(error.id, error.body);
             }
             console.log('error: ', JSON.stringify(error));
-            return self.renderError(uuidv4(), "Unknown error, please try again later");
+            return self.renderError(error.id, "Unknown error, please try again later");
         });
     
         return(<div>{errors}</div>);

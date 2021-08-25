@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import uuidv4 from '../web/uuid';
+
 class Base extends Component {
 
     constructor(props) { 
@@ -10,7 +12,10 @@ class Base extends Component {
     }
 
     registerError(err) {
-        console.log("register", err);
+        if(!err.id) {
+            err = {id: uuidv4(), body: err}
+        }
+
         var errs = this.errors();
         errs.push(err);
         this.setState({errors: errs});
