@@ -10,6 +10,7 @@ class Base extends Component {
     }
 
     registerError(err) {
+        console.log("register", err);
         var errs = this.errors();
         errs.push(err);
         this.setState({errors: errs});

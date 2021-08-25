@@ -11,14 +11,18 @@ class Error extends Component {
     }
 
     hideError(errId){
+        console.log("close ", errId);
         const self = this;
         return function(event) {
+            console.log("close2 ", errId);
             self.props.hideError(errId);
+            console.log("close3 ", errId);
             event.preventDefault();
         }
     }
 
     renderError(id, message, details=[]){
+        console.log("render ", id, details);
         var detailsList = details.map(msg => (<div key={uuidv4()}>{msg}</div>));
 
         return (
