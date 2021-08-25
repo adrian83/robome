@@ -3,7 +3,6 @@ package com.github.adrian83.robome.domain.user;
 import static java.util.concurrent.CompletableFuture.completedStage;
 
 import java.util.Optional;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -35,35 +34,22 @@ public class UserService {
 
     return userRepository
         .getByEmail(newUser.email())
-        .runWith(Sink.head(), actorSystem)
+        .runWith(Sink.headOption(), actorSystem)
         .thenApply(
-            (user) -> {
-              throw new EmailAlreadyInUseException("Email already in use");
+            (maybeUser) -> {
+              if (maybeUser.isPresent())
+                throw new EmailAlreadyInUseException("Email already in use");
+              return newUser;
             })
-        .exceptionally(
-            t -> {
-              if (t instanceof CompletionException) {
-                var cause = t.getCause();
-                if (cause instanceof EmailAlreadyInUseException) {
-                  throw new EmailAlreadyInUseException("Email already in use");
-                }
-              }
-              return true;
-            })
-        .thenCompose(
-            e -> {
-              var flow =
-                  userRepository
-                      .saveUser()
-                      .mapMaterializedValue(notUsed -> completedStage(newUser));
-
-              return Source.single(newUser).via(flow).runWith(Sink.head(), actorSystem);
-            });
+        .thenCompose(this::storeUser);
   }
 
   public CompletionStage<Optional<User>> findUserByEmail(String email) {
-    // log.info("Looking for a user with email: {}", email);
-
     return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
+  }
+
+  private CompletionStage<User> storeUser(User user) {
+    var flow = userRepository.saveUser().mapMaterializedValue(notUsed -> completedStage(user));
+    return Source.single(user).via(flow).runWith(Sink.head(), actorSystem);
   }
 }

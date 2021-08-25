@@ -39,8 +39,8 @@ public class ExceptionHandler {
 
     if (ex instanceof CompletionException) {
       return handle(ex.getCause());
-    } else if (ex instanceof ValidationException) {
-      return responseFactory.response400(((ValidationException) ex).getErrors());
+    } else if (ex instanceof ValidationException vex) {
+      return responseFactory.response400(vex.getErrors());
     } else if (ex instanceof InvalidSignInDataException) {
       return responseFactory.response400(List.of(INVALID_EMAIL_OR_PASS_ERROR));
     } else if (ex instanceof UserNotFoundException) {
