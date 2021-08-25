@@ -57,13 +57,13 @@ public class StageRepository {
     Function2<StageEntity, PreparedStatement, BoundStatement> statementBinder =
         (stage, prepStmt) ->
             prepStmt.bind(
-                stage.getKey().getStageId(),
-                stage.getKey().getTableId(),
-                stage.getUserId(),
-                stage.getTitle(),
-                stage.getState().name(),
-                toInstant(stage.getCreatedAt()),
-                toInstant(stage.getModifiedAt()));
+                stage.key().stageId(),
+                stage.key().tableId(),
+                stage.userId(),
+                stage.title(),
+                stage.state().name(),
+                toInstant(stage.createdAt()),
+                toInstant(stage.modifiedAt()));
 
     return CassandraFlow.create(session, defaults(), INSERT_STAGE_STMT, statementBinder);
   }
@@ -72,54 +72,47 @@ public class StageRepository {
     Function2<StageEntity, PreparedStatement, BoundStatement> statementBinder =
         (stage, prepStmt) ->
             prepStmt.bind(
-                stage.getTitle(),
-                stage.getState().name(),
-                toInstant(stage.getModifiedAt()),
-                stage.getKey().getTableId(),
-                stage.getKey().getStageId(),
-                stage.getUserId());
+                stage.title(),
+                stage.state().name(),
+                toInstant(stage.modifiedAt()),
+                stage.key().tableId(),
+                stage.key().stageId(),
+                stage.userId());
 
     return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
 
   public Flow<StageKey, StageKey, NotUsed> deleteStage(UUID userId) {
     Function2<StageKey, PreparedStatement, BoundStatement> statementBinder =
-        (key, prepStmt) -> prepStmt.bind(key.getTableId(), key.getStageId(), userId);
+        (key, prepStmt) -> prepStmt.bind(key.tableId(), key.stageId(), userId);
 
     return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
   }
 
   public Source<StageEntity, NotUsed> getById(StageKey stageKey, UUID userID) {
-	    Statement<?> stmt =
-	        SimpleStatement.newInstance(
-	            SELECT_STAGE_BY_ID_STMT, stageKey.getTableId(), stageKey.getStageId(), userID);
-
-	    return CassandraSource.create(session, stmt).map(this::fromRow);
-	  }
-  
-  public Source<StageEntity, NotUsed> getTableStages(TableKey key, UUID userId) {
     Statement<?> stmt =
-        SimpleStatement.newInstance(SELECT_STAGES_BY_TABLE_ID_STMT, key.getTableId(), userId);
+        SimpleStatement.newInstance(
+            SELECT_STAGE_BY_ID_STMT, stageKey.tableId(), stageKey.stageId(), userID);
 
     return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
+  public Source<StageEntity, NotUsed> getTableStages(TableKey key, UUID userId) {
+    Statement<?> stmt =
+        SimpleStatement.newInstance(SELECT_STAGES_BY_TABLE_ID_STMT, key.tableId(), userId);
 
+    return CassandraSource.create(session, stmt).map(this::fromRow);
+  }
 
   private StageEntity fromRow(Row row) {
-    var key =
-        StageKey.builder()
-            .tableId(row.get(TABLE_ID_COL, UUID.class))
-            .stageId(row.get(STAGE_ID_COL, UUID.class))
-            .build();
+    var key = new StageKey(row.get(TABLE_ID_COL, UUID.class), row.get(STAGE_ID_COL, UUID.class));
 
-    return StageEntity.builder()
-        .key(key)
-        .userId(row.get(USER_ID_COL, UUID.class))
-        .title(row.getString(TITLE_COL))
-        .state(valueOf(row.getString(STATE_COL)))
-        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
-        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
-        .build();
+    return new StageEntity(
+        key,
+        row.get(USER_ID_COL, UUID.class),
+        row.getString(TITLE_COL),
+        valueOf(row.getString(STATE_COL)),
+        toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)),
+        toUtcLocalDate(row.getInstant(CREATED_AT_COL)));
   }
 }

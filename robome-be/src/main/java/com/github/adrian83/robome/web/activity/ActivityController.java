@@ -7,6 +7,9 @@ import static java.util.UUID.fromString;
 
 import java.util.concurrent.CompletionStage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.activity.ActivityService;
@@ -32,10 +35,10 @@ import com.google.inject.Inject;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class ActivityController extends AllDirectives {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
   private static final String ACTIVITIES_PATH =
       "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/";
@@ -112,7 +115,7 @@ public class ActivityController extends AllDirectives {
       final String stageId,
       final NewActivity form) {
 
-    return logAction(log, userF, LOG_CREATE_ACT, tableId, stageId, form)
+    return logAction(LOGGER, userF, LOG_CREATE_ACT, tableId, stageId, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<NewActivity>(userCtx, form))
@@ -130,7 +133,7 @@ public class ActivityController extends AllDirectives {
       final String activityId,
       final UpdateActivity form) {
 
-    return logAction(log, userF, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
+    return logAction(LOGGER, userF, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form))
@@ -147,7 +150,7 @@ public class ActivityController extends AllDirectives {
       final String stageId,
       final String activityId) {
 
-    return logAction(log, userF, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
+    return logAction(LOGGER, userF, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(userCtx -> toDeleteActivityRequest(userCtx, tableId, stageId, activityId))
@@ -162,7 +165,7 @@ public class ActivityController extends AllDirectives {
       final String stageId,
       final String activityId) {
 
-    return logAction(log, userF, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
+    return logAction(LOGGER, userF, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toGetActivityRequest(userCtx, tableId, stageId, activityId))
@@ -176,7 +179,7 @@ public class ActivityController extends AllDirectives {
       final String tableId,
       final String stageId) {
 
-    return logAction(log, userF, LOG_LIST_ACTS, tableId, stageId)
+    return logAction(LOGGER, userF, LOG_LIST_ACTS, tableId, stageId)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toListStageActivitiesRequest(userCtx, tableId, stageId))
@@ -190,8 +193,8 @@ public class ActivityController extends AllDirectives {
       final String stageIdStr) {
 
     return new NewActivityRequest(
-        userAndForm.getForm().name(),
-        userAndForm.getUserContext().resourceOwnerIdOrError(),
+        userAndForm.form().name(),
+        userAndForm.userContext().resourceOwnerIdOrError(),
         StageKey.parse(tableIdStr, stageIdStr));
   }
 
@@ -202,8 +205,8 @@ public class ActivityController extends AllDirectives {
       final String activityIdStr) {
 
     return new UpdateActivityRequest(
-        userAndForm.getForm().name(),
-        userAndForm.getUserContext().resourceOwnerIdOrError(),
+        userAndForm.form().name(),
+        userAndForm.userContext().resourceOwnerIdOrError(),
         ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
   }
 

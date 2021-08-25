@@ -1,10 +1,7 @@
 package com.github.adrian83.robome.domain.stage.model.request;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import java.util.UUID;
 
-@SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-public class DeleteStageRequest extends GetStageRequest {}
+import com.github.adrian83.robome.domain.stage.model.StageKey;
+
+public record DeleteStageRequest(UUID userId, StageKey stageKey) {}

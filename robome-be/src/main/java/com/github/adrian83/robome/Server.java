@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.web.activity.ActivityController;
 import com.github.adrian83.robome.web.auth.AuthController;
 import com.github.adrian83.robome.web.health.HealthController;
@@ -16,10 +19,10 @@ import akka.actor.ActorSystem;
 import akka.http.javadsl.ServerBinding;
 import akka.http.javadsl.ServerBuilder;
 import akka.http.javadsl.server.Route;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class Server {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
   @SafeVarargs
   private static Route createRoutes(Supplier<Route>... controllers) {
@@ -31,7 +34,7 @@ public class Server {
 
   public static void main(String[] args) throws Exception {
 
-    log.info("starting server");
+    LOGGER.info("starting server");
 
     Injector injector = Guice.createInjector(new RobomeModule());
 

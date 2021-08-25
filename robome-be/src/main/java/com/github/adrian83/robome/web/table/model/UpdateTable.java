@@ -7,14 +7,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.adrian83.robome.common.validation.ValidationError;
 import com.github.adrian83.robome.common.validation.Validator;
 import com.google.common.base.Strings;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonSerialize
 public record UpdateTable(
     @JsonProperty(UpdateTable.TITLE_LABEL) String title,
-    @JsonProperty(UpdateTable.TITLE_LABEL) String description)
+    @JsonProperty(UpdateTable.DESC_LABEL) String description)
     implements Validator {
 
   private static final String TITLE_LABEL = "title";

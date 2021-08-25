@@ -109,8 +109,8 @@ public class ActivityRepository {
     Statement<?> stmt =
         SimpleStatement.newInstance(
             SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT,
-            key.getTableId(),
-            key.getStageId(),
+            key.tableId(),
+            key.stageId(),
             userId);
 
     return CassandraSource.create(session, stmt).map(this::fromRow);

@@ -58,13 +58,13 @@ public class TableRepository {
     Function2<TableEntity, PreparedStatement, BoundStatement> statementBinder =
         (table, prepStmt) ->
             prepStmt.bind(
-                table.getKey().getTableId(),
-                table.getUserId(),
-                table.getTitle(),
-                table.getDescription(),
-                table.getState().name(),
-                toInstant(table.getCreatedAt()),
-                toInstant(table.getModifiedAt()));
+                table.key().tableId(),
+                table.userId(),
+                table.title(),
+                table.description(),
+                table.state().name(),
+                toInstant(table.createdAt()),
+                toInstant(table.modifiedAt()));
 
     return CassandraFlow.create(session, defaults(), INSERT_TABLE_STMT, statementBinder);
   }
@@ -73,19 +73,19 @@ public class TableRepository {
     Function2<TableEntity, PreparedStatement, BoundStatement> statementBinder =
         (table, prepStmt) ->
             prepStmt.bind(
-                table.getTitle(),
-                table.getDescription(),
-                table.getState().name(),
-                toInstant(table.getModifiedAt()),
-                table.getKey().getTableId(),
-                table.getUserId());
+                table.title(),
+                table.description(),
+                table.state().name(),
+                toInstant(table.modifiedAt()),
+                table.key().tableId(),
+                table.userId());
 
     return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
 
   public Flow<TableKey, TableKey, NotUsed> deleteTable(UUID userId) {
     Function2<TableKey, PreparedStatement, BoundStatement> statementBinder =
-        (key, prepStmt) -> prepStmt.bind(key.getTableId(), userId);
+        (key, prepStmt) -> prepStmt.bind(key.tableId(), userId);
 
     return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
   }
@@ -109,14 +109,13 @@ public class TableRepository {
   }
 
   private TableEntity fromRow(Row row) {
-    return TableEntity.builder()
-        .key(TableKey.builder().tableId(row.get(TABLE_ID_COL, UUID.class)).build())
-        .userId(row.get(USER_ID_COL, UUID.class))
-        .title(row.getString(TITLE_COL))
-        .description(row.getString(DESCRIPTION_COL))
-        .state(valueOf(row.getString(STATE_COL)))
-        .modifiedAt(toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)))
-        .createdAt(toUtcLocalDate(row.getInstant(CREATED_AT_COL)))
-        .build();
+    return new TableEntity(
+        new TableKey(row.get(TABLE_ID_COL, UUID.class)),
+        row.get(USER_ID_COL, UUID.class),
+        row.getString(TITLE_COL),
+        row.getString(DESCRIPTION_COL),
+        valueOf(row.getString(STATE_COL)),
+        toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)),
+        toUtcLocalDate(row.getInstant(CREATED_AT_COL)));
   }
 }

@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 
-
 public record ActivityKey(UUID tableId, UUID stageId, UUID activityId) {
 
   public static ActivityKey parse(String tableIdStr, String stageIdStr, String activityIdStr) {
@@ -16,6 +15,6 @@ public record ActivityKey(UUID tableId, UUID stageId, UUID activityId) {
   }
 
   public static ActivityKey randomWithStageKey(StageKey stageKey) {
-    return new ActivityKey(stageKey.getTableId(), stageKey.getStageId(), randomUUID());
+    return new ActivityKey(stageKey.tableId(), stageKey.stageId(), randomUUID());
   }
 }

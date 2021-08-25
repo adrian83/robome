@@ -3,6 +3,9 @@ package com.github.adrian83.robome.web.health;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.routes.PrefixRoute;
 import com.github.adrian83.robome.web.health.model.AppStatus;
@@ -10,10 +13,10 @@ import com.google.inject.Inject;
 
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class HealthController extends AllDirectives {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(HealthController.class);
 
   public static final String HEALTH = "health";
   public static final String OK = "OK";
@@ -32,7 +35,7 @@ public class HealthController extends AllDirectives {
   }
 
   private Route createAppStatus() {
-    log.info("Checking application status: {}", OK);
+    LOGGER.info("Checking application status: {}", OK);
     return complete(response.jsonFromObject(new AppStatus(OK)));
   }
 }

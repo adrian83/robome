@@ -42,14 +42,13 @@ public class StageService {
 
   public CompletionStage<Stage> saveStage(NewStageRequest req) {
     var entity =
-        StageEntity.builder()
-            .key(StageKey.randomWithTableKey(req.getTableKey()))
-            .userId(req.getUserId())
-            .title(req.getTitle())
-            .state(StageState.ACTIVE)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new StageEntity(
+            StageKey.randomWithTableKey(req.tableKey()),
+            req.userId(),
+            req.title(),
+            StageState.ACTIVE,
+            Time.utcNow(),
+            Time.utcNow());
 
     return Source.single(entity)
         .via(stageRepository.saveStage())
@@ -59,14 +58,13 @@ public class StageService {
 
   public CompletionStage<Stage> updateStage(UpdateStageRequest req) {
     var entity =
-        StageEntity.builder()
-            .key(req.getStageKey())
-            .userId(req.getUserId())
-            .title(req.getTitle())
-            .state(StageState.ACTIVE)
-            .modifiedAt(Time.utcNow())
-            .createdAt(Time.utcNow())
-            .build();
+        new StageEntity(
+            req.stageKey(),
+            req.userId(),
+            req.title(),
+            StageState.ACTIVE,
+            Time.utcNow(),
+            Time.utcNow());
 
     return Source.single(entity)
         .via(stageRepository.updateStage())
@@ -75,14 +73,14 @@ public class StageService {
   }
 
   public CompletionStage<StageKey> deleteStage(DeleteStageRequest req) {
-    return Source.single(req.getStageKey())
-        .via(stageRepository.deleteStage(req.getUserId()))
+    return Source.single(req.stageKey())
+        .via(stageRepository.deleteStage(req.userId()))
         .runWith(Sink.head(), actorSystem);
   }
 
   public CompletionStage<Optional<Stage>> getStage(GetStageRequest req) {
     return stageRepository
-        .getById(req.getStageKey(), req.getUserId())
+        .getById(req.stageKey(), req.userId())
         .map(this::toStage)
         .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
         .runWith(Sink.headOption(), actorSystem);
@@ -90,26 +88,25 @@ public class StageService {
 
   public CompletionStage<List<Stage>> getTableStages(ListTableStagesRequest req) {
     return stageRepository
-        .getTableStages(req.getTableKey(), req.getUserId())
+        .getTableStages(req.tableKey(), req.userId())
         .map(this::toStage)
         .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
         .runWith(Sink.seq(), actorSystem);
   }
 
   private CompletionStage<Stage> getStageWithActivities(Stage stage) {
-    var listReq = new ListStageActivitiesRequest(stage.getUserId(), stage.getKey());
+    var listReq = new ListStageActivitiesRequest(stage.userId(), stage.key());
     return activityService.getStageActivities(listReq).thenApply(stage::copyWithActivities);
   }
 
   private Stage toStage(StageEntity entity) {
-    return Stage.builder()
-        .key(entity.getKey())
-        .userId(entity.getUserId())
-        .title(entity.getTitle())
-        .state(entity.getState())
-        .createdAt(entity.getCreatedAt())
-        .modifiedAt(entity.getModifiedAt())
-        .activities(emptyList())
-        .build();
+    return new Stage(
+        entity.key(),
+        entity.userId(),
+        entity.title(),
+        entity.state(),
+        entity.createdAt(),
+        entity.modifiedAt(),
+        emptyList());
   }
 }

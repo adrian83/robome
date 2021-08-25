@@ -4,16 +4,4 @@ import java.util.UUID;
 
 import com.github.adrian83.robome.domain.table.model.TableKey;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-@Data
-@Builder
-@ToString
-@EqualsAndHashCode
-public class ListTableStagesRequest {
-	private UUID userId;
-	private TableKey tableKey;
-}
+public record ListTableStagesRequest(UUID userId, TableKey tableKey) {}
