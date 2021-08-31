@@ -19,7 +19,7 @@
 		<scala.binary.version>2.13</scala.binary.version>
 		<akka.http.version>10.2.6</akka.http.version>
 		<akka.stream.version>2.6.8</akka.stream.version>
-		<cassandra.alpakka.version>2.0.2</cassandra.alpakka.version>
+		<cassandra.alpakka.version>3.0.3</cassandra.alpakka.version>
 		<jackson.jsr310.version>2.13.0-rc1</jackson.jsr310.version>
 		<jaxb.api.version>2.3.1</jaxb.api.version>
 		<guice.version>5.0.1</guice.version>
