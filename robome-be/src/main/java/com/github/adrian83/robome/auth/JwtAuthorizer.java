@@ -70,6 +70,6 @@ public class JwtAuthorizer {
   }
 
   private Date expirationDate() {
-    return new Date((Instant.now().getEpochSecond() * 1000) + TOKEN_EXPIRE_IN_MILLIS);
+    return new Date(Instant.now().getEpochSecond() * 1000 + TOKEN_EXPIRE_IN_MILLIS);
   }
 }

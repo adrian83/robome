@@ -5,7 +5,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>ab.java.adrian83.robome</groupId>
+	<groupId>com.github.adrian83.robome</groupId>
 	<artifactId>robome</artifactId>
 	<version>1.0.0</version>
 	<packaging>jar</packaging>
@@ -20,7 +20,7 @@
 		<akka.http.version>10.2.6</akka.http.version>
 		<akka.stream.version>2.6.8</akka.stream.version>
 		<cassandra.alpakka.version>3.0.3</cassandra.alpakka.version>
-		<jackson.jsr310.version>2.13.0-rc1</jackson.jsr310.version>
+		<jackson.version>2.13.0-rc1</jackson.version>
 		<jaxb.api.version>2.3.1</jaxb.api.version>
 		<guice.version>5.0.1</guice.version>
 		<log4j.version>2.14.0</log4j.version>
@@ -35,7 +35,7 @@
 		<shade.plugin.version>3.2.4</shade.plugin.version>
 		<compiler.plugin.version>3.8.1</compiler.plugin.version>
 		<exec.plugin.version>3.0.0</exec.plugin.version>
-		<pmd.plugin.version>3.14.0</pmd.plugin.version>
+		<pmd.plugin.version>3.15.0</pmd.plugin.version>
 	</properties>
 
 	<dependencies>
@@ -45,51 +45,43 @@
 			<artifactId>akka-stream_${scala.binary.version}</artifactId>
 			<version>${akka.stream.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-http_${scala.binary.version}</artifactId>
 			<version>${akka.http.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-http-spray-json_${scala.binary.version}</artifactId>
 			<version>${akka.http.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-http-xml_${scala.binary.version}</artifactId>
 			<version>${akka.http.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-http-jackson_${scala.binary.version}</artifactId>
 			<version>${akka.http.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.lightbend.akka</groupId>
 			<artifactId>akka-stream-alpakka-cassandra_${scala.binary.version}</artifactId>
 			<version>${cassandra.alpakka.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-http-testkit_${scala.binary.version}</artifactId>
 			<version>${akka.http.version}</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-testkit_${scala.binary.version}</artifactId>
 			<version>${akka.stream.version}</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-actor-testkit-typed_${scala.binary.version}</artifactId>
@@ -120,35 +112,31 @@
 			<artifactId>jaxb-api</artifactId>
 			<version>${jaxb.api.version}</version>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>${jackson.jsr310.version}</version>
+			<version>${jackson.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jdk8</artifactId>
-			<version>${jackson.jsr310.version}</version>
+			<version>${jackson.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>${jackson.jsr310.version}</version>
+			<version>${jackson.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.jsr310.version}</version>
+			<version>${jackson.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>${jackson.jsr310.version}</version>
+			<version>${jackson.version}</version>
 		</dependency>
 
 		<dependency>
@@ -156,7 +144,6 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>${sl4j.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
@@ -176,14 +163,12 @@
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.junit.vintage</groupId>
 			<artifactId>junit-vintage-engine</artifactId>
@@ -197,7 +182,6 @@
 			<version>${mockito.version}</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-junit-jupiter</artifactId>
@@ -211,8 +195,7 @@
 			<version>${assertj.version}</version>
 			<scope>test</scope>
 		</dependency>
-
-
+		
 	</dependencies>
 
 	<build>
@@ -313,13 +296,6 @@
 					<sourceEncoding>utf-8</sourceEncoding>
 					<minimumTokens>100</minimumTokens>
 					<targetJdk>${java.version}</targetJdk>
-					<excludes>
-						<exclude>**/*Bean.java</exclude>
-						<exclude>**/generated/*.java</exclude>
-					</excludes>
-					<excludeRoots>
-						<excludeRoot>target/generated-sources/stubs</excludeRoot>
-					</excludeRoots>
 				</configuration>
 			</plugin>
 		</plugins>

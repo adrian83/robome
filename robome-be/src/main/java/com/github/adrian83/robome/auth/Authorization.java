@@ -58,8 +58,13 @@ public final class Authorization {
     throw new UserNotAuthorizedException("user cannot write tables");
   }
 
-  private static boolean can(UserContext userCtx, Function<UserData, Boolean> hasPermision) {
-    return PermissionChecker.isAdmin(userCtx.loggedInUser())
-        || (hasPermision.apply(userCtx.loggedInUser()) && userCtx.userOwnsResource());
+  private static boolean can(
+      final UserContext userCtx, final Function<UserData, Boolean> hasPermision) {
+    return PermissionChecker.isAdmin(userCtx.loggedInUser()) || userCan(userCtx, hasPermision);
+  }
+
+  private static boolean userCan(
+      final UserContext userCtx, final Function<UserData, Boolean> hasPermision) {
+    return hasPermision.apply(userCtx.loggedInUser()) && userCtx.userOwnsResource();
   }
 }
