@@ -44,7 +44,6 @@ public class StageService {
     var entity =
         new StageEntity(
             StageKey.randomWithTableKey(req.tableKey()),
-            req.userId(),
             req.title(),
             StageState.ACTIVE,
             Time.utcNow(),
@@ -60,7 +59,6 @@ public class StageService {
     var entity =
         new StageEntity(
             req.stageKey(),
-            req.userId(),
             req.title(),
             StageState.ACTIVE,
             Time.utcNow(),
@@ -74,13 +72,13 @@ public class StageService {
 
   public CompletionStage<StageKey> deleteStage(DeleteStageRequest req) {
     return Source.single(req.stageKey())
-        .via(stageRepository.deleteStage(req.userId()))
+        .via(stageRepository.deleteStage())
         .runWith(Sink.head(), actorSystem);
   }
 
   public CompletionStage<Optional<Stage>> getStage(GetStageRequest req) {
     return stageRepository
-        .getById(req.stageKey(), req.userId())
+        .getById(req.stageKey())
         .map(this::toStage)
         .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
         .runWith(Sink.headOption(), actorSystem);
@@ -88,21 +86,20 @@ public class StageService {
 
   public CompletionStage<List<Stage>> getTableStages(ListTableStagesRequest req) {
     return stageRepository
-        .getTableStages(req.tableKey(), req.userId())
+        .getTableStages(req.tableKey())
         .map(this::toStage)
         .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
         .runWith(Sink.seq(), actorSystem);
   }
 
   private CompletionStage<Stage> getStageWithActivities(Stage stage) {
-    var listReq = new ListStageActivitiesRequest(stage.userId(), stage.key());
+    var listReq = new ListStageActivitiesRequest(stage.key());
     return activityService.getStageActivities(listReq).thenApply(stage::copyWithActivities);
   }
 
   private Stage toStage(StageEntity entity) {
     return new Stage(
         entity.key(),
-        entity.userId(),
         entity.title(),
         entity.state(),
         entity.createdAt(),

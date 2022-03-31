@@ -59,7 +59,7 @@ public class TableRepository {
         (table, prepStmt) ->
             prepStmt.bind(
                 table.key().tableId(),
-                table.userId(),
+                table.key().userId(),
                 table.title(),
                 table.description(),
                 table.state().name(),
@@ -78,7 +78,7 @@ public class TableRepository {
                 table.state().name(),
                 toInstant(table.modifiedAt()),
                 table.key().tableId(),
-                table.userId());
+                table.key().userId());
 
     return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
@@ -109,9 +109,9 @@ public class TableRepository {
   }
 
   private TableEntity fromRow(Row row) {
+	  var key = new TableKey(row.get(USER_ID_COL, UUID.class),row.get(TABLE_ID_COL, UUID.class));
     return new TableEntity(
-        new TableKey(row.get(TABLE_ID_COL, UUID.class)),
-        row.get(USER_ID_COL, UUID.class),
+    	key,
         row.getString(TITLE_COL),
         row.getString(DESCRIPTION_COL),
         valueOf(row.getString(STATE_COL)),

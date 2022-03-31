@@ -18,7 +18,6 @@ import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.google.inject.Inject;
 
 import akka.NotUsed;
-import akka.japi.Function2;
 import akka.stream.alpakka.cassandra.javadsl.CassandraFlow;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSession;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSource;
@@ -28,7 +27,7 @@ import akka.stream.javadsl.Source;
 public class ActivityRepository {
 
   private static final String INSERT_ACTIVITY_STMT =
-      "INSERT INTO robome.activities (activity_id, stage_id, table_id, user_id, name, state, "
+      "INSERT INTO robome.activities (user_id, activity_id, stage_id, table_id, name, state, "
           + "created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   private static final String SELECT_ACTIVITY_BY_ID_STMT =
       "SELECT * FROM robome.activities WHERE user_id = ? AND table_id = ? AND stage_id = ? AND activity_id = ?";
@@ -56,48 +55,22 @@ public class ActivityRepository {
   }
 
   public Flow<ActivityEntity, ActivityEntity, NotUsed> saveActivity() {
-    Function2<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
-        (activity, prepStmt) ->
-            prepStmt.bind(
-                activity.key().activityId(),
-                activity.key().stageId(),
-                activity.key().tableId(),
-                activity.userId(),
-                activity.name(),
-                activity.state().name(),
-                toInstant(activity.createdAt()),
-                toInstant(activity.modifiedAt()));
-
-    return CassandraFlow.create(session, defaults(), INSERT_ACTIVITY_STMT, statementBinder);
+    return CassandraFlow.create(session, defaults(), INSERT_ACTIVITY_STMT, this::saveActivityStatement);
   }
 
   public Flow<ActivityEntity, ActivityEntity, NotUsed> updateActivity() {
-    Function2<ActivityEntity, PreparedStatement, BoundStatement> statementBinder =
-        (activity, prepStmt) ->
-            prepStmt.bind(
-                activity.name(),
-                activity.state().name(),
-                toInstant(activity.modifiedAt()),
-                activity.key().tableId(),
-                activity.key().stageId(),
-                activity.key().activityId(),
-                activity.userId());
-
-    return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
+    return CassandraFlow.create(session, defaults(), UPDATE_STMT, this::updateActivityStatement);
   }
 
   public Flow<ActivityKey, ActivityKey, NotUsed> deleteActivity(UUID userId) {
-    Function2<ActivityKey, PreparedStatement, BoundStatement> statementBinder =
-        (key, prepStmt) -> prepStmt.bind(key.tableId(), key.stageId(), key.activityId(), userId);
-
-    return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
+    return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, this::deleteActivityStatement);
   }
 
-  public Source<ActivityEntity, NotUsed> getById(ActivityKey activityKey, UUID userId) {
+  public Source<ActivityEntity, NotUsed> getById(ActivityKey activityKey) {
     Statement<?> stmt =
         SimpleStatement.newInstance(
             SELECT_ACTIVITY_BY_ID_STMT,
-            userId,
+            activityKey.userId(),
             activityKey.tableId(),
             activityKey.stageId(),
             activityKey.activityId());
@@ -105,13 +78,13 @@ public class ActivityRepository {
     return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
-  public Source<ActivityEntity, NotUsed> getStageActivities(StageKey key, UUID userId) {
+  public Source<ActivityEntity, NotUsed> getStageActivities(StageKey key) {
     Statement<?> stmt =
         SimpleStatement.newInstance(
             SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID_STMT,
             key.tableId(),
             key.stageId(),
-            userId);
+            key.userId());
 
     return CassandraSource.create(session, stmt).map(this::fromRow);
   }
@@ -119,16 +92,44 @@ public class ActivityRepository {
   private ActivityEntity fromRow(Row row) {
     var key =
         new ActivityKey(
+        		row.get(USER_ID_COL, UUID.class),
             row.get(TABLE_ID_COL, UUID.class),
             row.get(STAGE_ID_COL, UUID.class),
             row.get(ACTIVITY_ID_COL, UUID.class));
 
     return new ActivityEntity(
         key,
-        row.get(USER_ID_COL, UUID.class),
         row.getString(NAME_COL),
         valueOf(row.getString(STATE_COL)),
         toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)),
         toUtcLocalDate(row.getInstant(CREATED_AT_COL)));
   }
+  
+  private BoundStatement saveActivityStatement(ActivityEntity activity, PreparedStatement prpdStmt) {
+	  return prpdStmt.bind(
+			  activity.key().userId(),
+              activity.key().activityId(),
+              activity.key().stageId(),
+              activity.key().tableId(),
+              activity.name(),
+              activity.state().name(),
+              toInstant(activity.createdAt()),
+              toInstant(activity.modifiedAt()));
+  }
+  
+  private BoundStatement updateActivityStatement(ActivityEntity activity, PreparedStatement prpdStmt) {
+  return prpdStmt.bind(
+	                activity.name(),
+	                activity.state().name(),
+	                toInstant(activity.modifiedAt()),
+	                activity.key().tableId(),
+	                activity.key().stageId(),
+	                activity.key().activityId(),
+	                activity.key().userId());
+  }
+  
+  private BoundStatement deleteActivityStatement(ActivityKey key, PreparedStatement prpdStmt) {
+	  return prpdStmt.bind(key.tableId(), key.stageId(), key.activityId(), key.userId());
+  }
+
 }

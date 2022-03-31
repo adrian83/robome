@@ -163,11 +163,11 @@ public class TableController extends AllDirectives {
   }
 
   private GetTableRequest toGetTableRequest(UserContext userCtx, String tableIdStr) {
-    return new GetTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(tableIdStr));
+    return new GetTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
   }
 
   private DeleteTableRequest toDeleteTableRequest(UserContext userCtx, String tableIdStr) {
-    return new DeleteTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(tableIdStr));
+    return new DeleteTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
   }
 
   private UpdateTableRequest toUpdateTableRequest(
@@ -176,7 +176,7 @@ public class TableController extends AllDirectives {
         form.title(),
         form.description(),
         userCtx.resourceOwnerIdOrError(),
-        TableKey.parse(tableIdStr));
+        TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
   }
 
   private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {

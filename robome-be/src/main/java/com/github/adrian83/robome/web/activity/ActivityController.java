@@ -194,8 +194,7 @@ public class ActivityController extends AllDirectives {
 
     return new NewActivityRequest(
         userAndForm.form().name(),
-        userAndForm.userContext().resourceOwnerIdOrError(),
-        StageKey.parse(tableIdStr, stageIdStr));
+        StageKey.parse(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr));
   }
 
   private UpdateActivityRequest toUpdateActivityRequest(
@@ -206,8 +205,7 @@ public class ActivityController extends AllDirectives {
 
     return new UpdateActivityRequest(
         userAndForm.form().name(),
-        userAndForm.userContext().resourceOwnerIdOrError(),
-        ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
+        ActivityKey.parse(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
   }
 
   private GetActivityRequest toGetActivityRequest(
@@ -217,7 +215,7 @@ public class ActivityController extends AllDirectives {
       final String activityIdStr) {
 
     return new GetActivityRequest(
-        userCtx.resourceOwnerIdOrError(), ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
+        ActivityKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
   }
 
   private DeleteActivityRequest toDeleteActivityRequest(
@@ -227,13 +225,11 @@ public class ActivityController extends AllDirectives {
       final String activityIdStr) {
 
     return new DeleteActivityRequest(
-        userCtx.resourceOwnerIdOrError(), ActivityKey.parse(tableIdStr, stageIdStr, activityIdStr));
+    		ActivityKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
   }
 
   private ListStageActivitiesRequest toListStageActivitiesRequest(
       final UserContext userCtx, final String tableIdStr, final String stageIdStr) {
-
-    return new ListStageActivitiesRequest(
-        userCtx.resourceOwnerIdOrError(), StageKey.parse(tableIdStr, stageIdStr));
+    return new ListStageActivitiesRequest(StageKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
   }
 }

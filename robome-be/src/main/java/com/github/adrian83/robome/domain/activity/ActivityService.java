@@ -35,7 +35,6 @@ public class ActivityService {
     var entity =
         new ActivityEntity(
             ActivityKey.randomWithStageKey(req.stageKey()),
-            req.userId(),
             req.name(),
             ActivityState.ACTIVE,
             Time.utcNow(),
@@ -51,7 +50,6 @@ public class ActivityService {
     var entity =
         new ActivityEntity(
             req.activityKey(),
-            req.userId(),
             req.name(),
             ActivityState.ACTIVE,
             Time.utcNow(),
@@ -65,20 +63,20 @@ public class ActivityService {
 
   public CompletionStage<ActivityKey> deleteActivity(DeleteActivityRequest req) {
     return Source.single(req.activityKey())
-        .via(activityRepository.deleteActivity(req.userId()))
+        .via(activityRepository.deleteActivity(req.activityKey().userId()))
         .runWith(Sink.head(), actorSystem);
   }
 
   public CompletionStage<Optional<Activity>> getActivity(GetActivityRequest req) {
     return activityRepository
-        .getById(req.activityKey(), req.userId())
+        .getById(req.activityKey())
         .map(this::toActivity)
         .runWith(Sink.headOption(), actorSystem);
   }
 
   public CompletionStage<List<Activity>> getStageActivities(ListStageActivitiesRequest req) {
     return activityRepository
-        .getStageActivities(req.stageKey(), req.userId())
+        .getStageActivities(req.stageKey())
         .map(this::toActivity)
         .runWith(Sink.seq(), actorSystem);
   }
@@ -86,7 +84,6 @@ public class ActivityService {
   private Activity toActivity(ActivityEntity entity) {
     return new Activity(
         entity.key(),
-        entity.userId(),
         entity.name(),
         entity.state(),
         entity.createdAt(),

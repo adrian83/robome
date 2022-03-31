@@ -46,13 +46,12 @@ public class TableServiceTest {
   private UserData user =
       new UserData(UUID.randomUUID(), "johndoe@somedomain.com", Collections.emptySet());
 
-  private TableKey tableKey1 = TableKey.random();
-  private TableKey tableKey2 = TableKey.random();
+  private TableKey tableKey1 = TableKey.random(user.id());
+  private TableKey tableKey2 = TableKey.random(user.id());
 
   private TableEntity tableEntity1 =
       new TableEntity(
           tableKey1,
-          user.id(),
           "test 1",
           "test table 1",
           TableState.ACTIVE,
@@ -62,7 +61,6 @@ public class TableServiceTest {
   private TableEntity tableEntity2 =
       new TableEntity(
           tableKey2,
-          user.id(),
           "test 2",
           "test table 2",
           TableState.ACTIVE,
@@ -72,7 +70,6 @@ public class TableServiceTest {
   private Stage stage =
       new Stage(
           StageKey.randomWithTableKey(tableKey1),
-          user.id(),
           "stage 1",
           StageState.ACTIVE,
           Time.utcNow(),
@@ -225,7 +222,6 @@ public class TableServiceTest {
     */
   public void assertTable(TableEntity expected, Table actual) {
     assertThat(expected.key()).isEqualTo(actual.key());
-    assertThat(expected.userId()).isEqualTo(actual.userId());
     assertThat(expected.title()).isEqualTo(actual.title());
     assertThat(expected.description()).isEqualTo(actual.description());
     assertThat(expected.state()).isEqualTo(actual.state());
@@ -235,7 +231,6 @@ public class TableServiceTest {
 
   public void assertStage(Stage expected, Stage actual) {
     assertThat(expected.key()).isEqualTo(actual.key());
-    assertThat(expected.userId()).isEqualTo(actual.userId());
     assertThat(expected.title()).isEqualTo(actual.title());
     assertThat(expected.state()).isEqualTo(actual.state());
     assertThat(expected.createdAt()).isEqualTo(actual.createdAt());

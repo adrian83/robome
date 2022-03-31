@@ -4,13 +4,13 @@ import static java.util.UUID.randomUUID;
 
 import java.util.UUID;
 
-public record TableKey(UUID tableId) {
+public record TableKey(UUID userId, UUID tableId) {
 
-  public static TableKey random() {
-    return new TableKey(randomUUID());
+  public static TableKey random(UUID userId) {
+    return new TableKey(userId, randomUUID());
   }
 
-  public static TableKey parse(String uuidStr) {
-    return new TableKey(UUID.fromString(uuidStr));
+  public static TableKey parse(UUID userId, String uuidStr) {
+    return new TableKey(userId, UUID.fromString(uuidStr));
   }
 }

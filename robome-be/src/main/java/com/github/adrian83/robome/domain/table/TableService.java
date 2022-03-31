@@ -42,8 +42,7 @@ public class TableService {
   public CompletionStage<Table> saveTable(NewTableRequest req) {
     var entity =
         new TableEntity(
-            TableKey.random(),
-            req.userId(),
+            TableKey.random(req.userId()),
             req.title(),
             req.description(),
             TableState.ACTIVE,
@@ -60,7 +59,6 @@ public class TableService {
     var entity =
         new TableEntity(
             req.tableKey(),
-            req.userId(),
             req.title(),
             req.description(),
             TableState.ACTIVE,
@@ -95,14 +93,13 @@ public class TableService {
   }
 
   private CompletionStage<Table> getTableWithStages(Table table) {
-    var listReq = new ListTableStagesRequest(table.userId(), table.key());
+    var listReq = new ListTableStagesRequest(table.key());
     return stageService.getTableStages(listReq).thenApply(table::copyWithStages);
   }
 
   private Table toTable(TableEntity entity) {
     return new Table(
         entity.key(),
-        entity.userId(),
         entity.title(),
         entity.description(),
         entity.state(),

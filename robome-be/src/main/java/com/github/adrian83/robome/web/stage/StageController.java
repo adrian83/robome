@@ -177,31 +177,29 @@ public class StageController extends AllDirectives {
   }
 
   private ListTableStagesRequest toListTableStagesRequest(UserContext userCtx, String tableIdStr) {
-    return new ListTableStagesRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(tableIdStr));
+    return new ListTableStagesRequest(TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
   }
 
   private DeleteStageRequest toDeleteStageRequest(
       UserContext userCtx, String tableIdStr, String stageIdStr) {
-    return new DeleteStageRequest(
-        userCtx.resourceOwnerIdOrError(), StageKey.parse(tableIdStr, stageIdStr));
+    return new DeleteStageRequest(StageKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
   }
 
   private UpdateStageRequest toUpdateStageRequest(
       UserContext userCtx, String tableIdStr, String stageIdStr, UpdateStage form) {
 
     return new UpdateStageRequest(
-        form.title(), userCtx.resourceOwnerIdOrError(), StageKey.parse(tableIdStr, stageIdStr));
+        form.title(), StageKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
   }
 
   private NewStageRequest toNewStageRequest(UserContext userCtx, String tableIdStr, NewStage form) {
     return new NewStageRequest(
-        form.title(), userCtx.resourceOwnerIdOrError(), TableKey.parse(tableIdStr));
+        form.title(), userCtx.resourceOwnerIdOrError(), TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
   }
 
   private GetStageRequest toGetStageRequest(
       UserContext userCtx, String tableIdStr, String stageIdStr) {
 
-    return new GetStageRequest(
-        userCtx.resourceOwnerIdOrError(), StageKey.parse(tableIdStr, stageIdStr));
+    return new GetStageRequest(StageKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
   }
 }

@@ -59,7 +59,7 @@ public class StageRepository {
             prepStmt.bind(
                 stage.key().stageId(),
                 stage.key().tableId(),
-                stage.userId(),
+                stage.key().userId(),
                 stage.title(),
                 stage.state().name(),
                 toInstant(stage.createdAt()),
@@ -77,39 +77,42 @@ public class StageRepository {
                 toInstant(stage.modifiedAt()),
                 stage.key().tableId(),
                 stage.key().stageId(),
-                stage.userId());
+                stage.key().userId());
 
     return CassandraFlow.create(session, defaults(), UPDATE_STMT, statementBinder);
   }
 
-  public Flow<StageKey, StageKey, NotUsed> deleteStage(UUID userId) {
+  public Flow<StageKey, StageKey, NotUsed> deleteStage() {
     Function2<StageKey, PreparedStatement, BoundStatement> statementBinder =
-        (key, prepStmt) -> prepStmt.bind(key.tableId(), key.stageId(), userId);
+        (key, prepStmt) -> prepStmt.bind(key.tableId(), key.stageId(), key.userId());
 
     return CassandraFlow.create(session, defaults(), DELETE_BY_ID_STMT, statementBinder);
   }
 
-  public Source<StageEntity, NotUsed> getById(StageKey stageKey, UUID userID) {
+  public Source<StageEntity, NotUsed> getById(StageKey stageKey) {
     Statement<?> stmt =
         SimpleStatement.newInstance(
-            SELECT_STAGE_BY_ID_STMT, stageKey.tableId(), stageKey.stageId(), userID);
+            SELECT_STAGE_BY_ID_STMT, stageKey.tableId(), stageKey.stageId(), stageKey.userId());
 
     return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
-  public Source<StageEntity, NotUsed> getTableStages(TableKey key, UUID userId) {
+  public Source<StageEntity, NotUsed> getTableStages(TableKey key) {
     Statement<?> stmt =
-        SimpleStatement.newInstance(SELECT_STAGES_BY_TABLE_ID_STMT, key.tableId(), userId);
+        SimpleStatement.newInstance(SELECT_STAGES_BY_TABLE_ID_STMT, key.tableId(), key.userId());
 
     return CassandraSource.create(session, stmt).map(this::fromRow);
   }
 
   private StageEntity fromRow(Row row) {
-    var key = new StageKey(row.get(TABLE_ID_COL, UUID.class), row.get(STAGE_ID_COL, UUID.class));
+    var key = new StageKey(
+    		row.get(USER_ID_COL, UUID.class), 
+    		row.get(TABLE_ID_COL, UUID.class), 
+    		row.get(STAGE_ID_COL, UUID.class)
+    		);
 
     return new StageEntity(
         key,
-        row.get(USER_ID_COL, UUID.class),
         row.getString(TITLE_COL),
         valueOf(row.getString(STATE_COL)),
         toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)),
