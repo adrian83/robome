@@ -40,7 +40,7 @@ public class JwtAuthorizer {
       return JWT.create()
           .withSubject(user.email())
           .withClaim(ID_CLAIM, user.id().toString())
-          .withArrayClaim(ROLES_CLAIM, user.roleName())
+          .withArrayClaim(ROLES_CLAIM, user.roleNames())
           .withIssuer(TOKEN_ISSUER)
           .withExpiresAt(expirationDate())
           .sign(SECURITY_ALGORITHM);
@@ -50,7 +50,7 @@ public class JwtAuthorizer {
     }
   }
 
-  public UserData userFromToken(String token) {
+  public UserData extractUserDataFromToken(String token) {
     try {
       DecodedJWT jwt = VERIFIER.verify(token);
       return new UserData(extractUserId(jwt), jwt.getSubject(), extractRoles(jwt));

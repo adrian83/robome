@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.Authentication;
-import com.github.adrian83.robome.auth.model.command.LoginRequest;
-import com.github.adrian83.robome.auth.model.command.RegisterRequest;
+import com.github.adrian83.robome.auth.model.command.LoginCommand;
+import com.github.adrian83.robome.auth.model.command.RegisterCommand;
 import com.github.adrian83.robome.common.validation.Validation;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
@@ -80,16 +80,16 @@ public class AuthController extends AllDirectives {
     return CompletableFuture.completedFuture(register)
         .thenApply(cLog::apply)
         .thenApply(Validation::validate)
-        .thenApply(v -> toRegisterRequest(register))
+        .thenApply(v -> toRegisterCommand(register))
         .thenCompose(authentication::registerUser)
         .thenApply(done -> response.response201());
   }
 
-  private LoginRequest toLoginRequest(Login form) {
-    return new LoginRequest(form.email(), form.password());
+  private LoginCommand toLoginRequest(Login form) {
+    return new LoginCommand(form.email(), form.password());
   }
 
-  private RegisterRequest toRegisterRequest(Register form) {
-    return new RegisterRequest(form.email(), form.password());
+  private RegisterCommand toRegisterCommand(Register form) {
+    return new RegisterCommand(form.email(), form.password());
   }
 }

@@ -2,6 +2,7 @@ package com.github.adrian83.robome.web.common;
 
 import static akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -9,11 +10,13 @@ import java.util.function.Function;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.model.UserData;
-import com.github.adrian83.robome.common.function.HexaFunction;
-import com.github.adrian83.robome.common.function.PentaFunction;
 import com.github.adrian83.robome.common.function.TetraFunction;
 import com.github.adrian83.robome.common.function.TriFunction;
 import com.github.adrian83.robome.web.common.http.HttpHeader;
+import com.github.adrian83.robome.web.common.request.Parameter3Request;
+import com.github.adrian83.robome.web.common.request.Parameter3WithBodyRequest;
+import com.github.adrian83.robome.web.common.request.Parameter4Request;
+import com.github.adrian83.robome.web.common.request.Parameter4WithBodyRequest;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
@@ -46,10 +49,7 @@ public class Security extends AllDirectives {
   }
 
   public Route secured(Function<CompletionStage<UserData>, CompletionStage<HttpResponse>> logic) {
-
-    Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) -> handleExceptions(logic.apply(userF));
-
+    Function<CompletionStage<UserData>, Route> userFToRoute = userF -> handleExceptions(logic.apply(userF));
     return withUserFromAuthHeader(userFToRoute);
   }
 
@@ -57,7 +57,7 @@ public class Security extends AllDirectives {
       T param, BiFunction<CompletionStage<UserData>, T, CompletionStage<HttpResponse>> logic) {
 
     Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) -> handleExceptions(logic.apply(userF, param));
+        userF -> handleExceptions(logic.apply(userF, param));
 
     return withUserFromAuthHeader(userFToRoute);
   }
@@ -68,19 +68,15 @@ public class Security extends AllDirectives {
       TriFunction<CompletionStage<UserData>, T, P, CompletionStage<HttpResponse>> logic) {
 
     Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) -> handleExceptions(logic.apply(userF, param1, param2));
+        userF -> handleExceptions(logic.apply(userF, param1, param2));
 
     return withUserFromAuthHeader(userFToRoute);
   }
 
-  public <T, P, R> Route secured(
-      T p1,
-      P p2,
-      R p3,
-      TetraFunction<CompletionStage<UserData>, T, P, R, CompletionStage<HttpResponse>> logic) {
+  public <T, P, R> Route secured(T p1, P p2, R p3, Parameter3Request<T, P, R> logic) {
 
     Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) -> handleExceptions(logic.apply(userF, p1, p2, p3));
+        userF -> handleExceptions(logic.apply(userF, p1, p2, p3));
 
     return withUserFromAuthHeader(userFToRoute);
   }
@@ -90,10 +86,10 @@ public class Security extends AllDirectives {
       P param2,
       R param3,
       Class<S> clazz,
-      PentaFunction<CompletionStage<UserData>, T, P, R, S, CompletionStage<HttpResponse>> logic) {
+      Parameter3WithBodyRequest<T, P, R, S> logic) {
 
     Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) ->
+        userF ->
             entity(
                 unmarshaller(clazz),
                 form -> handleExceptions(logic.apply(userF, param1, param2, param3, form)));
@@ -101,12 +97,13 @@ public class Security extends AllDirectives {
     return withUserFromAuthHeader(userFToRoute);
   }
 
+ 
   public <T> Route secured(
       Class<T> clazz,
       BiFunction<CompletionStage<UserData>, T, CompletionStage<HttpResponse>> logic) {
 
     Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) -> entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, form)));
+        userF -> entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, form)));
 
     return withUserFromAuthHeader(userFToRoute);
   }
@@ -117,7 +114,7 @@ public class Security extends AllDirectives {
       TriFunction<CompletionStage<UserData>, P, T, CompletionStage<HttpResponse>> logic) {
 
     Function<CompletionStage<UserData>, Route> userFToRoute =
-        (userF) ->
+        userF ->
             entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, param, form)));
 
     return withUserFromAuthHeader(userFToRoute);
@@ -127,71 +124,28 @@ public class Security extends AllDirectives {
       String p1,
       String p2,
       Class<T> clazz,
-      TetraFunction<CompletionStage<UserData>, String, String, T, CompletionStage<HttpResponse>>
-          logic) {
+      TetraFunction<CompletionStage<UserData>, String, String, T, CompletionStage<HttpResponse>> logic) {
 
     Function<CompletionStage<UserData>, Route> apply =
-        (userF) ->
+        userF ->
             entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(userF, p1, p2, form)));
 
     return withUserFromAuthHeader(apply);
   }
 
-  public <T> Route secured(
-      String p1,
-      String p2,
-      String p3,
-      Class<T> clazz,
-      PentaFunction<
-              CompletionStage<UserData>, String, String, String, T, CompletionStage<HttpResponse>>
-          logic) {
 
-    Function<CompletionStage<UserData>, Route> apply =
-        (userF) ->
-            entity(
-                unmarshaller(clazz),
-                form -> handleExceptions(logic.apply(userF, p1, p2, p3, form)));
-
-    return withUserFromAuthHeader(apply);
-  }
-
-  public <T> Route secured(
-      String p1,
-      String p2,
-      String p3,
-      String p4,
-      PentaFunction<
-              CompletionStage<UserData>,
-              String,
-              String,
-              String,
-              String,
-              CompletionStage<HttpResponse>>
-          logic) {
+  public <T> Route secured(String p1, String p2, String p3, String p4, Parameter4Request logic) {
 	  
-	
-
-    Function<CompletionStage<UserData>, Route> apply =
-        (userF) -> handleExceptions(logic.apply(userF, p1, p2, p3, p4));
-
+    Function<CompletionStage<UserData>, Route> apply = userF -> handleExceptions(logic.apply(userF, p1, p2, p3, p4));
     return withUserFromAuthHeader(apply);
   }
   
-  public <T> Route secured(
-	      String p1,
-	      String p2,
-	      String p3,
-	      String p4,
-	      Class<T> clazz,
-	      HexaFunction<
-	              CompletionStage<UserData>, String, String, String, String, T, CompletionStage<HttpResponse>>
-	          logic) {
-
+  public <T> Route secured(String p1, String p2, String p3, String p4, Class<T> clazz, Parameter4WithBodyRequest<T> logic) {
+	  
+	  var unmarshaller = unmarshaller(clazz);
 	    Function<CompletionStage<UserData>, Route> apply =
-	        (userF) ->
-	            entity(
-	                unmarshaller(clazz),
-	                form -> handleExceptions(logic.apply(userF, p1, p2, p3, p4, form)));
+	        userF ->
+	            entity(unmarshaller, form -> handleExceptions(logic.apply(userF, p1, p2, p3, p4, form)));
 
 	    return withUserFromAuthHeader(apply);
 	  }
@@ -209,9 +163,8 @@ public class Security extends AllDirectives {
                 .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION));
   }
 
-  private Route procedeIfValidToken(
-      String token, Function<CompletionStage<UserData>, Route> inner) {
-    var userF = authentication.findUserByToken(token);
-    return inner.apply(userF);
+  private Route procedeIfValidToken(String token, Function<CompletionStage<UserData>, Route> inner) {
+    var userData = authentication.findUserByToken(token);
+    return inner.apply(CompletableFuture.completedStage(userData));
   }
 }
