@@ -1,11 +1,11 @@
 package com.github.adrian83.robome.web.common.request;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import com.github.adrian83.robome.auth.model.UserData;
-import com.github.adrian83.robome.common.function.HexaFunction;
 
 import akka.http.javadsl.model.HttpResponse;
 
 @FunctionalInterface
-public interface Parameter4WithBodyRequest<P, R, S, T, BODY> extends HexaFunction<UserData, P, R, S, T, BODY, CompletionStage<HttpResponse>> {}
+public interface Parameter0Request extends Function<UserData, CompletionStage<HttpResponse>>{}

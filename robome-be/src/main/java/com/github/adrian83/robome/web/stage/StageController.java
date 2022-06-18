@@ -104,12 +104,12 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> persistStage(
-      CompletionStage<UserData> userF,
+      UserData user,
       String resourceOwnerIdStr,
       String tableIdStr,
       NewStage form) {
 
-    return logAction(LOGGER, userF, LOG_CREATE_STG, tableIdStr, form)
+    return logAction(LOGGER, user, LOG_CREATE_STG, tableIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<NewStage>(userCtx, form))
@@ -120,13 +120,13 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateStage(
-      CompletionStage<UserData> userF,
+      UserData user,
       String resourceOwnerIdStr,
       String tableIdStr,
       String stageIdStr,
       UpdateStage form) {
 
-    return logAction(LOGGER, userF, LOG_UPDATE_STG, tableIdStr, stageIdStr, form)
+    return logAction(LOGGER, user, LOG_UPDATE_STG, tableIdStr, stageIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<UpdateStage>(userCtx, form))
@@ -138,12 +138,12 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteStage(
-      CompletionStage<UserData> userF,
+      UserData user,
       String resourceOwnerIdStr,
       String tableIdStr,
       String stageIdStr) {
 
-    return logAction(LOGGER, userF, LOG_DEL_STG_BY_ID, tableIdStr, stageIdStr)
+    return logAction(LOGGER, user, LOG_DEL_STG_BY_ID, tableIdStr, stageIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> toDeleteStageRequest(userCtx, tableIdStr, stageIdStr))
@@ -152,12 +152,12 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getStageById(
-      CompletionStage<UserData> userF,
+      UserData user,
       String resourceOwnerIdStr,
       String tableIdStr,
       String stageIdStr) {
 
-    return logAction(LOGGER, userF, LOG_GET_STG_BY_ID, tableIdStr, stageIdStr)
+    return logAction(LOGGER, user, LOG_GET_STG_BY_ID, tableIdStr, stageIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toGetStageRequest(userCtx, tableIdStr, stageIdStr))
@@ -166,9 +166,11 @@ public class StageController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getTableStages(
-      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
+      UserData user, 
+      String resourceOwnerIdStr, 
+      String tableIdStr) {
 
-    return logAction(LOGGER, userF, LOG_LIST_STGS, tableIdStr)
+    return logAction(LOGGER, user, LOG_LIST_STGS, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadStages)
         .thenApply(userCtx -> toListTableStagesRequest(userCtx, tableIdStr))

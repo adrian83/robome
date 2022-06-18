@@ -82,7 +82,9 @@ public class Response {
   }
 
   public HttpResponse response401(HttpHeader... hdrs) {
-    return HttpResponse.create().withStatus(StatusCodes.UNAUTHORIZED).addHeaders(corsHeaders());
+    return HttpResponse.create()
+    	.withStatus(StatusCodes.UNAUTHORIZED)
+    	.addHeaders(corsHeaders());
   }
 
   public HttpResponse response500(String msg) {

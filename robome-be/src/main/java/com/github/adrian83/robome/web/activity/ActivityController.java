@@ -109,13 +109,13 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> persistActivity(
-      final CompletionStage<UserData> userF,
+      final UserData user,
       final String resourceOwnerId,
       final String tableId,
       final String stageId,
       final NewActivity form) {
 
-    return logAction(LOGGER, userF, LOG_CREATE_ACT, tableId, stageId, form)
+    return logAction(LOGGER, user, LOG_CREATE_ACT, tableId, stageId, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canWriteStages)
         .thenApply(userCtx -> new UserAndForm<NewActivity>(userCtx, form))
@@ -126,14 +126,14 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateActivity(
-      final CompletionStage<UserData> userF,
+      final UserData user,
       final String resourceOwnerId,
       final String tableId,
       final String stageId,
       final String activityId,
       final UpdateActivity form) {
 
-    return logAction(LOGGER, userF, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
+    return logAction(LOGGER, user, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form))
@@ -144,13 +144,13 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteActivity(
-      final CompletionStage<UserData> userF,
+      final UserData user,
       final String resourceOwnerId,
       final String tableId,
       final String stageId,
       final String activityId) {
 
-    return logAction(LOGGER, userF, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
+    return logAction(LOGGER, user, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canWriteAcivities)
         .thenApply(userCtx -> toDeleteActivityRequest(userCtx, tableId, stageId, activityId))
@@ -159,13 +159,13 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getActivityById(
-      final CompletionStage<UserData> userF,
+      final UserData user,
       final String resourceOwnerId,
       final String tableId,
       final String stageId,
       final String activityId) {
 
-    return logAction(LOGGER, userF, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
+    return logAction(LOGGER, user, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toGetActivityRequest(userCtx, tableId, stageId, activityId))
@@ -174,12 +174,12 @@ public class ActivityController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getStageActivities(
-      final CompletionStage<UserData> userF,
+      final UserData user,
       final String resourceOwnerId,
       final String tableId,
       final String stageId) {
 
-    return logAction(LOGGER, userF, LOG_LIST_ACTS, tableId, stageId)
+    return logAction(LOGGER, user, LOG_LIST_ACTS, tableId, stageId)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
         .thenApply(Authorization::canReadAcivities)
         .thenApply(userCtx -> toListStageActivitiesRequest(userCtx, tableId, stageId))

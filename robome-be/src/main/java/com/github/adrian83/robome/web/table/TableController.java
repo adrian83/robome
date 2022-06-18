@@ -97,9 +97,11 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> persistTable(
-      CompletionStage<UserData> userF, String resourceOwnerIdStr, NewTable form) {
+      UserData user, 
+      String resourceOwnerIdStr, 
+      NewTable form) {
 
-    return logAction(LOGGER, userF, LOG_CREATE_TAB, form)
+    return logAction(LOGGER, user, LOG_CREATE_TAB, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
@@ -110,12 +112,12 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> updateTable(
-      CompletionStage<UserData> userF,
+      UserData user,
       String resourceOwnerIdStr,
       String tableIdStr,
       UpdateTable form) {
 
-    return logAction(LOGGER, userF, LOG_UPDATE_TAB, tableIdStr, form)
+    return logAction(LOGGER, user, LOG_UPDATE_TAB, tableIdStr, form)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
@@ -126,9 +128,11 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> deleteTable(
-      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
+      UserData user, 
+      String resourceOwnerIdStr, 
+      String tableIdStr) {
 
-    return logAction(LOGGER, userF, LOG_DEL_TAB_BY_ID, tableIdStr)
+    return logAction(LOGGER, user, LOG_DEL_TAB_BY_ID, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canWriteTables)
         .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
@@ -137,9 +141,11 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getTableById(
-      CompletionStage<UserData> userF, String resourceOwnerIdStr, String tableIdStr) {
+      UserData user, 
+      String resourceOwnerIdStr, 
+      String tableIdStr) {
 
-    return logAction(LOGGER, userF, LOG_GET_TAB_BY_ID, tableIdStr)
+    return logAction(LOGGER, user, LOG_GET_TAB_BY_ID, tableIdStr)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
@@ -148,9 +154,10 @@ public class TableController extends AllDirectives {
   }
 
   private CompletionStage<HttpResponse> getTables(
-      CompletionStage<UserData> userF, String resourceOwnerIdStr) {
+      UserData user, 
+      String resourceOwnerIdStr) {
 
-    return logAction(LOGGER, userF, LOG_LIST_TABS)
+    return logAction(LOGGER, user, LOG_LIST_TABS)
         .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
         .thenApply(Authorization::canReadTables)
         .thenApply(this::toListTablesRequest)

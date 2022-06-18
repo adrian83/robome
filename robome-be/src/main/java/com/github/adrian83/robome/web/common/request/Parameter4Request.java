@@ -8,4 +8,4 @@ import com.github.adrian83.robome.common.function.PentaFunction;
 import akka.http.javadsl.model.HttpResponse;
 
 @FunctionalInterface
-public interface Parameter4Request extends PentaFunction<CompletionStage<UserData>, String, String, String, String, CompletionStage<HttpResponse>>{}
+public interface Parameter4Request<P, R, S, T> extends PentaFunction<UserData, P, R, S, T, CompletionStage<HttpResponse>>{}
