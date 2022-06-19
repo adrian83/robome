@@ -24,6 +24,7 @@
 /robome-be/.gradle
 /robome-be/build/
 !/robome-be/gradle/wrapper/gradle-wrapper.jar
+/robome-be/dependency-reduced-pom.xml
 
 ### STS ###
 /robome-be/.apt_generated
