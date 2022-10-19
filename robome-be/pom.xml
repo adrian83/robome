@@ -18,7 +18,7 @@
 		<akka.http.version>10.2.9</akka.http.version>
 		<akka.stream.version>2.6.19</akka.stream.version>
 		<cassandra.alpakka.version>3.0.4</cassandra.alpakka.version>
-		<jackson.version>2.13.3</jackson.version>
+		<jackson.version>2.13.4.1</jackson.version>
 		<jaxb.api.version>2.3.1</jaxb.api.version>
 		<guice.version>5.1.0</guice.version>
 		<log4j.version>2.17.2</log4j.version>
