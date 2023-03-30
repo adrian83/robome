@@ -47,8 +47,7 @@ public record Register( @JsonProperty(EMAIL_LABEL)  String email,
             check(email, EMPTY_EMAIL, Strings::isNullOrEmpty),
             check(password, EMPTY_PASSWORD_1, Strings::isNullOrEmpty),
             check(repeatedPassword, DIFFERENT_PASSWORDS, (String pass2) -> !pass2.equals(password)))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(Optional::stream)
         .collect(Collectors.toList());
   }
 }

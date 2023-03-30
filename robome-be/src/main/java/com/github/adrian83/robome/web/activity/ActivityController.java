@@ -10,7 +10,6 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
@@ -24,6 +23,7 @@ import com.github.adrian83.robome.domain.common.UserContext;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
+import com.github.adrian83.robome.web.auth.Authorization;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.FourParamAndFormRoute;

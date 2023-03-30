@@ -26,7 +26,7 @@ import akka.http.javadsl.server.Route;
 
 public class Security extends AllDirectives {
 
-  private static final String AUTHORIZATION = HttpHeader.AUTHORIZATION.getText();
+	private static final String AUTHORIZATION = HttpHeader.AUTHORIZATION.getText();
 
   private static final RuntimeException TOKEN_NOT_FOUND_EXCEPTION =
       new TokenNotFoundException("security token cannot be found");

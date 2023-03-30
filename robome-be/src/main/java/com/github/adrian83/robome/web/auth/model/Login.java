@@ -39,8 +39,7 @@ public record Login(
     return Stream.of(
             check(email, EMPTY_EMAIL, Strings::isNullOrEmpty),
             check(password, EMPTY_PASSWORD, Strings::isNullOrEmpty))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+    	.flatMap(Optional::stream)
         .collect(Collectors.toList());
   }
 }

@@ -10,7 +10,6 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.adrian83.robome.auth.Authorization;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.common.UserContext;
@@ -21,6 +20,7 @@ import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
 import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
+import com.github.adrian83.robome.web.auth.Authorization;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;

@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.auth;
+package com.github.adrian83.robome.web.auth;
 
 import java.util.function.Function;
 

@@ -15,59 +15,58 @@ import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
-
 public class Authentication {
-	
-  private static final RuntimeException INVALID_PASS_OR_EMAIL_EXCEPTION = new InvalidSignInDataException("invalid password or email");
 
-  private UserService userService;
-  private JwtAuthorizer jwtAuthorizer;
+	private static final RuntimeException INVALID_PASS_OR_EMAIL_EXCEPTION = new InvalidSignInDataException(
+			"invalid password or email");
 
-  @Inject
-  public Authentication(UserService userService, JwtAuthorizer jwtAuthorizer) {
-    this.userService = userService;
-    this.jwtAuthorizer = jwtAuthorizer;
-  }
+	private UserService userService;
+	private JwtAuthorizer jwtAuthorizer;
 
-  public CompletionStage<UserData> findUserWithPassword(LoginCommand req) {
-    return userService
-        .findUserByEmail(req.email())
-        .thenApply(this::userExists)
-        .thenApply(user -> isPasswordCorrect(user, req.password()))
-        .thenApply(user -> new UserData(user.id(), user.email(), user.roles()));
-  }
+	@Inject
+	public Authentication(UserService userService, JwtAuthorizer jwtAuthorizer) {
+		this.userService = userService;
+		this.jwtAuthorizer = jwtAuthorizer;
+	}
 
-  public CompletionStage<UserData> registerUser(RegisterCommand req) {
-    var user = new User(req.email(), hashPassword(req.password()), DEFAULT_USER_ROLES);
+	public CompletionStage<UserData> findUserWithPassword(LoginCommand req) {
+		return userService.findUserByEmail(req.email())
+				.thenApply(this::userExists)
+				.thenApply(user -> isPasswordCorrect(user, req.password()))
+				.thenApply(user -> new UserData(user.id(), user.email(), user.roles()));
+	}
 
-    return userService
-        .saveUser(user)
-        .thenApply(savedUser -> new UserData(savedUser.id(), savedUser.email(), savedUser.roles()));
-  }
+	public CompletionStage<UserData> registerUser(RegisterCommand req) {
+		var passwordHash = hashPassword(req.password());
+		var user = new User(req.email(), passwordHash, DEFAULT_USER_ROLES);
+		return userService.saveUser(user)
+				.thenApply(savedUser -> new UserData(savedUser.id(), savedUser.email(), savedUser.roles()));
+	}
 
-  public UserData findUserByToken(String token) {
-    return jwtAuthorizer.extractUserDataFromToken(token);
-  }
+	public UserData findUserByToken(String token) {
+		return jwtAuthorizer.extractUserDataFromToken(token);
+	}
 
-  public String createAuthToken(UserData user) {
-    return jwtAuthorizer.createToken(user);
-  }
-  
-  private User userExists(Optional<User> maybeUser) {
-	  return maybeUser.orElseThrow(() -> INVALID_PASS_OR_EMAIL_EXCEPTION);
-  }
+	public String createAuthToken(UserData user) {
+		return jwtAuthorizer.createToken(user);
+	}
 
-  private User isPasswordCorrect(User user, String password) {
-      var valid = validPassword(password, user.passwordHash());
-      if (!valid) throw INVALID_PASS_OR_EMAIL_EXCEPTION;
-      return user;
-  }
-  
-  private String hashPassword(String password) {
-    return BCrypt.hashpw(password, BCrypt.gensalt());
-  }
+	private User userExists(Optional<User> maybeUser) {
+		return maybeUser.orElseThrow(() -> INVALID_PASS_OR_EMAIL_EXCEPTION);
+	}
 
-  private boolean validPassword(String password, String passwordHash) {
-    return BCrypt.checkpw(password, passwordHash);
-  }
+	private User isPasswordCorrect(User user, String password) {
+		var valid = validPassword(password, user.passwordHash());
+		if (!valid)
+			throw INVALID_PASS_OR_EMAIL_EXCEPTION;
+		return user;
+	}
+
+	private String hashPassword(String password) {
+		return BCrypt.hashpw(password, BCrypt.gensalt());
+	}
+
+	private boolean validPassword(String password, String passwordHash) {
+		return BCrypt.checkpw(password, passwordHash);
+	}
 }

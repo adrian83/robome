@@ -17,18 +17,18 @@ import com.google.common.base.Strings;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonSerialize
 public record UpdateStage(@JsonProperty(TITLE_LABEL) String title) implements Validator {
-  private static final String TITLE_LABEL = "title";
-  private static final String EMPTY_TITLE_KEY = "stage.update.title.empty";
-  private static final String EMPTY_TITLE_MSG = "Stage title cannot be empty";
+	
+	private static final String TITLE_LABEL = "title";
+	private static final String EMPTY_TITLE_KEY = "stage.update.title.empty";
+	private static final String EMPTY_TITLE_MSG = "Stage title cannot be empty";
 
-  private static final ValidationError EMPTY_NAME =
-      new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY, EMPTY_TITLE_MSG);
+	private static final ValidationError EMPTY_NAME = new ValidationError(TITLE_LABEL, EMPTY_TITLE_KEY,
+			EMPTY_TITLE_MSG);
 
-  @Override
-  public List<ValidationError> validate() {
-    return Stream.of(check(title, EMPTY_NAME, Strings::isNullOrEmpty))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(Collectors.toList());
-  }
+	@Override
+	public List<ValidationError> validate() {
+		return Stream.of(check(title, EMPTY_NAME, Strings::isNullOrEmpty))
+				.flatMap(Optional::stream)
+				.collect(Collectors.toList());
+	}
 }
