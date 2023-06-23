@@ -8,4 +8,5 @@ import com.github.adrian83.robome.common.function.TriFunction;
 import akka.http.javadsl.model.HttpResponse;
 
 @FunctionalInterface
-public interface Parameter2Request<T, P> extends TriFunction<UserData, T, P, CompletionStage<HttpResponse>>{}
+public interface Parameter2Request<T, P> extends TriFunction<UserData, T, P, CompletionStage<HttpResponse>> {
+}

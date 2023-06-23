@@ -1,4 +1,4 @@
-FROM maven:3.9.0-eclipse-temurin-19-alpine
+FROM maven:3.9-eclipse-temurin-20-alpine
 
 ADD . /robome-be
 WORKDIR /robome-be

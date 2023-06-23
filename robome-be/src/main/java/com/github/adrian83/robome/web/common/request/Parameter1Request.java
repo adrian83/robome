@@ -8,4 +8,5 @@ import com.github.adrian83.robome.auth.model.UserData;
 import akka.http.javadsl.model.HttpResponse;
 
 @FunctionalInterface
-public interface Parameter1Request<T> extends BiFunction<UserData, T, CompletionStage<HttpResponse>>{}
+public interface Parameter1Request<T> extends BiFunction<UserData, T, CompletionStage<HttpResponse>> {
+}

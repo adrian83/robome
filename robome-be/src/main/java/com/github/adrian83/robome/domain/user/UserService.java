@@ -18,38 +18,34 @@ import akka.stream.javadsl.Source;
 
 public class UserService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
-  private UserRepository userRepository;
-  private ActorSystem actorSystem;
+    private UserRepository userRepository;
+    private ActorSystem actorSystem;
 
-  @Inject
-  public UserService(UserRepository repository, ActorSystem actorSystem) {
-    this.userRepository = repository;
-    this.actorSystem = actorSystem;
-  }
+    @Inject
+    public UserService(UserRepository repository, ActorSystem actorSystem) {
+	this.userRepository = repository;
+	this.actorSystem = actorSystem;
+    }
 
-  public CompletionStage<User> saveUser(User newUser) {
-    LOGGER.info("Persisting new user: {}", newUser);
+    public CompletionStage<User> saveUser(User newUser) {
+	LOGGER.info("Persisting new user: {}", newUser);
 
-    return userRepository
-        .getByEmail(newUser.email())
-        .runWith(Sink.headOption(), actorSystem)
-        .thenApply(
-            (maybeUser) -> {
-              if (maybeUser.isPresent())
-                throw new EmailAlreadyInUseException("Email already in use");
-              return newUser;
-            })
-        .thenCompose(this::storeUser);
-  }
+	return userRepository.getByEmail(newUser.email()).runWith(Sink.headOption(), actorSystem)
+		.thenApply((maybeUser) -> {
+		    if (maybeUser.isPresent())
+			throw new EmailAlreadyInUseException("Email already in use");
+		    return newUser;
+		}).thenCompose(this::storeUser);
+    }
 
-  public CompletionStage<Optional<User>> findUserByEmail(String email) {
-    return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
-  }
+    public CompletionStage<Optional<User>> findUserByEmail(String email) {
+	return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
+    }
 
-  private CompletionStage<User> storeUser(User user) {
-    var flow = userRepository.saveUser().mapMaterializedValue(notUsed -> completedStage(user));
-    return Source.single(user).via(flow).runWith(Sink.head(), actorSystem);
-  }
+    private CompletionStage<User> storeUser(User user) {
+	var flow = userRepository.saveUser().mapMaterializedValue(notUsed -> completedStage(user));
+	return Source.single(user).via(flow).runWith(Sink.head(), actorSystem);
+    }
 }

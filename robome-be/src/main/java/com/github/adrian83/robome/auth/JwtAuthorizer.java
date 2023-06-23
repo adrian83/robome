@@ -1,5 +1,6 @@
 package com.github.adrian83.robome.auth;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class JwtAuthorizer {
     private static final String SECURITY_SECRET = "fa23hgrb23rv2394g0x81hyr275tcgr23gxc2435g43og527x";
     private static final Algorithm SECURITY_ALGORITHM = Algorithm.HMAC256(SECURITY_SECRET);
 
-    private static final Long TOKEN_EXPIRE_IN_MILLIS = 1000L * 60 * 60 * 2; // 2h
+    private static final Duration TOKEN_EXPIRE_IN_HOURS = Duration.ofHours(2);
     private static final String TOKEN_ISSUER = "robome";
 
     private static final JWTVerifier VERIFIER = JWT.require(SECURITY_ALGORITHM).withIssuer(TOKEN_ISSUER).build();
@@ -65,6 +66,6 @@ public class JwtAuthorizer {
     }
 
     private Date expirationDate() {
-	return new Date(Instant.now().getEpochSecond() * 1000 + TOKEN_EXPIRE_IN_MILLIS);
+	return Date.from(Instant.now().plusSeconds(TOKEN_EXPIRE_IN_HOURS.getSeconds()));
     }
 }

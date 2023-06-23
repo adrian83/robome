@@ -18,18 +18,15 @@ import com.google.common.base.Strings;
 @JsonSerialize
 public record NewActivity(@JsonProperty(NewActivity.NAME_LABEL) String name) implements Validator {
 
-  private static final String NAME_LABEL = "name";
-  private static final String EMPTY_NAME_KEY = "activity.create.name.empty";
-  private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
+    private static final String NAME_LABEL = "name";
+    private static final String EMPTY_NAME_KEY = "activity.create.name.empty";
+    private static final String EMPTY_NAME_MSG = "Activity name cannot be empty";
 
-  private static final ValidationError EMPTY_NAME =
-      new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
+    private static final ValidationError EMPTY_NAME = new ValidationError(NAME_LABEL, EMPTY_NAME_KEY, EMPTY_NAME_MSG);
 
-  @Override
-  public List<ValidationError> validate() {
-    return Stream.of(check(name, EMPTY_NAME, Strings::isNullOrEmpty))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(Collectors.toList());
-  }
+    @Override
+    public List<ValidationError> validate() {
+	return Stream.of(check(name, EMPTY_NAME, Strings::isNullOrEmpty)).filter(Optional::isPresent).map(Optional::get)
+		.collect(Collectors.toList());
+    }
 }

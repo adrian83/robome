@@ -37,156 +37,110 @@ import akka.http.javadsl.server.Route;
 
 public class TableController extends AllDirectives {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
 
-  private static final String TABLES_PATH = "/users/{userId}/tables/";
-  private static final String TABLE_PATH = "/users/{userId}/tables/{tableId}/";
+    private static final String TABLES_PATH = "/users/{userId}/tables/";
+    private static final String TABLE_PATH = "/users/{userId}/tables/{tableId}/";
 
-  private static final String LOG_LIST_TABS = "list tables request";
-  private static final String LOG_CREATE_TAB = "persist table request, data: {}";
-  private static final String LOG_GET_TAB_BY_ID = "get table by id request, tableId: {}";
-  private static final String LOG_DEL_TAB_BY_ID = "delete table by id request, tableId: {}";
-  private static final String LOG_UPDATE_TAB = "update table request, tableId: {}, data: {}";
+    private static final String LOG_LIST_TABS = "list tables request";
+    private static final String LOG_CREATE_TAB = "persist table request, data: {}";
+    private static final String LOG_GET_TAB_BY_ID = "get table by id request, tableId: {}";
+    private static final String LOG_DEL_TAB_BY_ID = "delete table by id request, tableId: {}";
+    private static final String LOG_UPDATE_TAB = "update table request, tableId: {}, data: {}";
 
-  private TableService tableService;
-  private Response response;
-  private Security security;
+    private TableService tableService;
+    private Response response;
+    private Security security;
 
-  @Inject
-  public TableController(TableService tableService, Response response, Security security) {
-    this.tableService = tableService;
-    this.response = response;
-    this.security = security;
-  }
+    @Inject
+    public TableController(TableService tableService, Response response, Security security) {
+	this.tableService = tableService;
+	this.response = response;
+	this.security = security;
+    }
 
-  public Route createRoute() {
-    return route(
-        get(
-            new OneParamRoute(
-                TABLES_PATH,
-                (resourceOwnerId) -> security.secured(resourceOwnerId, this::getTables))),
-        get(
-            new TwoParamsRoute(
-                TABLE_PATH,
-                (resourceOwnerId, tabId) ->
-                    security.secured(resourceOwnerId, tabId, this::getTableById))),
-        post(
-            new OneParamAndFormRoute<NewTable>(
-                TABLES_PATH,
-                NewTable.class,
-                (resourceOwnerId, clz) ->
-                    security.secured(resourceOwnerId, clz, this::persistTable))),
-        put(
-            new TwoParamsAndFormRoute<UpdateTable>(
-                TABLE_PATH,
-                UpdateTable.class,
-                (resourceOwnerId, tabId, clz) ->
-                    security.secured(resourceOwnerId, tabId, clz, this::updateTable))),
-        delete(
-            new TwoParamsRoute(
-                TABLE_PATH,
-                (resourceOwnerId, tabId) ->
-                    security.secured(resourceOwnerId, tabId, this::deleteTable))),
-        options(
-            new OneParamRoute(
-                TABLES_PATH, (resourceOwnerId) -> complete(response.response200(GET, POST)))),
-        options(
-            new TwoParamsRoute(
-                TABLE_PATH,
-                (resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))));
-  }
+    public Route createRoute() {
+	return route(
+		get(new OneParamRoute(TABLES_PATH,
+			(resourceOwnerId) -> security.secured(resourceOwnerId, this::getTables))),
+		get(new TwoParamsRoute(TABLE_PATH,
+			(resourceOwnerId, tabId) -> security.secured(resourceOwnerId, tabId, this::getTableById))),
+		post(new OneParamAndFormRoute<NewTable>(TABLES_PATH, NewTable.class,
+			(resourceOwnerId, clz) -> security.secured(resourceOwnerId, clz, this::persistTable))),
+		put(new TwoParamsAndFormRoute<UpdateTable>(TABLE_PATH, UpdateTable.class,
+			(resourceOwnerId, tabId, clz) -> security.secured(resourceOwnerId, tabId, clz,
+				this::updateTable))),
+		delete(new TwoParamsRoute(TABLE_PATH,
+			(resourceOwnerId, tabId) -> security.secured(resourceOwnerId, tabId, this::deleteTable))),
+		options(new OneParamRoute(TABLES_PATH, (resourceOwnerId) -> complete(response.response200(GET, POST)))),
+		options(new TwoParamsRoute(TABLE_PATH,
+			(resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))));
+    }
 
-  private CompletionStage<HttpResponse> persistTable(
-      UserData user, 
-      String resourceOwnerIdStr, 
-      NewTable form) {
+    private CompletionStage<HttpResponse> persistTable(UserData user, String resourceOwnerIdStr, NewTable form) {
 
-    return logAction(LOGGER, user, LOG_CREATE_TAB, form)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
-        .thenApply(Authorization::canWriteTables)
-        .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
-        .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toNewTableRequest(uaf.userContext(), uaf.form()))
-        .thenCompose(tableService::saveTable)
-        .thenApply(table -> response.jsonFromObject(table));
-  }
+	return logAction(LOGGER, user, LOG_CREATE_TAB, form)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+		.thenApply(Authorization::canWriteTables).thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
+		.thenApply(UserAndForm::validate).thenApply(uaf -> toNewTableRequest(uaf.userContext(), uaf.form()))
+		.thenCompose(tableService::saveTable).thenApply(table -> response.jsonFromObject(table));
+    }
 
-  private CompletionStage<HttpResponse> updateTable(
-      UserData user,
-      String resourceOwnerIdStr,
-      String tableIdStr,
-      UpdateTable form) {
+    private CompletionStage<HttpResponse> updateTable(UserData user, String resourceOwnerIdStr, String tableIdStr,
+	    UpdateTable form) {
 
-    return logAction(LOGGER, user, LOG_UPDATE_TAB, tableIdStr, form)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
-        .thenApply(Authorization::canWriteTables)
-        .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
-        .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toUpdateTableRequest(uaf.userContext(), tableIdStr, uaf.form()))
-        .thenCompose(tableService::updateTable)
-        .thenApply(table -> response.jsonFromObject(table));
-  }
+	return logAction(LOGGER, user, LOG_UPDATE_TAB, tableIdStr, form)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+		.thenApply(Authorization::canWriteTables)
+		.thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form)).thenApply(UserAndForm::validate)
+		.thenApply(uaf -> toUpdateTableRequest(uaf.userContext(), tableIdStr, uaf.form()))
+		.thenCompose(tableService::updateTable).thenApply(table -> response.jsonFromObject(table));
+    }
 
-  private CompletionStage<HttpResponse> deleteTable(
-      UserData user, 
-      String resourceOwnerIdStr, 
-      String tableIdStr) {
+    private CompletionStage<HttpResponse> deleteTable(UserData user, String resourceOwnerIdStr, String tableIdStr) {
 
-    return logAction(LOGGER, user, LOG_DEL_TAB_BY_ID, tableIdStr)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
-        .thenApply(Authorization::canWriteTables)
-        .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
-        .thenCompose(tableService::deleteTable)
-        .thenApply(response::jsonFromObject);
-  }
+	return logAction(LOGGER, user, LOG_DEL_TAB_BY_ID, tableIdStr)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+		.thenApply(Authorization::canWriteTables).thenApply(u -> toDeleteTableRequest(u, tableIdStr))
+		.thenCompose(tableService::deleteTable).thenApply(response::jsonFromObject);
+    }
 
-  private CompletionStage<HttpResponse> getTableById(
-      UserData user, 
-      String resourceOwnerIdStr, 
-      String tableIdStr) {
+    private CompletionStage<HttpResponse> getTableById(UserData user, String resourceOwnerIdStr, String tableIdStr) {
 
-    return logAction(LOGGER, user, LOG_GET_TAB_BY_ID, tableIdStr)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
-        .thenApply(Authorization::canReadTables)
-        .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
-        .thenCompose(tableService::getTable)
-        .thenApply(response::jsonFromOptional);
-  }
+	return logAction(LOGGER, user, LOG_GET_TAB_BY_ID, tableIdStr)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+		.thenApply(Authorization::canReadTables).thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
+		.thenCompose(tableService::getTable).thenApply(response::jsonFromOptional);
+    }
 
-  private CompletionStage<HttpResponse> getTables(
-      UserData user, 
-      String resourceOwnerIdStr) {
+    private CompletionStage<HttpResponse> getTables(UserData user, String resourceOwnerIdStr) {
 
-    return logAction(LOGGER, user, LOG_LIST_TABS)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
-        .thenApply(Authorization::canReadTables)
-        .thenApply(this::toListTablesRequest)
-        .thenCompose(tableService::getTables)
-        .thenApply(response::jsonFromObject);
-  }
+	return logAction(LOGGER, user, LOG_LIST_TABS)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+		.thenApply(Authorization::canReadTables).thenApply(this::toListTablesRequest)
+		.thenCompose(tableService::getTables).thenApply(response::jsonFromObject);
+    }
 
-  private ListTablesRequest toListTablesRequest(UserContext userCtx) {
-    return new ListTablesRequest(userCtx.resourceOwnerIdOrError());
-  }
+    private ListTablesRequest toListTablesRequest(UserContext userCtx) {
+	return new ListTablesRequest(userCtx.resourceOwnerIdOrError());
+    }
 
-  private GetTableRequest toGetTableRequest(UserContext userCtx, String tableIdStr) {
-    return new GetTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
-  }
+    private GetTableRequest toGetTableRequest(UserContext userCtx, String tableIdStr) {
+	return new GetTableRequest(userCtx.resourceOwnerIdOrError(),
+		TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr));
+    }
 
-  private DeleteTableRequest toDeleteTableRequest(UserContext userCtx, String tableIdStr) {
-    return new DeleteTableRequest(userCtx.resourceOwnerIdOrError(), TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
-  }
+    private DeleteTableRequest toDeleteTableRequest(UserContext userCtx, String tableIdStr) {
+	return new DeleteTableRequest(userCtx.resourceOwnerIdOrError(),
+		TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr));
+    }
 
-  private UpdateTableRequest toUpdateTableRequest(
-      UserContext userCtx, String tableIdStr, UpdateTable form) {
-    return new UpdateTableRequest(
-        form.title(),
-        form.description(),
-        userCtx.resourceOwnerIdOrError(),
-        TableKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr));
-  }
+    private UpdateTableRequest toUpdateTableRequest(UserContext userCtx, String tableIdStr, UpdateTable form) {
+	return new UpdateTableRequest(form.title(), form.description(), userCtx.resourceOwnerIdOrError(),
+		TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr));
+    }
 
-  private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {
-    return new NewTableRequest(form.title(), form.description(), userCtx.resourceOwnerIdOrError());
-  }
+    private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {
+	return new NewTableRequest(form.title(), form.description(), userCtx.resourceOwnerIdOrError());
+    }
 }

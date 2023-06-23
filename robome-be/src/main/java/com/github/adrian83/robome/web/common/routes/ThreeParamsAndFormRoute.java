@@ -12,40 +12,36 @@ import akka.http.javadsl.server.Route;
 
 public class ThreeParamsAndFormRoute<T> extends AbsFormRoute<T> implements Supplier<Route> {
 
-  private TetraFunction<String, String, String, Class<T>, Route> action;
+    private TetraFunction<String, String, String, Class<T>, Route> action;
 
-  public ThreeParamsAndFormRoute(
-      String[] path,
-      Class<T> clazz,
-      TetraFunction<String, String, String, Class<T>, Route> action) {
-    super(path, clazz);
-    this.action = action;
-  }
-
-  public ThreeParamsAndFormRoute(
-      String path, Class<T> clazz, TetraFunction<String, String, String, Class<T>, Route> action) {
-    super(path, clazz);
-    this.action = action;
-  }
-
-  @Override
-  public Route get() {
-
-    if (emptyPath()) {
-      throw new IllegalStateException("path should contains one parameter");
+    public ThreeParamsAndFormRoute(String[] path, Class<T> clazz,
+	    TetraFunction<String, String, String, Class<T>, Route> action) {
+	super(path, clazz);
+	this.action = action;
     }
 
-    var newPath = pathTail();
-
-    if (startsWithParameter()) {
-      Function<String, TriFunction<String, String, Class<T>, Route>> newFunc =
-          (String var1) ->
-              (String var2, String var3, Class<T> clz) -> action.apply(var1, var2, var3, clz);
-      return pathPrefix(
-          segment(),
-          var1 -> new TwoParamsAndFormRoute<T>(newPath, getClazz(), newFunc.apply(var1)).get());
+    public ThreeParamsAndFormRoute(String path, Class<T> clazz,
+	    TetraFunction<String, String, String, Class<T>, Route> action) {
+	super(path, clazz);
+	this.action = action;
     }
 
-    return pathPrefix(pathHead(), new ThreeParamsAndFormRoute<T>(newPath, getClazz(), action));
-  }
+    @Override
+    public Route get() {
+
+	if (emptyPath()) {
+	    throw new IllegalStateException("path should contains one parameter");
+	}
+
+	var newPath = pathTail();
+
+	if (startsWithParameter()) {
+	    Function<String, TriFunction<String, String, Class<T>, Route>> newFunc = (
+		    String var1) -> (String var2, String var3, Class<T> clz) -> action.apply(var1, var2, var3, clz);
+	    return pathPrefix(segment(),
+		    var1 -> new TwoParamsAndFormRoute<T>(newPath, getClazz(), newFunc.apply(var1)).get());
+	}
+
+	return pathPrefix(pathHead(), new ThreeParamsAndFormRoute<T>(newPath, getClazz(), action));
+    }
 }

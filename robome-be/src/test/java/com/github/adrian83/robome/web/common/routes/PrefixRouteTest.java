@@ -9,21 +9,21 @@ import akka.http.javadsl.server.Route;
 
 public class PrefixRouteTest {
 
-  @Test
-  public void shouldThrowExceptionIfPathContainsParameter() {
-    // given
-    var expectedRoute = new MyAppFragment().createRoute();
+    @Test
+    public void shouldThrowExceptionIfPathContainsParameter() {
+	// given
+	var expectedRoute = new MyAppFragment().createRoute();
 
-    var prefixRoute = new PrefixRoute("{param}/prefix2/", expectedRoute);
+	var prefixRoute = new PrefixRoute("{param}/prefix2/", expectedRoute);
 
-    // when & then
-    assertThatThrownBy(() -> prefixRoute.get()).isInstanceOf(IllegalStateException.class);
-  }
-
-  private class MyAppFragment extends AllDirectives {
-
-    public Route createRoute() {
-      return get(() -> complete("Fragments of imagination"));
+	// when & then
+	assertThatThrownBy(() -> prefixRoute.get()).isInstanceOf(IllegalStateException.class);
     }
-  }
+
+    private class MyAppFragment extends AllDirectives {
+
+	public Route createRoute() {
+	    return get(() -> complete("Fragments of imagination"));
+	}
+    }
 }

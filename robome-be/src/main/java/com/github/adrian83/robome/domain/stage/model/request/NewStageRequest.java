@@ -4,4 +4,5 @@ import java.util.UUID;
 
 import com.github.adrian83.robome.domain.table.model.TableKey;
 
-public record NewStageRequest(String title, UUID userId, TableKey tableKey) {}
+public record NewStageRequest(String title, UUID userId, TableKey tableKey) {
+}

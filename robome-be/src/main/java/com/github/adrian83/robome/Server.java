@@ -22,47 +22,35 @@ import akka.http.javadsl.server.Route;
 
 public class Server {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
-  @SafeVarargs
-  private static Route createRoutes(Supplier<Route>... controllers) {
-    return Arrays.stream(controllers)
-        .reduce((r1, r2) -> () -> r1.get().orElse(r2.get()))
-        .get()
-        .get();
-  }
+    @SafeVarargs
+    private static Route createRoutes(Supplier<Route>... controllers) {
+	return Arrays.stream(controllers).reduce((r1, r2) -> () -> r1.get().orElse(r2.get())).get().get();
+    }
 
-  public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
 
-    LOGGER.info("starting server");
+	LOGGER.info("starting server");
 
-    Injector injector = Guice.createInjector(new RobomeModule());
+	Injector injector = Guice.createInjector(new RobomeModule());
 
-    TableController tableController = injector.getInstance(TableController.class);
-    StageController stageController = injector.getInstance(StageController.class);
-    ActivityController activityController = injector.getInstance(ActivityController.class);
-    AuthController authController = injector.getInstance(AuthController.class);
-    HealthController healthController = injector.getInstance(HealthController.class);
+	TableController tableController = injector.getInstance(TableController.class);
+	StageController stageController = injector.getInstance(StageController.class);
+	ActivityController activityController = injector.getInstance(ActivityController.class);
+	AuthController authController = injector.getInstance(AuthController.class);
+	HealthController healthController = injector.getInstance(HealthController.class);
 
-    Route route =
-        createRoutes(
-            () -> tableController.createRoute(),
-            () -> stageController.createRoute(),
-            () -> activityController.createRoute(),
-            () -> authController.createRoute(),
-            () -> healthController.createRoute());
+	Route route = createRoutes(() -> tableController.createRoute(), () -> stageController.createRoute(),
+		() -> activityController.createRoute(), () -> authController.createRoute(),
+		() -> healthController.createRoute());
 
-    ActorSystem system = injector.getInstance(ActorSystem.class);
-    ServerBuilder server = injector.getInstance(ServerBuilder.class);
-    CompletionStage<ServerBinding> binding = server.bind(route);
+	ActorSystem system = injector.getInstance(ActorSystem.class);
+	ServerBuilder server = injector.getInstance(ServerBuilder.class);
+	CompletionStage<ServerBinding> binding = server.bind(route);
 
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  binding
-                      .thenCompose(ServerBinding::unbind)
-                      .thenAccept(unbound -> system.terminate());
-                }));
-  }
+	Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+	    binding.thenCompose(ServerBinding::unbind).thenAccept(unbound -> system.terminate());
+	}));
+    }
 }

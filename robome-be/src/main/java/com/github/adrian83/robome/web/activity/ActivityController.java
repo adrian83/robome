@@ -38,198 +38,134 @@ import akka.http.javadsl.server.Route;
 
 public class ActivityController extends AllDirectives {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
-  private static final String ACTIVITIES_PATH =
-      "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/";
-  private static final String ACTIVITY_PATH =
-      "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
+    private static final String ACTIVITIES_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/";
+    private static final String ACTIVITY_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
 
-  private static final String LOG_LIST_ACTS =
-      "list stage's activities request, tableId: {}, stageId: {}";
-  private static final String LOG_CREATE_ACT =
-      "persist activity request, tableId: {}, stageId: {}, data: {}";
-  private static final String LOG_GET_ACT_BY_ID =
-      "get activity by id request, tableId: {}, stageId: {}, activityId: {}";
-  private static final String LOG_DEL_ACT_BY_ID =
-      "delete activity by id request, tableId: {}, stageId: {}, activityId: {}";
-  private static final String LOG_UPDATE_ACT =
-      "update activity request, tableId: {}, stageId: {}, activityId: {}, data: {}";
+    private static final String LOG_LIST_ACTS = "list stage's activities request, tableId: {}, stageId: {}";
+    private static final String LOG_CREATE_ACT = "persist activity request, tableId: {}, stageId: {}, data: {}";
+    private static final String LOG_GET_ACT_BY_ID = "get activity by id request, tableId: {}, stageId: {}, activityId: {}";
+    private static final String LOG_DEL_ACT_BY_ID = "delete activity by id request, tableId: {}, stageId: {}, activityId: {}";
+    private static final String LOG_UPDATE_ACT = "update activity request, tableId: {}, stageId: {}, activityId: {}, data: {}";
 
-  private ActivityService activityService;
-  private Security security;
-  private Response response;
+    private ActivityService activityService;
+    private Security security;
+    private Response response;
 
-  @Inject
-  public ActivityController(ActivityService activityService, Response response, Security security) {
-    this.activityService = activityService;
-    this.security = security;
-    this.response = response;
-  }
+    @Inject
+    public ActivityController(ActivityService activityService, Response response, Security security) {
+	this.activityService = activityService;
+	this.security = security;
+	this.response = response;
+    }
 
-  public Route createRoute() {
-    return route(
-        get(
-            new ThreeParamsRoute(
-                ACTIVITIES_PATH,
-                (resourceOwnerId, tabId, stgId) ->
-                    security.secured(resourceOwnerId, tabId, stgId, this::getStageActivities))),
-        get(
-            new FourParamRoute(
-                ACTIVITY_PATH,
-                (resourceOwnerId, tabId, stgId, actId) ->
-                    security.secured(resourceOwnerId, tabId, stgId, actId, this::getActivityById))),
-        delete(
-            new FourParamRoute(
-                ACTIVITY_PATH,
-                (resourceOwnerId, tabId, stgId, actId) ->
-                    security.secured(resourceOwnerId, tabId, stgId, actId, this::deleteActivity))),
-        put(
-            new FourParamAndFormRoute<UpdateActivity>(
-                ACTIVITY_PATH,
-                UpdateActivity.class,
-                (resourceOwnerId, tabId, stgId, actId, clz) ->
-                    security.secured(
-                        resourceOwnerId, tabId, stgId, actId, clz, this::updateActivity))),
-        post(
-            new ThreeParamsAndFormRoute<NewActivity>(
-                ACTIVITIES_PATH,
-                NewActivity.class,
-                (resourceOwnerId, tabId, stgId, clz) ->
-                    security.secured(resourceOwnerId, tabId, stgId, clz, this::persistActivity))),
-        options(
-            new ThreeParamsRoute(
-                ACTIVITIES_PATH,
-                (resourceOwnerId, tabId, stgId) -> complete(response.response200(GET, POST)))),
-        options(
-            new FourParamRoute(
-                ACTIVITY_PATH,
-                (resourceOwnerId, tabId, stgId, actId) ->
-                    complete(response.response200(GET, DELETE, PUT)))));
-  }
+    public Route createRoute() {
+	return route(
+		get(new ThreeParamsRoute(ACTIVITIES_PATH,
+			(resourceOwnerId, tabId, stgId) -> security.secured(resourceOwnerId, tabId, stgId,
+				this::getStageActivities))),
+		get(new FourParamRoute(ACTIVITY_PATH,
+			(resourceOwnerId, tabId, stgId, actId) -> security.secured(resourceOwnerId, tabId, stgId, actId,
+				this::getActivityById))),
+		delete(new FourParamRoute(ACTIVITY_PATH,
+			(resourceOwnerId, tabId, stgId, actId) -> security.secured(resourceOwnerId, tabId, stgId, actId,
+				this::deleteActivity))),
+		put(new FourParamAndFormRoute<UpdateActivity>(ACTIVITY_PATH, UpdateActivity.class,
+			(resourceOwnerId, tabId, stgId, actId, clz) -> security.secured(resourceOwnerId, tabId, stgId,
+				actId, clz, this::updateActivity))),
+		post(new ThreeParamsAndFormRoute<NewActivity>(ACTIVITIES_PATH, NewActivity.class,
+			(resourceOwnerId, tabId, stgId, clz) -> security.secured(resourceOwnerId, tabId, stgId, clz,
+				this::persistActivity))),
+		options(new ThreeParamsRoute(ACTIVITIES_PATH,
+			(resourceOwnerId, tabId, stgId) -> complete(response.response200(GET, POST)))),
+		options(new FourParamRoute(ACTIVITY_PATH,
+			(resourceOwnerId, tabId, stgId, actId) -> complete(response.response200(GET, DELETE, PUT)))));
+    }
 
-  private CompletionStage<HttpResponse> persistActivity(
-      final UserData user,
-      final String resourceOwnerId,
-      final String tableId,
-      final String stageId,
-      final NewActivity form) {
+    private CompletionStage<HttpResponse> persistActivity(final UserData user, final String resourceOwnerId,
+	    final String tableId, final String stageId, final NewActivity form) {
 
-    return logAction(LOGGER, user, LOG_CREATE_ACT, tableId, stageId, form)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
-        .thenApply(Authorization::canWriteStages)
-        .thenApply(userCtx -> new UserAndForm<NewActivity>(userCtx, form))
-        .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toNewActivityRequest(uaf, tableId, stageId))
-        .thenCompose(activityService::saveActivity)
-        .thenApply(response::jsonFromObject);
-  }
+	return logAction(LOGGER, user, LOG_CREATE_ACT, tableId, stageId, form)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
+		.thenApply(Authorization::canWriteStages)
+		.thenApply(userCtx -> new UserAndForm<NewActivity>(userCtx, form)).thenApply(UserAndForm::validate)
+		.thenApply(uaf -> toNewActivityRequest(uaf, tableId, stageId))
+		.thenCompose(activityService::saveActivity).thenApply(response::jsonFromObject);
+    }
 
-  private CompletionStage<HttpResponse> updateActivity(
-      final UserData user,
-      final String resourceOwnerId,
-      final String tableId,
-      final String stageId,
-      final String activityId,
-      final UpdateActivity form) {
+    private CompletionStage<HttpResponse> updateActivity(final UserData user, final String resourceOwnerId,
+	    final String tableId, final String stageId, final String activityId, final UpdateActivity form) {
 
-    return logAction(LOGGER, user, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
-        .thenApply(Authorization::canWriteAcivities)
-        .thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form))
-        .thenApply(UserAndForm::validate)
-        .thenApply(uaf -> toUpdateActivityRequest(uaf, tableId, stageId, activityId))
-        .thenCompose(activityService::updateActivity)
-        .thenApply(response::jsonFromObject);
-  }
+	return logAction(LOGGER, user, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
+		.thenApply(Authorization::canWriteAcivities)
+		.thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form)).thenApply(UserAndForm::validate)
+		.thenApply(uaf -> toUpdateActivityRequest(uaf, tableId, stageId, activityId))
+		.thenCompose(activityService::updateActivity).thenApply(response::jsonFromObject);
+    }
 
-  private CompletionStage<HttpResponse> deleteActivity(
-      final UserData user,
-      final String resourceOwnerId,
-      final String tableId,
-      final String stageId,
-      final String activityId) {
+    private CompletionStage<HttpResponse> deleteActivity(final UserData user, final String resourceOwnerId,
+	    final String tableId, final String stageId, final String activityId) {
 
-    return logAction(LOGGER, user, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
-        .thenApply(Authorization::canWriteAcivities)
-        .thenApply(userCtx -> toDeleteActivityRequest(userCtx, tableId, stageId, activityId))
-        .thenCompose(activityService::deleteActivity)
-        .thenApply(response::jsonFromObject);
-  }
+	return logAction(LOGGER, user, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
+		.thenApply(Authorization::canWriteAcivities)
+		.thenApply(userCtx -> toDeleteActivityRequest(userCtx, tableId, stageId, activityId))
+		.thenCompose(activityService::deleteActivity).thenApply(response::jsonFromObject);
+    }
 
-  private CompletionStage<HttpResponse> getActivityById(
-      final UserData user,
-      final String resourceOwnerId,
-      final String tableId,
-      final String stageId,
-      final String activityId) {
+    private CompletionStage<HttpResponse> getActivityById(final UserData user, final String resourceOwnerId,
+	    final String tableId, final String stageId, final String activityId) {
 
-    return logAction(LOGGER, user, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
-        .thenApply(Authorization::canReadAcivities)
-        .thenApply(userCtx -> toGetActivityRequest(userCtx, tableId, stageId, activityId))
-        .thenCompose(activityService::getActivity)
-        .thenApply(response::jsonFromOptional);
-  }
+	return logAction(LOGGER, user, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
+		.thenApply(Authorization::canReadAcivities)
+		.thenApply(userCtx -> toGetActivityRequest(userCtx, tableId, stageId, activityId))
+		.thenCompose(activityService::getActivity).thenApply(response::jsonFromOptional);
+    }
 
-  private CompletionStage<HttpResponse> getStageActivities(
-      final UserData user,
-      final String resourceOwnerId,
-      final String tableId,
-      final String stageId) {
+    private CompletionStage<HttpResponse> getStageActivities(final UserData user, final String resourceOwnerId,
+	    final String tableId, final String stageId) {
 
-    return logAction(LOGGER, user, LOG_LIST_ACTS, tableId, stageId)
-        .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
-        .thenApply(Authorization::canReadAcivities)
-        .thenApply(userCtx -> toListStageActivitiesRequest(userCtx, tableId, stageId))
-        .thenCompose(activityService::getStageActivities)
-        .thenApply(response::jsonFromObject);
-  }
+	return logAction(LOGGER, user, LOG_LIST_ACTS, tableId, stageId)
+		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
+		.thenApply(Authorization::canReadAcivities)
+		.thenApply(userCtx -> toListStageActivitiesRequest(userCtx, tableId, stageId))
+		.thenCompose(activityService::getStageActivities).thenApply(response::jsonFromObject);
+    }
 
-  private NewActivityRequest toNewActivityRequest(
-      final UserAndForm<NewActivity> userAndForm,
-      final String tableIdStr,
-      final String stageIdStr) {
+    private NewActivityRequest toNewActivityRequest(final UserAndForm<NewActivity> userAndForm, final String tableIdStr,
+	    final String stageIdStr) {
 
-    return new NewActivityRequest(
-        userAndForm.form().name(),
-        StageKey.parse(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr));
-  }
+	return new NewActivityRequest(userAndForm.form().name(),
+		StageKey.create(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+    }
 
-  private UpdateActivityRequest toUpdateActivityRequest(
-      final UserAndForm<UpdateActivity> userAndForm,
-      final String tableIdStr,
-      final String stageIdStr,
-      final String activityIdStr) {
+    private UpdateActivityRequest toUpdateActivityRequest(final UserAndForm<UpdateActivity> userAndForm,
+	    final String tableIdStr, final String stageIdStr, final String activityIdStr) {
 
-    return new UpdateActivityRequest(
-        userAndForm.form().name(),
-        ActivityKey.parse(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
-  }
+	return new UpdateActivityRequest(userAndForm.form().name(), ActivityKey
+		.create(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
+    }
 
-  private GetActivityRequest toGetActivityRequest(
-      final UserContext userCtx,
-      final String tableIdStr,
-      final String stageIdStr,
-      final String activityIdStr) {
+    private GetActivityRequest toGetActivityRequest(final UserContext userCtx, final String tableIdStr,
+	    final String stageIdStr, final String activityIdStr) {
 
-    return new GetActivityRequest(
-        ActivityKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
-  }
+	return new GetActivityRequest(
+		ActivityKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
+    }
 
-  private DeleteActivityRequest toDeleteActivityRequest(
-      final UserContext userCtx,
-      final String tableIdStr,
-      final String stageIdStr,
-      final String activityIdStr) {
+    private DeleteActivityRequest toDeleteActivityRequest(final UserContext userCtx, final String tableIdStr,
+	    final String stageIdStr, final String activityIdStr) {
 
-    return new DeleteActivityRequest(
-    		ActivityKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
-  }
+	return new DeleteActivityRequest(
+		ActivityKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
+    }
 
-  private ListStageActivitiesRequest toListStageActivitiesRequest(
-      final UserContext userCtx, final String tableIdStr, final String stageIdStr) {
-    return new ListStageActivitiesRequest(StageKey.parse(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
-  }
+    private ListStageActivitiesRequest toListStageActivitiesRequest(final UserContext userCtx, final String tableIdStr,
+	    final String stageIdStr) {
+	return new ListStageActivitiesRequest(
+		StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+    }
 }

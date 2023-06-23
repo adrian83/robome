@@ -4,5 +4,5 @@ import java.util.List;
 
 @FunctionalInterface
 public interface Validator {
-  List<ValidationError> validate();
+    List<ValidationError> validate();
 }

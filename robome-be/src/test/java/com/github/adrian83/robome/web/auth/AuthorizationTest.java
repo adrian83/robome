@@ -16,145 +16,146 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AuthorizationTest {
 
-  @Test
-  public void shouldAdminReadTables() {
-    // given
-    var admin = userWithRoles(Role.ADMIN);
+    @Test
+    public void shouldAdminReadTables() {
+	// given
+	var admin = ownerWithRoles(Role.ADMIN);
 
-    // when
-    var result = Authorization.canReadTables(admin);
+	// when
+	var result = Authorization.canReadTables(admin);
 
-    // then
-    assertThat(admin).isEqualTo(result);
-  }
+	// then
+	assertThat(admin).isEqualTo(result);
+    }
 
-  public void shouldAdminReadStages() {
-    // given
-    var admin = userWithRoles(Role.ADMIN);
+    @Test
+    public void shouldAdminReadStages() {
+	// given
+	var admin = ownerWithRoles(Role.ADMIN);
 
-    // when
-    var result = Authorization.canReadStages(admin);
+	// when
+	var result = Authorization.canReadStages(admin);
 
-    // then
-    assertThat(admin).isEqualTo(result);
-  }
+	// then
+	assertThat(admin).isEqualTo(result);
+    }
 
-  public void shouldAdminWriteTables() {
-    // given
-    var admin = userWithRoles(Role.ADMIN);
+    @Test
+    public void shouldAdminWriteTables() {
+	// given
+	var admin = ownerWithRoles(Role.ADMIN);
 
-    // when
-    var result = Authorization.canWriteTables(admin);
+	// when
+	var result = Authorization.canWriteTables(admin);
 
-    // then
-    assertThat(admin).isEqualTo(result);
-  }
+	// then
+	assertThat(admin).isEqualTo(result);
+    }
 
-  public void shouldAdminWriteStages() {
-    // given
-    var admin = userWithRoles(Role.ADMIN);
+    @Test
+    public void shouldAdminWriteStages() {
+	// given
+	var admin = ownerWithRoles(Role.ADMIN);
 
-    // when
-    var result = Authorization.canWriteStages(admin);
+	// when
+	var result = Authorization.canWriteStages(admin);
 
-    // then
-    assertThat(admin).isEqualTo(result);
-  }
+	// then
+	assertThat(admin).isEqualTo(result);
+    }
 
-  @Test
-  public void shouldCheckIfUserCanReadStages() {
-    // given
-    var userWithRole = userWithRoles(Role.READ_STAGES);
+    @Test
+    public void shouldCheckIfUserCanReadStages() {
+	// given
+	var userWithRole = ownerWithRoles(Role.READ_STAGES);
 
-    // when
-    var result = Authorization.canReadStages(userWithRole);
+	// when
+	var result = Authorization.canReadStages(userWithRole);
 
-    // then
-    assertThat(userWithRole).isEqualTo(result);
-  }
+	// then
+	assertThat(userWithRole).isEqualTo(result);
+    }
 
-  @Test
-  public void shouldThrowExceptionIfUserCanNotReadStages() {
-    // given
-    var userWithoutRole = userWithRoles();
+    @Test
+    public void shouldThrowExceptionIfUserCanNotReadStages() {
+	// given
+	var userWithoutRole = ownerWithRoles();
 
-    // when
-    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
-        .isInstanceOf(UserNotAuthorizedException.class);
-  }
+	// when
+	assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+		.isInstanceOf(UserNotAuthorizedException.class);
+    }
 
-  @Test
-  public void shouldCheckIfUserCanReadTables() {
-    // given
-    var userWithRole = userWithRoles(Role.READ_TABLES);
+    @Test
+    public void shouldCheckIfUserCanReadTables() {
+	// given
+	var userWithRole = ownerWithRoles(Role.READ_TABLES);
 
-    // when
-    var result = Authorization.canReadTables(userWithRole);
+	// when
+	var result = Authorization.canReadTables(userWithRole);
 
-    // then
-    assertThat(userWithRole).isEqualTo(result);
-  }
+	// then
+	assertThat(userWithRole).isEqualTo(result);
+    }
 
-  @Test
-  public void shouldThrowExceptionIfUserCanNotReadTables() {
-    // given
-    var userWithoutRole = userWithRoles();
+    @Test
+    public void shouldThrowExceptionIfUserCanNotReadTables() {
+	// given
+	var userWithoutRole = ownerWithRoles();
 
-    // when
-    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
-        .isInstanceOf(UserNotAuthorizedException.class);
-  }
+	// when
+	assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+		.isInstanceOf(UserNotAuthorizedException.class);
+    }
 
-  @Test
-  public void shouldCheckIfUserCanWriteStages() {
-    // given
-    var userWithRole = userWithRoles(Role.WRITE_STAGES);
+    @Test
+    public void shouldCheckIfUserCanWriteStages() {
+	// given
+	var userWithRole = ownerWithRoles(Role.WRITE_STAGES);
 
-    // when
-    var result = Authorization.canWriteStages(userWithRole);
+	// when
+	var result = Authorization.canWriteStages(userWithRole);
 
-    // then
-    assertThat(userWithRole).isEqualTo(result);
-  }
+	// then
+	assertThat(userWithRole).isEqualTo(result);
+    }
 
-  @Test
-  public void shouldThrowExceptionIfUserCanNotWriteStages() {
-    // given
-    var userWithoutRole = userWithRoles();
+    @Test
+    public void shouldThrowExceptionIfUserCanNotWriteStages() {
+	// given
+	var userWithoutRole = ownerWithRoles();
 
-    // when
-    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
-        .isInstanceOf(UserNotAuthorizedException.class);
-  }
+	// when
+	assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+		.isInstanceOf(UserNotAuthorizedException.class);
+    }
 
-  @Test
-  public void shouldCheckIfUserCanWriteTables() {
-    // given
-    var userWithRole = userWithRoles(Role.WRITE_TABLES);
+    @Test
+    public void shouldCheckIfUserCanWriteTables() {
+	// given
+	var userWithRole = ownerWithRoles(Role.WRITE_TABLES);
 
-    // when
-    var result = Authorization.canWriteTables(userWithRole);
+	// when
+	var result = Authorization.canWriteTables(userWithRole);
 
-    // then
-    assertThat(userWithRole).isEqualTo(result);
-  }
+	// then
+	assertThat(userWithRole).isEqualTo(result);
+    }
 
-  @Test
-  public void shouldThrowExceptionIfUserCanNotWriteTables() {
-    // given
-    var userWithoutRole = userWithRoles();
+    @Test
+    public void shouldThrowExceptionIfUserCanNotWriteTables() {
+	// given
+	var userWithoutRole = ownerWithRoles();
 
-    // when
-    assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
-        .isInstanceOf(UserNotAuthorizedException.class);
-  }
+	// when
+	assertThatThrownBy(() -> Authorization.canReadStages(userWithoutRole))
+		.isInstanceOf(UserNotAuthorizedException.class);
+    }
 
-  private UserContext userWithRoles(Role... roles) {
-    var userData = new UserData(
-    		UUID.randomUUID(), 
-    		"johndoe@somedomain.com",
-            Sets.newHashSet(roles));
-    
-    return new UserContext(userData, Optional.empty());
-  }
+    private UserContext ownerWithRoles(Role... roles) {
+	var userId = UUID.randomUUID();
+	var userData = new UserData(userId, "johndoe@somedomain.com", Sets.newHashSet(roles));
+
+	return new UserContext(userData, Optional.of(userId));
+    }
 }

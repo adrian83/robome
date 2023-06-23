@@ -26,84 +26,55 @@ import akka.stream.javadsl.Source;
 
 public class StageService {
 
-  private static final int DEFAULT_PARALLERISM = 1;
+    private static final int DEFAULT_PARALLERISM = 1;
 
-  private StageRepository stageRepository;
-  private ActivityService activityService;
-  private ActorSystem actorSystem;
+    private StageRepository stageRepository;
+    private ActivityService activityService;
+    private ActorSystem actorSystem;
 
-  @Inject
-  public StageService(
-      StageRepository stageRepository, ActivityService activityService, ActorSystem actorSystem) {
-    this.stageRepository = stageRepository;
-    this.actorSystem = actorSystem;
-    this.activityService = activityService;
-  }
+    @Inject
+    public StageService(StageRepository stageRepository, ActivityService activityService, ActorSystem actorSystem) {
+	this.stageRepository = stageRepository;
+	this.actorSystem = actorSystem;
+	this.activityService = activityService;
+    }
 
-  public CompletionStage<Stage> saveStage(NewStageRequest req) {
-    var entity =
-        new StageEntity(
-            StageKey.randomWithTableKey(req.tableKey()),
-            req.title(),
-            StageState.ACTIVE,
-            Time.utcNow(),
-            Time.utcNow());
+    public CompletionStage<Stage> saveStage(NewStageRequest req) {
+	var entity = new StageEntity(StageKey.basedOnTableKey(req.tableKey()), req.title(), StageState.ACTIVE,
+		Time.utcNow(), Time.utcNow());
 
-    return Source.single(entity)
-        .via(stageRepository.saveStage())
-        .map(this::toStage)
-        .runWith(Sink.head(), actorSystem);
-  }
+	return Source.single(entity).via(stageRepository.saveStage()).map(this::toStage).runWith(Sink.head(),
+		actorSystem);
+    }
 
-  public CompletionStage<Stage> updateStage(UpdateStageRequest req) {
-    var entity =
-        new StageEntity(
-            req.stageKey(),
-            req.title(),
-            StageState.ACTIVE,
-            Time.utcNow(),
-            Time.utcNow());
+    public CompletionStage<Stage> updateStage(UpdateStageRequest req) {
+	var entity = new StageEntity(req.stageKey(), req.title(), StageState.ACTIVE, Time.utcNow(), Time.utcNow());
 
-    return Source.single(entity)
-        .via(stageRepository.updateStage())
-        .map(this::toStage)
-        .runWith(Sink.head(), actorSystem);
-  }
+	return Source.single(entity).via(stageRepository.updateStage()).map(this::toStage).runWith(Sink.head(),
+		actorSystem);
+    }
 
-  public CompletionStage<StageKey> deleteStage(DeleteStageRequest req) {
-    return Source.single(req.stageKey())
-        .via(stageRepository.deleteStage())
-        .runWith(Sink.head(), actorSystem);
-  }
+    public CompletionStage<StageKey> deleteStage(DeleteStageRequest req) {
+	return Source.single(req.stageKey()).via(stageRepository.deleteStage()).runWith(Sink.head(), actorSystem);
+    }
 
-  public CompletionStage<Optional<Stage>> getStage(GetStageRequest req) {
-    return stageRepository
-        .getById(req.stageKey())
-        .map(this::toStage)
-        .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
-        .runWith(Sink.headOption(), actorSystem);
-  }
+    public CompletionStage<Optional<Stage>> getStage(GetStageRequest req) {
+	return stageRepository.getById(req.stageKey()).map(this::toStage)
+		.mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities).runWith(Sink.headOption(), actorSystem);
+    }
 
-  public CompletionStage<List<Stage>> getTableStages(ListTableStagesRequest req) {
-    return stageRepository
-        .getTableStages(req.tableKey())
-        .map(this::toStage)
-        .mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities)
-        .runWith(Sink.seq(), actorSystem);
-  }
+    public CompletionStage<List<Stage>> getTableStages(ListTableStagesRequest req) {
+	return stageRepository.getTableStages(req.tableKey()).map(this::toStage)
+		.mapAsync(DEFAULT_PARALLERISM, this::getStageWithActivities).runWith(Sink.seq(), actorSystem);
+    }
 
-  private CompletionStage<Stage> getStageWithActivities(Stage stage) {
-    var listReq = new ListStageActivitiesRequest(stage.key());
-    return activityService.getStageActivities(listReq).thenApply(stage::copyWithActivities);
-  }
+    private CompletionStage<Stage> getStageWithActivities(Stage stage) {
+	var listReq = new ListStageActivitiesRequest(stage.key());
+	return activityService.getStageActivities(listReq).thenApply(stage::withActivities);
+    }
 
-  private Stage toStage(StageEntity entity) {
-    return new Stage(
-        entity.key(),
-        entity.title(),
-        entity.state(),
-        entity.createdAt(),
-        entity.modifiedAt(),
-        emptyList());
-  }
+    private Stage toStage(StageEntity entity) {
+	return new Stage(entity.key(), entity.title(), entity.state(), entity.createdAt(), entity.modifiedAt(),
+		emptyList());
+    }
 }

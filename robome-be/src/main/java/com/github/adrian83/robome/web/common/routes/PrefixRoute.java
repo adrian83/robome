@@ -6,28 +6,28 @@ import akka.http.javadsl.server.Route;
 
 public class PrefixRoute extends AbsRoute implements Supplier<Route> {
 
-  private Route route;
+    private Route route;
 
-  public PrefixRoute(String[] path, Route route) {
-    super(path);
-    this.route = route;
-  }
-
-  public PrefixRoute(String path, Route route) {
-    super(path);
-    this.route = route;
-  }
-
-  @Override
-  public Route get() {
-    if (emptyPath()) {
-      return pathEndOrSingleSlash(() -> route);
+    public PrefixRoute(String[] path, Route route) {
+	super(path);
+	this.route = route;
     }
 
-    if (startsWithParameter()) {
-      throw new IllegalStateException("path should not contain any parameter");
+    public PrefixRoute(String path, Route route) {
+	super(path);
+	this.route = route;
     }
 
-    return pathPrefix(pathHead(), new PrefixRoute(pathTail(), route));
-  }
+    @Override
+    public Route get() {
+	if (emptyPath()) {
+	    return pathEndOrSingleSlash(() -> route);
+	}
+
+	if (startsWithParameter()) {
+	    throw new IllegalStateException("path should not contain any parameter");
+	}
+
+	return pathPrefix(pathHead(), new PrefixRoute(pathTail(), route));
+    }
 }

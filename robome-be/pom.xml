@@ -10,7 +10,7 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<java.version>19</java.version>
+		<java.version>20</java.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -33,7 +33,7 @@
 		<shade.plugin.version>3.3.0</shade.plugin.version>
 		<compiler.plugin.version>3.11.0</compiler.plugin.version>
 		<exec.plugin.version>3.0.0</exec.plugin.version>
-		<pmd.plugin.version>3.20.0</pmd.plugin.version>
+		<pmd.plugin.version>3.21.0</pmd.plugin.version>
 	</properties>
 
 	<dependencies>
@@ -290,7 +290,6 @@
 				<artifactId>maven-pmd-plugin</artifactId>
 				<version>${pmd.plugin.version}</version>
 				<configuration>
-					<sourceEncoding>utf-8</sourceEncoding>
 					<minimumTokens>100</minimumTokens>
 					<targetJdk>${java.version}</targetJdk>
 				</configuration>

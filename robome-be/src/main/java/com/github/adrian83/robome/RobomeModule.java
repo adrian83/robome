@@ -19,65 +19,64 @@ import akka.stream.alpakka.cassandra.javadsl.CassandraSessionRegistry;
 
 public class RobomeModule extends AbstractModule {
 
-  private static final String ACTOR_SYSTEM_NAME = "robome";
+    private static final String ACTOR_SYSTEM_NAME = "robome";
 
-  private static final String SERVER_HOST_KEY = "server.host";
-  private static final String SERVER_PORT_KEY = "server.port";
+    private static final String SERVER_HOST_KEY = "server.host";
+    private static final String SERVER_PORT_KEY = "server.port";
 
-  private final ActorSystem system = ActorSystem.create(ACTOR_SYSTEM_NAME);
+    private final ActorSystem system = ActorSystem.create(ACTOR_SYSTEM_NAME);
 
-  private Config config;
+    private Config config;
 
-  @Override
-  protected void configure() {
-    initializeConfig();
-    initializeServerBuilder();
-    initializeActorSystem();
-    initializeCassandraSession();
-    initializeObjectMapper();
-    initializeMarshaller();
-  }
+    @Override
+    protected void configure() {
+	initializeConfig();
+	initializeServerBuilder();
+	initializeActorSystem();
+	initializeCassandraSession();
+	initializeObjectMapper();
+	initializeMarshaller();
+    }
 
-  private void initializeConfig() {
-    ConfigFactory.invalidateCaches();
-    config = ConfigFactory.load();
-    this.bind(Config.class).toInstance(config);
-  }
+    private void initializeConfig() {
+	ConfigFactory.invalidateCaches();
+	config = ConfigFactory.load();
+	this.bind(Config.class).toInstance(config);
+    }
 
-  private void initializeServerBuilder() {
-    final Http http = Http.get(system);
-    var server =
-        http.newServerAt(config.getString(SERVER_HOST_KEY), config.getInt(SERVER_PORT_KEY));
+    private void initializeServerBuilder() {
+	final Http http = Http.get(system);
+	var server = http.newServerAt(config.getString(SERVER_HOST_KEY), config.getInt(SERVER_PORT_KEY));
 
-    this.bind(ServerBuilder.class).toInstance(server);
-  }
+	this.bind(ServerBuilder.class).toInstance(server);
+    }
 
-  private void initializeActorSystem() {
-    this.bind(ActorSystem.class).toInstance(system);
-  }
+    private void initializeActorSystem() {
+	this.bind(ActorSystem.class).toInstance(system);
+    }
 
-  private void initializeCassandraSession() {
-    var sessionSettings = CassandraSessionSettings.create();
-    var cassandraSession = CassandraSessionRegistry.get(system).sessionFor(sessionSettings);
+    private void initializeCassandraSession() {
+	var sessionSettings = CassandraSessionSettings.create();
+	var cassandraSession = CassandraSessionRegistry.get(system).sessionFor(sessionSettings);
 
-    this.bind(CassandraSession.class).toInstance(cassandraSession);
-  }
+	this.bind(CassandraSession.class).toInstance(cassandraSession);
+    }
 
-  private void initializeObjectMapper() {
-    var objectMapper = createObjectMapper();
-    this.bind(ObjectMapper.class).toInstance(objectMapper);
-  }
+    private void initializeObjectMapper() {
+	var objectMapper = createObjectMapper();
+	this.bind(ObjectMapper.class).toInstance(objectMapper);
+    }
 
-  private void initializeMarshaller() {
-    var marshaller = Jackson.marshaller(createObjectMapper());
-    this.bind(Marshaller.class).toInstance(marshaller);
-  }
+    private void initializeMarshaller() {
+	var marshaller = Jackson.marshaller(createObjectMapper());
+	this.bind(Marshaller.class).toInstance(marshaller);
+    }
 
-  private ObjectMapper createObjectMapper() {
-    var mapper = new ObjectMapper();
-    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    mapper.registerModule(new JavaTimeModule());
-    mapper.registerModule(new Jdk8Module());
-    return mapper;
-  }
+    private ObjectMapper createObjectMapper() {
+	var mapper = new ObjectMapper();
+	mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+	mapper.registerModule(new JavaTimeModule());
+	mapper.registerModule(new Jdk8Module());
+	return mapper;
+    }
 }
