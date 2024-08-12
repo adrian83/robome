@@ -21,8 +21,8 @@ import com.google.inject.Inject;
 
 public class JwtAuthorizer {
 
-    private static final String ID_CLAIM = "id";
-    private static final String ROLES_CLAIM = "roles";
+    private static final String CLAIM_ID = "id";
+    private static final String CLAIM_ROLES = "roles";
 
     private static final String SECURITY_SECRET = "fa23hgrb23rv2394g0x81hyr275tcgr23gxc2435g43og527x";
     private static final Algorithm SECURITY_ALGORITHM = Algorithm.HMAC256(SECURITY_SECRET);
@@ -30,42 +30,51 @@ public class JwtAuthorizer {
     private static final Duration TOKEN_EXPIRE_IN_HOURS = Duration.ofHours(2);
     private static final String TOKEN_ISSUER = "robome";
 
-    private static final JWTVerifier VERIFIER = JWT.require(SECURITY_ALGORITHM).withIssuer(TOKEN_ISSUER).build();
+    private static final JWTVerifier VERIFIER = JWT.require(SECURITY_ALGORITHM)
+            .withIssuer(TOKEN_ISSUER)
+            .build();
 
     @Inject
     public JwtAuthorizer() {
     }
 
     public String createToken(UserData user) {
-	try {
-	    return JWT.create().withSubject(user.email()).withClaim(ID_CLAIM, user.id().toString())
-		    .withArrayClaim(ROLES_CLAIM, user.roleNames()).withIssuer(TOKEN_ISSUER)
-		    .withExpiresAt(expirationDate()).sign(SECURITY_ALGORITHM);
+        try {
+            return JWT.create()
+                    .withSubject(user.email())
+                    .withClaim(CLAIM_ID, user.id().toString())
+                    .withArrayClaim(CLAIM_ROLES, user.roleNames())
+                    .withIssuer(TOKEN_ISSUER)
+                    .withExpiresAt(expirationDate())
+                    .sign(SECURITY_ALGORITHM);
 
-	} catch (JWTCreationException ex) {
-	    throw new InvalidSignInDataException("cannot create jwt token from user data", ex);
-	}
+        } catch (JWTCreationException ex) {
+            throw new InvalidSignInDataException("cannot create jwt token from user data", ex);
+        }
     }
 
     public UserData extractUserDataFromToken(String token) {
-	try {
-	    DecodedJWT jwt = VERIFIER.verify(token);
-	    return new UserData(extractUserId(jwt), jwt.getSubject(), extractRoles(jwt));
-	} catch (JWTVerificationException ex) {
-	    throw new TokenNotFoundException("cannot verify jwt token", ex);
-	}
+        try {
+            DecodedJWT jwt = VERIFIER.verify(token);
+            return new UserData(extractUserId(jwt), jwt.getSubject(), extractRoles(jwt));
+        } catch (JWTVerificationException ex) {
+            throw new TokenNotFoundException("cannot verify jwt token", ex);
+        }
     }
 
     private Set<Role> extractRoles(DecodedJWT jwt) {
-	return jwt.getClaim(ROLES_CLAIM).asList(String.class).stream().map(roleStr -> Role.valueOf(roleStr))
-		.collect(Collectors.toSet());
+        return jwt.getClaim(CLAIM_ROLES)
+                .asList(String.class)
+                .stream()
+                .map(roleStr -> Role.valueOf(roleStr))
+                .collect(Collectors.toSet());
     }
 
     private UUID extractUserId(DecodedJWT jwt) {
-	return UUID.fromString(jwt.getClaim(ID_CLAIM).asString());
+        return UUID.fromString(jwt.getClaim(CLAIM_ID).asString());
     }
 
     private Date expirationDate() {
-	return Date.from(Instant.now().plusSeconds(TOKEN_EXPIRE_IN_HOURS.getSeconds()));
+        return Date.from(Instant.now().plusSeconds(TOKEN_EXPIRE_IN_HOURS.getSeconds()));
     }
 }

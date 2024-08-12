@@ -30,53 +30,53 @@ public class RobomeModule extends AbstractModule {
 
     @Override
     protected void configure() {
-	initializeConfig();
-	initializeServerBuilder();
-	initializeActorSystem();
-	initializeCassandraSession();
-	initializeObjectMapper();
-	initializeMarshaller();
+        initializeConfig();
+        initializeServerBuilder();
+        initializeActorSystem();
+        initializeCassandraSession();
+        initializeObjectMapper();
+        initializeMarshaller();
     }
 
     private void initializeConfig() {
-	ConfigFactory.invalidateCaches();
-	config = ConfigFactory.load();
-	this.bind(Config.class).toInstance(config);
+        ConfigFactory.invalidateCaches();
+        config = ConfigFactory.load();
+        this.bind(Config.class).toInstance(config);
     }
 
     private void initializeServerBuilder() {
-	final Http http = Http.get(system);
-	var server = http.newServerAt(config.getString(SERVER_HOST_KEY), config.getInt(SERVER_PORT_KEY));
+        final Http http = Http.get(system);
+        var server = http.newServerAt(config.getString(SERVER_HOST_KEY), config.getInt(SERVER_PORT_KEY));
 
-	this.bind(ServerBuilder.class).toInstance(server);
+        this.bind(ServerBuilder.class).toInstance(server);
     }
 
     private void initializeActorSystem() {
-	this.bind(ActorSystem.class).toInstance(system);
+        this.bind(ActorSystem.class).toInstance(system);
     }
 
     private void initializeCassandraSession() {
-	var sessionSettings = CassandraSessionSettings.create();
-	var cassandraSession = CassandraSessionRegistry.get(system).sessionFor(sessionSettings);
+        var sessionSettings = CassandraSessionSettings.create();
+        var cassandraSession = CassandraSessionRegistry.get(system).sessionFor(sessionSettings);
 
-	this.bind(CassandraSession.class).toInstance(cassandraSession);
+        this.bind(CassandraSession.class).toInstance(cassandraSession);
     }
 
     private void initializeObjectMapper() {
-	var objectMapper = createObjectMapper();
-	this.bind(ObjectMapper.class).toInstance(objectMapper);
+        var objectMapper = createObjectMapper();
+        this.bind(ObjectMapper.class).toInstance(objectMapper);
     }
 
     private void initializeMarshaller() {
-	var marshaller = Jackson.marshaller(createObjectMapper());
-	this.bind(Marshaller.class).toInstance(marshaller);
+        var marshaller = Jackson.marshaller(createObjectMapper());
+        this.bind(Marshaller.class).toInstance(marshaller);
     }
 
     private ObjectMapper createObjectMapper() {
-	var mapper = new ObjectMapper();
-	mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-	mapper.registerModule(new JavaTimeModule());
-	mapper.registerModule(new Jdk8Module());
-	return mapper;
+        var mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.registerModule(new JavaTimeModule());
+        mapper.registerModule(new Jdk8Module());
+        return mapper;
     }
 }

@@ -1,21 +1,19 @@
 package com.github.adrian83.robome.domain.table;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.CompletionStage;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.common.Time;
@@ -28,167 +26,176 @@ import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.TableState;
+import com.github.adrian83.robome.domain.table.model.request.DeleteTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
 import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
+import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
+import com.github.adrian83.robome.web.table.model.NewTable;
 
 import akka.actor.ActorSystem;
+import akka.stream.javadsl.Flow;
 import akka.stream.javadsl.Source;
 
 public class TableServiceTest {
 
-    private TableRepository tableRepositoryMock = Mockito.mock(TableRepository.class);
-    private StageService stageServiceMock = Mockito.mock(StageService.class);
-    private ActorSystem actorSystem = ActorSystem.create();
+    private final TableRepository tableRepositoryMock = Mockito.mock(TableRepository.class);
+    private final StageService stageServiceMock = Mockito.mock(StageService.class);
+    private final ActorSystem actorSystem = ActorSystem.create();
 
-    private TableService tableService = new TableService(tableRepositoryMock, stageServiceMock, actorSystem);
+    private final TableService tableService = new TableService(tableRepositoryMock, stageServiceMock, actorSystem);
 
-    private UserData user = new UserData(UUID.randomUUID(), "johndoe@somedomain.com", Collections.emptySet());
+    private final UserData user = new UserData(UUID.randomUUID(), "johndoe@somedomain.com", Collections.emptySet());
 
-    private TableKey tableKey1 = TableKey.create(user.id());
-    private TableKey tableKey2 = TableKey.create(user.id());
-
-    private TableEntity tableEntity1 = new TableEntity(tableKey1, "test 1", "test table 1", TableState.ACTIVE,
-	    Time.utcNow(), Time.utcNow());
-
-    private TableEntity tableEntity2 = new TableEntity(tableKey2, "test 2", "test table 2", TableState.ACTIVE,
-	    Time.utcNow(), Time.utcNow());
-
-    private Stage stage = new Stage(StageKey.basedOnTableKey(tableKey1), "stage 1", StageState.ACTIVE, Time.utcNow(),
-	    Time.utcNow(), Collections.emptyList());
+    private final LocalDateTime now = Time.utcNow();
 
     @Test
-    public void shouldReturnTableForGivenKeyAndUser()
-	    throws InterruptedException, ExecutionException, TimeoutException {
-	// given
-	var stages = newArrayList(stage);
-	var stagesF = CompletableFuture.<List<Stage>>completedFuture(stages);
-	var getTableReq = new GetTableRequest(user.id(), tableKey1);
+    public void shouldReturnTableForGivenKeyAndUser() throws Exception {
+        // given
+        var tableKey = TableKey.create(user.id());
+        var tableEntity = new TableEntity(tableKey, "test 1", "test table 1", TableState.ACTIVE, now, now);
+        var stage = new Stage(StageKey.basedOnTableKey(tableKey), "stage 1", StageState.ACTIVE, now, now, Collections.emptyList());
 
-	var tableSource = Source.lazySingle(() -> tableEntity1);
+        var stagesF = CompletableFuture.<List<Stage>>completedFuture(List.of(stage));
+        var getTableReq = new GetTableRequest(user.id(), tableKey);
 
-	when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
-	when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
+        var tableSource = Source.lazySingle(() -> tableEntity);
 
-	// when
-	var maybeTableF = tableService.getTable(getTableReq);
-	var maybeTable = maybeTableF.toCompletableFuture().get(1, SECONDS);
+        when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
+        when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
 
-	// then
-	verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-	verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
+        // when
+        var maybeTable = tableService.getTable(getTableReq).toCompletableFuture().get(1, SECONDS);
 
-	assertThat(maybeTable).isNotEmpty();
+        // then
+        verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
+        verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
 
-	var table = maybeTable.get();
+        assertThat(maybeTable).isNotEmpty();
 
-	assertTable(tableEntity1, table);
-	assertThat(table.stages()).hasSize(1);
-	assertStage(stage, table.stages().get(0));
+        var table = maybeTable.get();
+
+        assertTable(tableEntity, table);
+        assertThat(table.stages()).hasSize(1);
+        assertStage(stage, table.stages().get(0));
     }
 
     @Test()
-    public void shouldNotReturnTableForGivenKeyAndUser()
-	    throws InterruptedException, ExecutionException, TimeoutException {
-	// given
-	// var stagesF = CompletableFuture.<List<Stage>>completedFuture(newArrayList());
-	var getTableReq = new GetTableRequest(user.id(), tableKey1);
+    public void shouldNotReturnTableForGivenKeyAndUser() throws Exception {
+        // given
+        var tableKey = TableKey.create(user.id());
+        var getTableReq = new GetTableRequest(user.id(), tableKey);
 
-	when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
-	// when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
+        when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
 
-	// when
-	var maybeTableF = tableService.getTable(getTableReq);
-	var maybeTable = maybeTableF.toCompletableFuture().get(1, SECONDS);
+        // when
+        var maybeTable = extract(tableService.getTable(getTableReq));
 
-	// then
-	assertThat(maybeTable).isEmpty();
+        // then
+        assertThat(maybeTable).isEmpty();
     }
 
     @Test
-    public void shouldReturnUserTables() throws InterruptedException, ExecutionException, TimeoutException {
-	// given
-	var entities = newArrayList(tableEntity1, tableEntity2);
-	var tablesSource = Source.from(entities);
-	var listTablesReq = new ListTablesRequest(user.id());
+    public void shouldReturnUserTables() throws Exception {
+        // given
+        var tableKey1 = TableKey.create(user.id());
+        var tableKey2 = TableKey.create(user.id());
 
-	when(tableRepositoryMock.getUserTables(any(UUID.class))).thenReturn(tablesSource);
+        var tableEntity1 = new TableEntity(tableKey1, "test 1", "test table 1", TableState.ACTIVE, now, now);
+        var tableEntity2 = new TableEntity(tableKey2, "test 2", "test table 2", TableState.ACTIVE, now, now);
 
-	// when
-	var tablesF = tableService.getTables(listTablesReq);
-	var tables = tablesF.toCompletableFuture().get(1, SECONDS);
+        var tableEntities = List.of(tableEntity1, tableEntity2);
+        var tablesSource = Source.from(tableEntities);
+        var listTablesReq = new ListTablesRequest(user.id());
 
-	// then
-	verify(tableRepositoryMock).getUserTables(any(UUID.class));
+        when(tableRepositoryMock.getUserTables(any(UUID.class))).thenReturn(tablesSource);
 
-	assertThat(entities).hasSize(tables.size());
+        // when
+        var tables = extract(tableService.getTables(listTablesReq));
 
-	assertThat(entities)
-		.anySatisfy(tableEntity -> assertThat(tables).anySatisfy(table -> assertTable(tableEntity, table)));
+        // then
+        verify(tableRepositoryMock).getUserTables(any(UUID.class));
+
+        assertThat(tableEntities).hasSize(tables.size());
+
+        assertThat(tableEntities)
+                .anySatisfy(tableEntity -> assertThat(tables).anySatisfy(table -> assertTable(tableEntity, table)));
     }
 
-    /*
-     * @Test public void shouldSaveTable() throws InterruptedException,
-     * ExecutionException, TimeoutException { // given var newTable = new
-     * NewTable("some stuff", "table with my stuff"); Sink<TableEntity, NotUsed>
-     * sink = Sink.fold(Done.done(), (Done d, TableEntity k) -> d); var newTableReq
-     * = NewTableRequest.builder() .userId(user.getId()) .title(newTable.getTitle())
-     * .description(newTable.getDescription()) .build();
-     * 
-     * when(tableRepositoryMock.saveTable()).thenReturn(sink);
-     * 
-     * // when var tableF = tableService.saveTable(newTableReq);
-     * 
-     * // then verify(tableRepositoryMock).saveTable();
-     * 
-     * var table = tableF.toCompletableFuture().get(2, SECONDS);
-     * assertEquals(newTable.getTitle(), table.getTitle());
-     * assertEquals(newTable.getDescription(), table.getDescription()); } /*
-     * 
-     * @Test public void shouldUpdateTable() throws InterruptedException,
-     * ExecutionException, TimeoutException { // given var sink =
-     * Sink.fold(Done.done(), (Done d, TableEntity k) -> d); var updateTableReq =
-     * UpdateTableRequest.builder() .userId(user.getId()) .tableKey(tableKey1)
-     * .title("new title") .description("new descryption") .build();
-     * 
-     * when(tableRepositoryMock.updateTable()).thenReturn(sink);
-     * 
-     * // when var tableF = tableService.updateTable(updateTableReq);
-     * 
-     * // then verify(tableRepositoryMock).updateTable();
-     * 
-     * var table = tableF.toCompletableFuture().get(2, SECONDS);
-     * assertEquals(updateTableReq.getTitle(), table.getTitle());
-     * assertEquals(updateTableReq.getDescription(), table.getDescription()); }
-     * 
-     * @Test public void shouldDeleteTable() throws InterruptedException,
-     * ExecutionException, TimeoutException { // given Sink<TableKey, NotUsed> sink
-     * = Sink. var deleteTableReq =
-     * DeleteTableRequest.builder().userId(user.getId()).tableKey(tableKey1).build()
-     * ;
-     * 
-     * when(tableRepositoryMock.deleteTable(any(UUID.class))).thenReturn(sink);
-     * 
-     * // when var tableKeyF = tableService.deleteTable(deleteTableReq);
-     * 
-     * // then verify(tableRepositoryMock).deleteTable(any(UUID.class));
-     * 
-     * var tableKey = tableKeyF.toCompletableFuture().get(2, SECONDS);
-     * assertEquals(tableKey1, tableKey); }
-     */
+    @Test
+    public void shouldSaveTable() throws Exception {
+        // given 
+        var newTable = new NewTable("some stuff", "table with my stuff");
+        var saveTableFlow = Flow.of(TableEntity.class);
+        var newTableReq = new NewTableRequest(newTable.title(), newTable.description(), user.id());
+
+        when(tableRepositoryMock.saveTable()).thenReturn(saveTableFlow);
+
+        // when 
+        var table = extract(tableService.saveTable(newTableReq));
+
+        // then 
+        verify(tableRepositoryMock).saveTable();
+
+        assertThat(newTableReq.title()).isEqualTo(table.title());
+        assertThat(newTableReq.description()).isEqualTo(table.description());
+    }
+
+    @Test
+    public void shouldUpdateTable() throws Exception {
+        // given 
+        var tableKey = TableKey.create(user.id());
+        var updateTableFlow = Flow.of(TableEntity.class);
+        var updateTableReq = new UpdateTableRequest("new title", "new descryption", user.id(), tableKey);
+
+        when(tableRepositoryMock.updateTable()).thenReturn(updateTableFlow);
+
+        // when 
+        var table = extract(tableService.updateTable(updateTableReq));
+
+        // then 
+        verify(tableRepositoryMock).updateTable();
+
+        assertThat(updateTableReq.title()).isEqualTo(table.title());
+        assertThat(updateTableReq.description()).isEqualTo(table.description());
+    }
+
+    @Test
+    public void shouldDeleteTable() throws Exception {
+        // given 
+        var tableKey = TableKey.create(user.id());
+        var deleteTableFlow = Flow.of(TableKey.class);
+        var deleteTableReq = new DeleteTableRequest(user.id(), tableKey);
+
+        when(tableRepositoryMock.deleteTable(any(UUID.class))).thenReturn(deleteTableFlow);
+
+        // when 
+        var deletedTableKey = extract(tableService.deleteTable(deleteTableReq));
+
+        // then 
+        verify(tableRepositoryMock).deleteTable(any(UUID.class));
+
+        assertThat(deletedTableKey).isEqualTo(tableKey);
+    }
+
+    private <T> T extract(CompletionStage<T> cmplStage) throws Exception {
+        return cmplStage.toCompletableFuture().get(1, SECONDS);
+    }
+
     public void assertTable(TableEntity expected, Table actual) {
-	assertThat(expected.key()).isEqualTo(actual.key());
-	assertThat(expected.title()).isEqualTo(actual.title());
-	assertThat(expected.description()).isEqualTo(actual.description());
-	assertThat(expected.state()).isEqualTo(actual.state());
-	assertThat(expected.createdAt()).isEqualTo(actual.createdAt());
-	assertThat(expected.modifiedAt()).isEqualTo(actual.modifiedAt());
+        assertThat(expected.key()).isEqualTo(actual.key());
+        assertThat(expected.title()).isEqualTo(actual.title());
+        assertThat(expected.description()).isEqualTo(actual.description());
+        assertThat(expected.state()).isEqualTo(actual.state());
+        assertThat(expected.createdAt()).isEqualTo(actual.createdAt());
+        assertThat(expected.modifiedAt()).isEqualTo(actual.modifiedAt());
     }
 
     public void assertStage(Stage expected, Stage actual) {
-	assertThat(expected.key()).isEqualTo(actual.key());
-	assertThat(expected.title()).isEqualTo(actual.title());
-	assertThat(expected.state()).isEqualTo(actual.state());
-	assertThat(expected.createdAt()).isEqualTo(actual.createdAt());
-	assertThat(expected.modifiedAt()).isEqualTo(actual.modifiedAt());
+        assertThat(expected.key()).isEqualTo(actual.key());
+        assertThat(expected.title()).isEqualTo(actual.title());
+        assertThat(expected.state()).isEqualTo(actual.state());
+        assertThat(expected.createdAt()).isEqualTo(actual.createdAt());
+        assertThat(expected.modifiedAt()).isEqualTo(actual.modifiedAt());
     }
 }

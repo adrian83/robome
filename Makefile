@@ -3,11 +3,8 @@
 docker:
 	sudo systemctl start docker
 
-compose-build:
-	sudo docker-compose build
-
-compose-up:
-	sudo docker-compose up
+compose:
+	sudo docker-compose up --build
 
 deps:
 	echo "starting cassandra image (version 3.11.9)"

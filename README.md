@@ -10,7 +10,7 @@ Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cas
 - Docker Compose
 
 #### Steps
-1. Run `docker-compose up`
+1. Run `docker-compose up --build`
 2. Navigate in browser to `localhost:3000`
 
 ### Running locally
