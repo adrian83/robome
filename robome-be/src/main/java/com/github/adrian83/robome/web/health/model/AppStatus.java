@@ -6,4 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonSerialize
-public record AppStatus(@JsonProperty("status") String status) {}
+public record AppStatus(@JsonProperty("status")
+        String status) {
+
+}

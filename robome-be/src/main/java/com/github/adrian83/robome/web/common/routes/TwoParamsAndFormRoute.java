@@ -12,34 +12,31 @@ import akka.http.javadsl.server.Route;
 
 public class TwoParamsAndFormRoute<T> extends AbsFormRoute<T> implements Supplier<Route> {
 
-    private TriFunction<String, String, Class<T>, Route> action;
+    private final TriFunction<String, String, Class<T>, Route> action;
 
     public TwoParamsAndFormRoute(String[] path, Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
-	super(path, clazz);
-	this.action = action;
+        super(path, clazz);
+        this.action = action;
     }
 
     public TwoParamsAndFormRoute(String path, Class<T> clazz, TriFunction<String, String, Class<T>, Route> action) {
-	super(path, clazz);
-	this.action = action;
+        super(path, clazz);
+        this.action = action;
     }
 
     @Override
     public Route get() {
+        if (emptyPath()) {
+            throw new IllegalStateException("path should contains one parameter");
+        }
 
-	if (emptyPath()) {
-	    throw new IllegalStateException("path should contains one parameter");
-	}
+        var newPath = this.pathTail();
+        if (startsWithParameter()) {
+            Function<String, BiFunction<String, Class<T>, Route>> newFunc = (
+                    String var1) -> (String var2, Class<T> clz) -> action.apply(var1, var2, clz);
+            return pathPrefix(segment(), var1 -> new OneParamAndFormRoute<T>(newPath, this.getClazz(), newFunc.apply(var1)).get());
+        }
 
-	var newPath = this.pathTail();
-
-	if (startsWithParameter()) {
-	    Function<String, BiFunction<String, Class<T>, Route>> newFunc = (
-		    String var1) -> (String var2, Class<T> clz) -> action.apply(var1, var2, clz);
-	    return pathPrefix(segment(),
-		    var1 -> new OneParamAndFormRoute<T>(newPath, this.getClazz(), newFunc.apply(var1)).get());
-	}
-
-	return pathPrefix(pathHead(), new TwoParamsAndFormRoute<T>(newPath, this.getClazz(), action));
+        return pathPrefix(pathHead(), new TwoParamsAndFormRoute<>(newPath, this.getClazz(), action));
     }
 }

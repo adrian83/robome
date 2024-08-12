@@ -13,8 +13,8 @@ public final class Logging {
     }
 
     public static CompletionStage<UserData> logAction(Logger log, UserData userData, String patter, Object... params) {
-	var email = String.format("[user: {%s}], ", userData.email());
-	log.info(email + patter, params);
-	return CompletableFuture.completedFuture(userData);
+        var email = String.format("[user: {%s}], ", userData.email());
+        log.info(email + patter, params);
+        return CompletableFuture.completedFuture(userData);
     }
 }

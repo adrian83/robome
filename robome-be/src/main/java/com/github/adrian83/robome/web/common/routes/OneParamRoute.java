@@ -27,7 +27,6 @@ public class OneParamRoute extends AbsRoute implements Supplier<Route> {
         }
 
         var newPath = pathTail();
-
         if (startsWithParameter()) {
             Function<String, Route> newFunc = (String var1) -> action.apply(var1);
             return pathPrefix(segment(), var1 -> new PrefixRoute(newPath, newFunc.apply(var1)).get());

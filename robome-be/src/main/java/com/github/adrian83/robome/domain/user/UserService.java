@@ -20,32 +20,33 @@ public class UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
-    private UserRepository userRepository;
-    private ActorSystem actorSystem;
+    private final UserRepository userRepository;
+    private final ActorSystem actorSystem;
 
     @Inject
     public UserService(UserRepository repository, ActorSystem actorSystem) {
-	this.userRepository = repository;
-	this.actorSystem = actorSystem;
+        this.userRepository = repository;
+        this.actorSystem = actorSystem;
     }
 
     public CompletionStage<User> saveUser(User newUser) {
-	LOGGER.info("Persisting new user: {}", newUser);
+        LOGGER.info("Persisting new user: {}", newUser);
 
-	return userRepository.getByEmail(newUser.email()).runWith(Sink.headOption(), actorSystem)
-		.thenApply((maybeUser) -> {
-		    if (maybeUser.isPresent())
-			throw new EmailAlreadyInUseException("Email already in use");
-		    return newUser;
-		}).thenCompose(this::storeUser);
+        return userRepository.getByEmail(newUser.email()).runWith(Sink.headOption(), actorSystem)
+                .thenApply((maybeUser) -> {
+                    if (maybeUser.isPresent()) {
+                        throw new EmailAlreadyInUseException("Email already in use");
+                    }
+                    return newUser;
+                }).thenCompose(this::storeUser);
     }
 
     public CompletionStage<Optional<User>> findUserByEmail(String email) {
-	return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
+        return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
     }
 
     private CompletionStage<User> storeUser(User user) {
-	var flow = userRepository.saveUser().mapMaterializedValue(notUsed -> completedStage(user));
-	return Source.single(user).via(flow).runWith(Sink.head(), actorSystem);
+        var flow = userRepository.saveUser().mapMaterializedValue(notUsed -> completedStage(user));
+        return Source.single(user).via(flow).runWith(Sink.head(), actorSystem);
     }
 }

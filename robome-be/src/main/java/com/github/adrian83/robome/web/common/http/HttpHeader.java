@@ -4,13 +4,13 @@ public enum HttpHeader {
     CONTENT_TYPE("Content-Type"), AUTHORIZATION("Authorization"), LOCATION("Location"),
     EXPOSE_HEADERS("access-control-expose-headers");
 
-    private String text;
+    private final String text;
 
     HttpHeader(String text) {
-	this.text = text;
+        this.text = text;
     }
 
     public String getText() {
-	return this.text;
+        return this.text;
     }
 }

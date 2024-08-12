@@ -66,7 +66,7 @@ public class JwtAuthorizer {
         return jwt.getClaim(CLAIM_ROLES)
                 .asList(String.class)
                 .stream()
-                .map(roleStr -> Role.valueOf(roleStr))
+                .map(Role::valueOf)
                 .collect(Collectors.toSet());
     }
 

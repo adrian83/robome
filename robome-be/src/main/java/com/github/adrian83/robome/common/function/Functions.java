@@ -6,9 +6,9 @@ import java.util.function.Function;
 public class Functions {
 
     public static <T> Function<T, T> use(Consumer<T> c) {
-	return (e) -> {
-	    c.accept(e);
-	    return e;
-	};
+        return (e) -> {
+            c.accept(e);
+            return e;
+        };
     }
 }

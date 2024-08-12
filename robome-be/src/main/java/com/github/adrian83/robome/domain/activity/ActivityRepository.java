@@ -41,61 +41,61 @@ public class ActivityRepository {
     private static final String COL_CREATED_AT = "created_at";
     private static final String COL_MODIFIED_AT = "modified_at";
 
-    private CassandraSession session;
+    private final CassandraSession session;
 
     @Inject
     public ActivityRepository(CassandraSession session) {
-	this.session = session;
+        this.session = session;
     }
 
     public Flow<ActivityEntity, ActivityEntity, NotUsed> saveActivity() {
-	return CassandraFlow.create(session, defaults(), STMT_INSERT_ACTIVITY, this::saveActivityStatement);
+        return CassandraFlow.create(session, defaults(), STMT_INSERT_ACTIVITY, this::saveActivityStatement);
     }
 
     public Flow<ActivityEntity, ActivityEntity, NotUsed> updateActivity() {
-	return CassandraFlow.create(session, defaults(), STMT_UPDATE_ACTIVITY, this::updateActivityStatement);
+        return CassandraFlow.create(session, defaults(), STMT_UPDATE_ACTIVITY, this::updateActivityStatement);
     }
 
     public Flow<ActivityKey, ActivityKey, NotUsed> deleteActivity(UUID userId) {
-	return CassandraFlow.create(session, defaults(), STMT_DELETE_ACTIVITY_BY_ID, this::deleteActivityStatement);
+        return CassandraFlow.create(session, defaults(), STMT_DELETE_ACTIVITY_BY_ID, this::deleteActivityStatement);
     }
 
     public Source<ActivityEntity, NotUsed> getById(ActivityKey activityKey) {
-	Statement<?> stmt = SimpleStatement.newInstance(STMT_SELECT_ACTIVITY_BY_ID, activityKey.userId(),
-		activityKey.tableId(), activityKey.stageId(), activityKey.activityId());
+        Statement<?> stmt = SimpleStatement.newInstance(STMT_SELECT_ACTIVITY_BY_ID, activityKey.userId(),
+                activityKey.tableId(), activityKey.stageId(), activityKey.activityId());
 
-	return CassandraSource.create(session, stmt).map(this::fromRow);
+        return CassandraSource.create(session, stmt).map(this::fromRow);
     }
 
     public Source<ActivityEntity, NotUsed> getStageActivities(StageKey key) {
-	Statement<?> stmt = SimpleStatement.newInstance(STMT_SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID, key.tableId(),
-		key.stageId(), key.userId());
+        Statement<?> stmt = SimpleStatement.newInstance(STMT_SELECT_ACTIVITIES_BY_TABLE_ID_AND_STAGE_ID, key.tableId(),
+                key.stageId(), key.userId());
 
-	return CassandraSource.create(session, stmt).map(this::fromRow);
+        return CassandraSource.create(session, stmt).map(this::fromRow);
     }
 
     private ActivityEntity fromRow(Row row) {
-	var key = new ActivityKey(row.get(COL_USER_ID, UUID.class), row.get(COL_TABLE_ID, UUID.class),
-		row.get(COL_STAGE_ID, UUID.class), row.get(COL_ACTIVITY_ID, UUID.class));
+        var key = new ActivityKey(row.get(COL_USER_ID, UUID.class), row.get(COL_TABLE_ID, UUID.class),
+                row.get(COL_STAGE_ID, UUID.class), row.get(COL_ACTIVITY_ID, UUID.class));
 
-	return new ActivityEntity(key, row.getString(COL_NAME), valueOf(row.getString(COL_STATE)),
-		toUtcLocalDate(row.getInstant(COL_MODIFIED_AT)), toUtcLocalDate(row.getInstant(COL_CREATED_AT)));
+        return new ActivityEntity(key, row.getString(COL_NAME), valueOf(row.getString(COL_STATE)),
+                toUtcLocalDate(row.getInstant(COL_MODIFIED_AT)), toUtcLocalDate(row.getInstant(COL_CREATED_AT)));
     }
 
     private BoundStatement saveActivityStatement(ActivityEntity activity, PreparedStatement prpdStmt) {
-	return prpdStmt.bind(activity.key().userId(), activity.key().activityId(), activity.key().stageId(),
-		activity.key().tableId(), activity.name(), activity.state().name(), toInstant(activity.createdAt()),
-		toInstant(activity.modifiedAt()));
+        return prpdStmt.bind(activity.key().userId(), activity.key().activityId(), activity.key().stageId(),
+                activity.key().tableId(), activity.name(), activity.state().name(), toInstant(activity.createdAt()),
+                toInstant(activity.modifiedAt()));
     }
 
     private BoundStatement updateActivityStatement(ActivityEntity activity, PreparedStatement prpdStmt) {
-	return prpdStmt.bind(activity.name(), activity.state().name(), toInstant(activity.modifiedAt()),
-		activity.key().tableId(), activity.key().stageId(), activity.key().activityId(),
-		activity.key().userId());
+        return prpdStmt.bind(activity.name(), activity.state().name(), toInstant(activity.modifiedAt()),
+                activity.key().tableId(), activity.key().stageId(), activity.key().activityId(),
+                activity.key().userId());
     }
 
     private BoundStatement deleteActivityStatement(ActivityKey key, PreparedStatement prpdStmt) {
-	return prpdStmt.bind(key.tableId(), key.stageId(), key.activityId(), key.userId());
+        return prpdStmt.bind(key.tableId(), key.stageId(), key.activityId(), key.userId());
     }
 
 }

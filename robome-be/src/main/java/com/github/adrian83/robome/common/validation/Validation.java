@@ -10,14 +10,14 @@ public final class Validation {
     }
 
     public static Validator validate(Validator validator) {
-	List<ValidationError> errors = validator.validate();
-	if (!errors.isEmpty()) {
-	    throw new ValidationException(errors);
-	}
-	return validator;
+        List<ValidationError> errors = validator.validate();
+        if (!errors.isEmpty()) {
+            throw new ValidationException(errors);
+        }
+        return validator;
     }
 
     public static <T> Optional<ValidationError> check(T arg, ValidationError error, Function<T, Boolean> isInvalid) {
-	return isInvalid.apply(arg) ? Optional.ofNullable(error) : Optional.empty();
+        return isInvalid.apply(arg) ? Optional.ofNullable(error) : Optional.empty();
     }
 }

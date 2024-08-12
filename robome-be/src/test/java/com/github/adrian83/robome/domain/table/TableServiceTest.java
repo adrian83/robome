@@ -21,16 +21,16 @@ import com.github.adrian83.robome.domain.stage.StageService;
 import com.github.adrian83.robome.domain.stage.model.Stage;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.domain.stage.model.StageState;
-import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesRequest;
+import com.github.adrian83.robome.domain.stage.model.request.ListTableStagesQuery;
 import com.github.adrian83.robome.domain.table.model.Table;
 import com.github.adrian83.robome.domain.table.model.TableEntity;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.TableState;
-import com.github.adrian83.robome.domain.table.model.request.DeleteTableRequest;
-import com.github.adrian83.robome.domain.table.model.request.GetTableRequest;
-import com.github.adrian83.robome.domain.table.model.request.ListTablesRequest;
-import com.github.adrian83.robome.domain.table.model.request.NewTableRequest;
-import com.github.adrian83.robome.domain.table.model.request.UpdateTableRequest;
+import com.github.adrian83.robome.domain.table.model.request.DeleteTableCommand;
+import com.github.adrian83.robome.domain.table.model.request.GetTableQuery;
+import com.github.adrian83.robome.domain.table.model.request.ListTablesQuery;
+import com.github.adrian83.robome.domain.table.model.request.NewTableCommand;
+import com.github.adrian83.robome.domain.table.model.request.UpdateTableCommand;
 import com.github.adrian83.robome.web.table.model.NewTable;
 
 import akka.actor.ActorSystem;
@@ -57,19 +57,19 @@ public class TableServiceTest {
         var stage = new Stage(StageKey.basedOnTableKey(tableKey), "stage 1", StageState.ACTIVE, now, now, Collections.emptyList());
 
         var stagesF = CompletableFuture.<List<Stage>>completedFuture(List.of(stage));
-        var getTableReq = new GetTableRequest(user.id(), tableKey);
+        var getTableReq = new GetTableQuery(user.id(), tableKey);
 
         var tableSource = Source.lazySingle(() -> tableEntity);
 
         when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(tableSource);
-        when(stageServiceMock.getTableStages(any(ListTableStagesRequest.class))).thenReturn(stagesF);
+        when(stageServiceMock.getTableStages(any(ListTableStagesQuery.class))).thenReturn(stagesF);
 
         // when
         var maybeTable = tableService.getTable(getTableReq).toCompletableFuture().get(1, SECONDS);
 
         // then
         verify(tableRepositoryMock).getById(any(UUID.class), any(UUID.class));
-        verify(stageServiceMock).getTableStages(any(ListTableStagesRequest.class));
+        verify(stageServiceMock).getTableStages(any(ListTableStagesQuery.class));
 
         assertThat(maybeTable).isNotEmpty();
 
@@ -84,7 +84,7 @@ public class TableServiceTest {
     public void shouldNotReturnTableForGivenKeyAndUser() throws Exception {
         // given
         var tableKey = TableKey.create(user.id());
-        var getTableReq = new GetTableRequest(user.id(), tableKey);
+        var getTableReq = new GetTableQuery(user.id(), tableKey);
 
         when(tableRepositoryMock.getById(any(UUID.class), any(UUID.class))).thenReturn(Source.empty());
 
@@ -106,7 +106,7 @@ public class TableServiceTest {
 
         var tableEntities = List.of(tableEntity1, tableEntity2);
         var tablesSource = Source.from(tableEntities);
-        var listTablesReq = new ListTablesRequest(user.id());
+        var listTablesReq = new ListTablesQuery(user.id());
 
         when(tableRepositoryMock.getUserTables(any(UUID.class))).thenReturn(tablesSource);
 
@@ -127,7 +127,7 @@ public class TableServiceTest {
         // given 
         var newTable = new NewTable("some stuff", "table with my stuff");
         var saveTableFlow = Flow.of(TableEntity.class);
-        var newTableReq = new NewTableRequest(newTable.title(), newTable.description(), user.id());
+        var newTableReq = new NewTableCommand(newTable.title(), newTable.description(), user.id());
 
         when(tableRepositoryMock.saveTable()).thenReturn(saveTableFlow);
 
@@ -146,7 +146,7 @@ public class TableServiceTest {
         // given 
         var tableKey = TableKey.create(user.id());
         var updateTableFlow = Flow.of(TableEntity.class);
-        var updateTableReq = new UpdateTableRequest("new title", "new descryption", user.id(), tableKey);
+        var updateTableReq = new UpdateTableCommand("new title", "new descryption", user.id(), tableKey);
 
         when(tableRepositoryMock.updateTable()).thenReturn(updateTableFlow);
 
@@ -165,7 +165,7 @@ public class TableServiceTest {
         // given 
         var tableKey = TableKey.create(user.id());
         var deleteTableFlow = Flow.of(TableKey.class);
-        var deleteTableReq = new DeleteTableRequest(user.id(), tableKey);
+        var deleteTableReq = new DeleteTableCommand(user.id(), tableKey);
 
         when(tableRepositoryMock.deleteTable(any(UUID.class))).thenReturn(deleteTableFlow);
 

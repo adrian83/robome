@@ -16,7 +16,8 @@ import com.google.common.base.Strings;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonSerialize
-public record NewActivity(@JsonProperty(NewActivity.NAME_LABEL) String name) implements Validator {
+public record NewActivity(@JsonProperty(NewActivity.NAME_LABEL)
+        String name) implements Validator {
 
     private static final String NAME_LABEL = "name";
     private static final String EMPTY_NAME_KEY = "activity.create.name.empty";
@@ -26,7 +27,9 @@ public record NewActivity(@JsonProperty(NewActivity.NAME_LABEL) String name) imp
 
     @Override
     public List<ValidationError> validate() {
-	return Stream.of(check(name, EMPTY_NAME, Strings::isNullOrEmpty)).filter(Optional::isPresent).map(Optional::get)
-		.collect(Collectors.toList());
+        return Stream.of(check(name, EMPTY_NAME, Strings::isNullOrEmpty))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 }

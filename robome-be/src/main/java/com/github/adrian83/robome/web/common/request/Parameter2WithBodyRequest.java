@@ -8,6 +8,5 @@ import com.github.adrian83.robome.common.function.TetraFunction;
 import akka.http.javadsl.model.HttpResponse;
 
 @FunctionalInterface
-public interface Parameter2WithBodyRequest<T, P, BODY>
-	extends TetraFunction<UserData, T, P, BODY, CompletionStage<HttpResponse>> {
+public interface Parameter2WithBodyRequest<T, P, BODY> extends TetraFunction<UserData, T, P, BODY, CompletionStage<HttpResponse>> {
 }

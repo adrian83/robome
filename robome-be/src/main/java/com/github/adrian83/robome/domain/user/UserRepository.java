@@ -28,7 +28,7 @@ public class UserRepository {
 
     private static final String SELECT_USER_BY_EMAIL = "SELECT * FROM robome.users WHERE email = ?";
     private static final String INSERT_USER_STMT = "INSERT INTO robome.users (id, email, " + "password_hash, "
-	    + "roles, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
+            + "roles, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
 
     private static final String ID_COL = "id";
     private static final String EMAIL_COL = "email";
@@ -37,30 +37,29 @@ public class UserRepository {
     private static final String CREATED_AT_COL = "created_at";
     private static final String MODIFIED_AT_COL = "modified_at";
 
-    private CassandraSession session;
+    private final CassandraSession session;
 
     @Inject
     public UserRepository(CassandraSession session) {
-	this.session = session;
+        this.session = session;
     }
 
     public Source<User, NotUsed> getByEmail(String email) {
-	Statement<?> stmt = SimpleStatement.newInstance(SELECT_USER_BY_EMAIL, email);
-
-	return CassandraSource.create(session, stmt).map(this::fromRow);
+        Statement<?> stmt = SimpleStatement.newInstance(SELECT_USER_BY_EMAIL, email);
+        return CassandraSource.create(session, stmt).map(this::fromRow);
     }
 
     public Flow<User, User, NotUsed> saveUser() {
-	Function2<User, PreparedStatement, BoundStatement> statementBinder = (user, prepStmt) -> prepStmt.bind(
-		user.id(), user.email(), user.passwordHash(), Role.toString(user.roles()), toInstant(user.createdAt()),
-		toInstant(user.modifiedAt()));
+        Function2<User, PreparedStatement, BoundStatement> statementBinder = (user, prepStmt) -> prepStmt.bind(
+                user.id(), user.email(), user.passwordHash(), Role.toString(user.roles()), toInstant(user.createdAt()),
+                toInstant(user.modifiedAt()));
 
-	return CassandraFlow.create(session, defaults(), INSERT_USER_STMT, statementBinder);
+        return CassandraFlow.create(session, defaults(), INSERT_USER_STMT, statementBinder);
     }
 
     private User fromRow(Row row) {
-	return new User(row.get(ID_COL, UUID.class), row.getString(EMAIL_COL), row.getString(PASS_HASH_COL),
-		toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)), toUtcLocalDate(row.getInstant(CREATED_AT_COL)),
-		fromString(row.getString(ROLES_COL)));
+        return new User(row.get(ID_COL, UUID.class), row.getString(EMAIL_COL), row.getString(PASS_HASH_COL),
+                toUtcLocalDate(row.getInstant(MODIFIED_AT_COL)), toUtcLocalDate(row.getInstant(CREATED_AT_COL)),
+                fromString(row.getString(ROLES_COL)));
     }
 }

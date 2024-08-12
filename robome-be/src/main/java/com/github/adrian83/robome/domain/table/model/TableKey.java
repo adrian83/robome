@@ -7,10 +7,10 @@ import java.util.UUID;
 public record TableKey(UUID userId, UUID tableId) {
 
     public static TableKey create(UUID userId) {
-	return new TableKey(userId, randomUUID());
+        return new TableKey(userId, randomUUID());
     }
 
     public static TableKey create(UUID userId, String uuidStr) {
-	return new TableKey(userId, UUID.fromString(uuidStr));
+        return new TableKey(userId, UUID.fromString(uuidStr));
     }
 }

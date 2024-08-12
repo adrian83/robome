@@ -1,6 +1,7 @@
 package com.github.adrian83.robome.auth;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -35,10 +36,11 @@ public class Authentication {
                 .thenApply(user -> new UserData(user.id(), user.email(), user.roles()));
     }
 
-    public CompletionStage<UserData> registerUser(RegisterCommand req) {
-        var passwordHash = hashPassword(req.password());
-        var user = new User(req.email(), passwordHash, DEFAULT_USER_ROLES);
-        return userService.saveUser(user)
+    public CompletionStage<UserData> registerUser(RegisterCommand command) {
+        return CompletableFuture.completedFuture(command)
+                .thenApply(cmd -> hashPassword(cmd.password()))
+                .thenApply(hashedPass -> new User(command.email(), hashedPass, DEFAULT_USER_ROLES))
+                .thenCompose(user -> userService.saveUser(user))
                 .thenApply(savedUser -> new UserData(savedUser.id(), savedUser.email(), savedUser.roles()));
     }
 

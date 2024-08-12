@@ -16,26 +16,26 @@ import akka.http.javadsl.server.Route;
 
 public class HealthController extends AllDirectives {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(HealthController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HealthController.class);
 
-  public static final String HEALTH = "health";
-  public static final String OK = "OK";
+    public static final String HEALTH = "health";
+    public static final String OK = "OK";
 
-  private Response response;
+    private final Response response;
 
-  @Inject
-  public HealthController(Response response) {
-    this.response = response;
-  }
+    @Inject
+    public HealthController(Response response) {
+        this.response = response;
+    }
 
-  public Route createRoute() {
-    return route(
-        get(new PrefixRoute(HEALTH, createAppStatus())),
-        options(new PrefixRoute(HEALTH, complete(response.response200(GET, POST)))));
-  }
+    public Route createRoute() {
+        return route(
+                get(new PrefixRoute(HEALTH, createAppStatus())),
+                options(new PrefixRoute(HEALTH, complete(response.response200(GET, POST)))));
+    }
 
-  private Route createAppStatus() {
-    LOGGER.info("Checking application status: {}", OK);
-    return complete(response.jsonFromObject(new AppStatus(OK)));
-  }
+    private Route createAppStatus() {
+        LOGGER.info("Checking application status: {}", OK);
+        return complete(response.jsonFromObject(new AppStatus(OK)));
+    }
 }

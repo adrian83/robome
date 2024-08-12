@@ -28,6 +28,7 @@ public class TableControllerTest extends JUnitRouteTest {
 
     @ClassRule
     public static TestKitJunitResource testkit = new TestKitJunitResource();
+
     @Test
     public void shoultTestOptionsWithTableIdParam() {
         // given
@@ -38,8 +39,6 @@ public class TableControllerTest extends JUnitRouteTest {
 
         // TestRoute appRoute = testRoute(tableController.createRoute());
         var route = tableController.createRoute();
-
-
 
         // when
         // testRoute(route)
