@@ -37,10 +37,13 @@ import akka.http.javadsl.server.Route;
 
 public class TableController extends AllDirectives {
 
+    private final static String PATH_PARAM_USER_ID = "userId";
+    private final static String PATH_PARAM_TABLE_ID = "tableId";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
 
-    private static final String TABLES_PATH = "/users/{userId}/tables/";
-    private static final String TABLE_PATH = "/users/{userId}/tables/{tableId}/";
+    private static final String TABLES_PATH = "/users/{" + PATH_PARAM_USER_ID + "}/tables/";
+    private static final String TABLE_PATH = "/users/{" + PATH_PARAM_USER_ID + "}/tables/{" + PATH_PARAM_TABLE_ID + "}/";
 
     private static final String LOG_LIST_TABS = "list tables request";
     private static final String LOG_CREATE_TAB = "persist table request, data: {}";
@@ -72,7 +75,7 @@ public class TableController extends AllDirectives {
     }
 
     private CompletionStage<HttpResponse> persistTable(UserData user, Map<String, String> pathParams, NewTable form) {
-        String resourceOwnerIdStr = pathParams.get("userId");
+        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
         return logAction(LOGGER, user, LOG_CREATE_TAB, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canWriteTables)
@@ -83,10 +86,9 @@ public class TableController extends AllDirectives {
                 .thenApply(table -> response.jsonFromObject(table));
     }
 
-    private CompletionStage<HttpResponse> updateTable(UserData user, Map<String, String> pathParams,
-            UpdateTable form) {
-        String resourceOwnerIdStr = pathParams.get("userId");
-        String tableIdStr = pathParams.get("tableId");
+    private CompletionStage<HttpResponse> updateTable(UserData user, Map<String, String> pathParams, UpdateTable form) {
+        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
+        String tableIdStr = pathParams.get(PATH_PARAM_TABLE_ID
 
         return logAction(LOGGER, user, LOG_UPDATE_TAB, tableIdStr, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))

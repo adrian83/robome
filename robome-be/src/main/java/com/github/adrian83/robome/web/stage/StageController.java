@@ -81,7 +81,8 @@ public class StageController extends AllDirectives {
                 .thenApply(Authorization::canWriteStages).thenApply(userCtx -> new UserAndForm<NewStage>(userCtx, form))
                 .thenApply(UserAndForm::validate)
                 .thenApply(uaf -> toNewStageRequest(uaf.userContext(), tableIdStr, uaf.form()))
-                .thenCompose(stageService::saveStage).thenApply(response::jsonFromObject);
+                .thenCompose(stageService::saveStage)
+                .thenApply(response::jsonFromObject);
     }
 
     private CompletionStage<HttpResponse> updateStage(UserData user, Map<String, String> pathParams, UpdateStage form) {
