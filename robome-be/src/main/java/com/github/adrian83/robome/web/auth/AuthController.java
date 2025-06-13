@@ -1,7 +1,6 @@
 package com.github.adrian83.robome.web.auth;
 
-import static com.github.adrian83.robome.common.function.Functions.use;
-
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -11,15 +10,16 @@ import org.slf4j.LoggerFactory;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.model.command.LoginCommand;
 import com.github.adrian83.robome.auth.model.command.RegisterCommand;
+import static com.github.adrian83.robome.common.function.Functions.use;
 import com.github.adrian83.robome.common.validation.Validation;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.http.HttpMethod;
-import com.github.adrian83.robome.web.common.routes.FormRoute;
-import com.github.adrian83.robome.web.common.routes.PrefixRoute;
+import com.github.adrian83.robome.web.common.routes.RouteSupplier;
 import com.google.inject.Inject;
+
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
@@ -38,11 +38,6 @@ public class AuthController extends AllDirectives {
     private Security security;
     private Authentication authentication;
 
-    private final FormRoute<Login> loggingRoute = new FormRoute<Login>(LOGIN_PATH, Login.class,
-	    (clz) -> security.unsecured(clz, this::loginUser));
-
-    private final FormRoute<Register> registeringRoute = new FormRoute<Register>(REGISTER_PATH, Register.class,
-	    (clz) -> security.unsecured(clz, this::registerUser));
 
     @Inject
     public AuthController(Authentication authentication, Response response, Security security) {
@@ -52,13 +47,14 @@ public class AuthController extends AllDirectives {
     }
 
     public Route createRoute() {
-	return route(post(loggingRoute),
-		options(new PrefixRoute(LOGIN_PATH, complete(response.response200(HttpMethod.POST)))),
-		post(registeringRoute),
-		options(new PrefixRoute(REGISTER_PATH, complete(response.response200(HttpMethod.POST)))));
+        return route(
+            post(new RouteSupplier(LOGIN_PATH, (pathParams) -> security.unsecured(Login.class, login -> loginUser(pathParams, login)))),
+            post(new RouteSupplier(REGISTER_PATH, (pathParams) -> security.unsecured(Register.class, register -> registerUser(pathParams, register)))),
+            options(new RouteSupplier(LOGIN_PATH, (pathParams) -> complete(response.response200(HttpMethod.POST)))),
+            options(new RouteSupplier(REGISTER_PATH, (pathParams) -> complete(response.response200(HttpMethod.POST)))));
     }
 
-    private CompletionStage<HttpResponse> loginUser(Login login) {
+    private CompletionStage<HttpResponse> loginUser(Map<String, String> pathParams, Login login) {
 	var cLog = use((Login form) -> LOGGER.info(LOG_LOGIN, form));
 	return CompletableFuture.completedFuture(login).thenApply(cLog::apply).thenApply(Validation::validate)
 		.thenApply(v -> toLoginRequest(login)).thenCompose(authentication::loginUser)
@@ -66,7 +62,7 @@ public class AuthController extends AllDirectives {
 		.thenApply(response::response200);
     }
 
-    private CompletionStage<HttpResponse> registerUser(Register register) {
+    private CompletionStage<HttpResponse> registerUser(Map<String, String> pathParams, Register register) {
 	var cLog = use((Register form) -> LOGGER.info(LOG_REGISTER, form));
 	return CompletableFuture.completedFuture(register).thenApply(cLog::apply).thenApply(Validation::validate)
 		.thenApply(v -> toRegisterCommand(register)).thenCompose(authentication::registerUser)

@@ -1,5 +1,6 @@
 package com.github.adrian83.robome.web.table;
 
+import java.util.Map;
 import static java.util.UUID.fromString;
 import java.util.concurrent.CompletionStage;
 
@@ -25,10 +26,7 @@ import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.PUT;
-import com.github.adrian83.robome.web.common.routes.OneParamAndFormRoute;
-import com.github.adrian83.robome.web.common.routes.OneParamRoute;
-import com.github.adrian83.robome.web.common.routes.TwoParamsAndFormRoute;
-import com.github.adrian83.robome.web.common.routes.TwoParamsRoute;
+import com.github.adrian83.robome.web.common.routes.RouteSupplier;
 import com.github.adrian83.robome.web.table.model.NewTable;
 import com.github.adrian83.robome.web.table.model.UpdateTable;
 import com.google.inject.Inject;
@@ -63,23 +61,18 @@ public class TableController extends AllDirectives {
 
     public Route createRoute() {
         return route(
-                get(new OneParamRoute(TABLES_PATH,
-                        (resourceOwnerId) -> security.secured(resourceOwnerId, this::getTables))),
-                get(new TwoParamsRoute(TABLE_PATH,
-                        (resourceOwnerId, tabId) -> security.secured(resourceOwnerId, tabId, this::getTableById))),
-                post(new OneParamAndFormRoute<>(TABLES_PATH, NewTable.class,
-                        (resourceOwnerId, clz) -> security.secured(resourceOwnerId, clz, this::persistTable))),
-                put(new TwoParamsAndFormRoute<>(TABLE_PATH, UpdateTable.class,
-                        (resourceOwnerId, tabId, clz) -> security.secured(resourceOwnerId, tabId, clz, this::updateTable))),
-                delete(new TwoParamsRoute(TABLE_PATH,
-                        (resourceOwnerId, tabId) -> security.secured(resourceOwnerId, tabId, this::deleteTable))),
-                options(new TwoParamsRoute(TABLE_PATH,
-                        (resourceOwnerId, tabId) -> complete(response.response200(GET, PUT, DELETE)))),
-                options(new OneParamRoute(TABLES_PATH, (resourceOwnerId) -> complete(response.response200(GET, POST))))
+                get(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured2(pathParams, this::getTableById))),
+                get(new RouteSupplier(TABLES_PATH, (pathParams) -> security.secured2(pathParams, this::getTables))),
+                post(new RouteSupplier(TABLES_PATH, (pathParams) -> security.secured2(pathParams, NewTable.class, this::persistTable))),
+                put(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured(pathParams, UpdateTable.class, this::updateTable))),
+                delete(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured2(pathParams, this::deleteTable))),
+                options(new RouteSupplier(TABLE_PATH, (pathParams) -> complete(response.response200(GET, PUT, DELETE)))),
+                options(new RouteSupplier(TABLES_PATH, (pathParams) -> complete(response.response200(GET, POST))))
         );
     }
 
-    private CompletionStage<HttpResponse> persistTable(UserData user, String resourceOwnerIdStr, NewTable form) {
+    private CompletionStage<HttpResponse> persistTable(UserData user, Map<String, String> pathParams, NewTable form) {
+        String resourceOwnerIdStr = pathParams.get("userId");
         return logAction(LOGGER, user, LOG_CREATE_TAB, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canWriteTables)
@@ -90,8 +83,10 @@ public class TableController extends AllDirectives {
                 .thenApply(table -> response.jsonFromObject(table));
     }
 
-    private CompletionStage<HttpResponse> updateTable(UserData user, String resourceOwnerIdStr, String tableIdStr,
+    private CompletionStage<HttpResponse> updateTable(UserData user, Map<String, String> pathParams,
             UpdateTable form) {
+        String resourceOwnerIdStr = pathParams.get("userId");
+        String tableIdStr = pathParams.get("tableId");
 
         return logAction(LOGGER, user, LOG_UPDATE_TAB, tableIdStr, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
@@ -101,7 +96,9 @@ public class TableController extends AllDirectives {
                 .thenCompose(tableService::updateTable).thenApply(table -> response.jsonFromObject(table));
     }
 
-    private CompletionStage<HttpResponse> deleteTable(UserData user, String resourceOwnerIdStr, String tableIdStr) {
+    private CompletionStage<HttpResponse> deleteTable(UserData user, Map<String, String> pathParams) {
+        String resourceOwnerIdStr = pathParams.get("userId");
+        String tableIdStr = pathParams.get("tableId");
 
         return logAction(LOGGER, user, LOG_DEL_TAB_BY_ID, tableIdStr)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
@@ -109,7 +106,9 @@ public class TableController extends AllDirectives {
                 .thenCompose(tableService::deleteTable).thenApply(response::jsonFromObject);
     }
 
-    private CompletionStage<HttpResponse> getTableById(UserData user, String resourceOwnerIdStr, String tableIdStr) {
+    private CompletionStage<HttpResponse> getTableById(UserData user, Map<String, String> pathParams) {
+        String resourceOwnerIdStr = pathParams.get("userId");
+        String tableIdStr = pathParams.get("tableId");
 
         return logAction(LOGGER, user, LOG_GET_TAB_BY_ID, tableIdStr)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
@@ -117,7 +116,8 @@ public class TableController extends AllDirectives {
                 .thenCompose(tableService::getTable).thenApply(response::jsonFromOptional);
     }
 
-    private CompletionStage<HttpResponse> getTables(UserData user, String resourceOwnerIdStr) {
+    private CompletionStage<HttpResponse> getTables(UserData user, Map<String, String> pathParams) {
+        String resourceOwnerIdStr = pathParams.get("userId");
 
         return logAction(LOGGER, user, LOG_LIST_TABS)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))

@@ -41,9 +41,12 @@ public class Server {
 	AuthController authController = injector.getInstance(AuthController.class);
 	HealthController healthController = injector.getInstance(HealthController.class);
 
-	Route route = createRoutes(() -> tableController.createRoute(), () -> stageController.createRoute(),
-		() -> activityController.createRoute(), () -> authController.createRoute(),
-		() -> healthController.createRoute());
+	Route route = createRoutes(
+		() -> authController.createRoute(),
+		() -> healthController.createRoute(),
+		() -> activityController.createRoute(),
+		() -> stageController.createRoute(),
+		() -> tableController.createRoute());
 
 	ActorSystem system = injector.getInstance(ActorSystem.class);
 	ServerBuilder server = injector.getInstance(ServerBuilder.class);

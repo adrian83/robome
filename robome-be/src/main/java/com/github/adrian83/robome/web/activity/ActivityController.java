@@ -1,16 +1,14 @@
 package com.github.adrian83.robome.web.activity;
 
-import static com.github.adrian83.robome.common.Logging.logAction;
-import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
-import static com.github.adrian83.robome.web.common.http.HttpMethod.*;
+import java.util.Map;
 import static java.util.UUID.fromString;
-
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.adrian83.robome.auth.model.UserData;
+import static com.github.adrian83.robome.common.Logging.logAction;
 import com.github.adrian83.robome.domain.activity.ActivityService;
 import com.github.adrian83.robome.domain.activity.model.ActivityKey;
 import com.github.adrian83.robome.domain.activity.model.request.DeleteActivityRequest;
@@ -20,16 +18,18 @@ import com.github.adrian83.robome.domain.activity.model.request.NewActivityReque
 import com.github.adrian83.robome.domain.activity.model.request.UpdateActivityRequest;
 import com.github.adrian83.robome.domain.common.UserAndForm;
 import com.github.adrian83.robome.domain.common.UserContext;
+import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
 import com.github.adrian83.robome.web.auth.Authorization;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
-import com.github.adrian83.robome.web.common.routes.FourParamAndFormRoute;
-import com.github.adrian83.robome.web.common.routes.FourParamRoute;
-import com.github.adrian83.robome.web.common.routes.ThreeParamsAndFormRoute;
-import com.github.adrian83.robome.web.common.routes.ThreeParamsRoute;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.GET;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.POST;
+import static com.github.adrian83.robome.web.common.http.HttpMethod.PUT;
+import com.github.adrian83.robome.web.common.routes.RouteSupplier;
 import com.google.inject.Inject;
 
 import akka.http.javadsl.model.HttpResponse;
@@ -61,30 +61,20 @@ public class ActivityController extends AllDirectives {
     }
 
     public Route createRoute() {
-	return route(
-		get(new ThreeParamsRoute(ACTIVITIES_PATH,
-			(resourceOwnerId, tabId, stgId) -> security.secured(resourceOwnerId, tabId, stgId,
-				this::getStageActivities))),
-		get(new FourParamRoute(ACTIVITY_PATH,
-			(resourceOwnerId, tabId, stgId, actId) -> security.secured(resourceOwnerId, tabId, stgId, actId,
-				this::getActivityById))),
-		delete(new FourParamRoute(ACTIVITY_PATH,
-			(resourceOwnerId, tabId, stgId, actId) -> security.secured(resourceOwnerId, tabId, stgId, actId,
-				this::deleteActivity))),
-		put(new FourParamAndFormRoute<UpdateActivity>(ACTIVITY_PATH, UpdateActivity.class,
-			(resourceOwnerId, tabId, stgId, actId, clz) -> security.secured(resourceOwnerId, tabId, stgId,
-				actId, clz, this::updateActivity))),
-		post(new ThreeParamsAndFormRoute<NewActivity>(ACTIVITIES_PATH, NewActivity.class,
-			(resourceOwnerId, tabId, stgId, clz) -> security.secured(resourceOwnerId, tabId, stgId, clz,
-				this::persistActivity))),
-		options(new ThreeParamsRoute(ACTIVITIES_PATH,
-			(resourceOwnerId, tabId, stgId) -> complete(response.response200(GET, POST)))),
-		options(new FourParamRoute(ACTIVITY_PATH,
-			(resourceOwnerId, tabId, stgId, actId) -> complete(response.response200(GET, DELETE, PUT)))));
+        return route(
+            get(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured2(pathParams, this::getActivityById))),
+            get(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> security.secured2(pathParams, this::getStageActivities))),
+            delete(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured2(pathParams, this::deleteActivity))),
+            put(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured2(pathParams, UpdateActivity.class, this::updateActivity))),
+            post(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> security.secured2(pathParams, NewActivity.class, this::persistActivity))),
+            options(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> complete(response.response200(GET, DELETE, PUT)))),
+            options(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> complete(response.response200(GET, POST)))));
     }
 
-    private CompletionStage<HttpResponse> persistActivity(final UserData user, final String resourceOwnerId,
-	    final String tableId, final String stageId, final NewActivity form) {
+    private CompletionStage<HttpResponse> persistActivity(final UserData user, Map<String, String> pathParams, final NewActivity form) {
+        final String resourceOwnerId = pathParams.get("userId");
+        final String tableId = pathParams.get("tableId");
+        final String stageId = pathParams.get("stageId");
 
 	return logAction(LOGGER, user, LOG_CREATE_ACT, tableId, stageId, form)
 		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
@@ -94,8 +84,11 @@ public class ActivityController extends AllDirectives {
 		.thenCompose(activityService::saveActivity).thenApply(response::jsonFromObject);
     }
 
-    private CompletionStage<HttpResponse> updateActivity(final UserData user, final String resourceOwnerId,
-	    final String tableId, final String stageId, final String activityId, final UpdateActivity form) {
+    private CompletionStage<HttpResponse> updateActivity(final UserData user, Map<String, String> pathParams, final UpdateActivity form) {
+        final String resourceOwnerId = pathParams.get("userId");
+        final String tableId = pathParams.get("tableId");
+        final String stageId = pathParams.get("stageId");
+        final String activityId = pathParams.get("activityId");
 
 	return logAction(LOGGER, user, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
 		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
@@ -105,8 +98,11 @@ public class ActivityController extends AllDirectives {
 		.thenCompose(activityService::updateActivity).thenApply(response::jsonFromObject);
     }
 
-    private CompletionStage<HttpResponse> deleteActivity(final UserData user, final String resourceOwnerId,
-	    final String tableId, final String stageId, final String activityId) {
+    private CompletionStage<HttpResponse> deleteActivity(final UserData user, Map<String, String> pathParams) {
+        final String resourceOwnerId = pathParams.get("userId");
+        final String tableId = pathParams.get("tableId");
+        final String stageId = pathParams.get("stageId");
+        final String activityId = pathParams.get("activityId");
 
 	return logAction(LOGGER, user, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
 		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
@@ -115,8 +111,11 @@ public class ActivityController extends AllDirectives {
 		.thenCompose(activityService::deleteActivity).thenApply(response::jsonFromObject);
     }
 
-    private CompletionStage<HttpResponse> getActivityById(final UserData user, final String resourceOwnerId,
-	    final String tableId, final String stageId, final String activityId) {
+    private CompletionStage<HttpResponse> getActivityById(final UserData user, Map<String, String> pathParams) {
+        final String resourceOwnerId = pathParams.get("userId");
+        final String tableId = pathParams.get("tableId");
+        final String stageId = pathParams.get("stageId");
+        final String activityId = pathParams.get("activityId");
 
 	return logAction(LOGGER, user, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
 		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
@@ -125,8 +124,10 @@ public class ActivityController extends AllDirectives {
 		.thenCompose(activityService::getActivity).thenApply(response::jsonFromOptional);
     }
 
-    private CompletionStage<HttpResponse> getStageActivities(final UserData user, final String resourceOwnerId,
-	    final String tableId, final String stageId) {
+    private CompletionStage<HttpResponse> getStageActivities(final UserData user, Map<String, String> pathParams) {
+        final String resourceOwnerId = pathParams.get("userId");
+        final String tableId = pathParams.get("tableId");
+        final String stageId = pathParams.get("stageId");
 
 	return logAction(LOGGER, user, LOG_LIST_ACTS, tableId, stageId)
 		.thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
