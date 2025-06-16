@@ -21,6 +21,7 @@ import com.github.adrian83.robome.domain.stage.model.request.NewStageRequest;
 import com.github.adrian83.robome.domain.stage.model.request.UpdateStageRequest;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.web.auth.Authorization;
+import com.github.adrian83.robome.web.common.PathParams;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
@@ -36,12 +37,12 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class StageController extends AllDirectives {
+public class StageController extends AllDirectives implements PathParams {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StageController.class);
 
-    private static final String STAGES_PATH = "/users/{userId}/tables/{tableId}/stages/";
-    private static final String STAGE_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/";
+    private static final String STAGES_PATH = "/users/{" + PATH_PARAM_USER_ID + "}/tables/{" + PATH_PARAM_TABLE_ID + "}/stages/";
+    private static final String STAGE_PATH = "/users/{" + PATH_PARAM_USER_ID + "}/tables/{" + PATH_PARAM_TABLE_ID + "}/stages/{" + PATH_PARAM_STAGE_ID + "}/";
 
     private static final String LOG_LIST_STGS = "list stages by table request, tableId: {}";
     private static final String LOG_CREATE_STG = "persist stage request, tableId: {}, data: {}";
@@ -49,9 +50,9 @@ public class StageController extends AllDirectives {
     private static final String LOG_DEL_STG_BY_ID = "delete stage by id request, tableId: {}, stageId: {}";
     private static final String LOG_UPDATE_STG = "update stage request, tableId: {}, stageId: {}, data: {}";
 
-    private StageService stageService;
-    private Response response;
-    private Security security;
+    private final StageService stageService;
+    private final Response response;
+    private final Security security;
 
     @Inject
     public StageController(StageService stageService, Response response, Security security) {
@@ -73,8 +74,8 @@ public class StageController extends AllDirectives {
     }
 
     private CompletionStage<HttpResponse> persistStage(UserData user, Map<String, String> pathParams, NewStage form) {
-        final String resourceOwnerIdStr = pathParams.get("userId");
-        final String tableIdStr = pathParams.get("tableId");
+        final String resourceOwnerIdStr = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableIdStr = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
 
         return logAction(LOGGER, user, LOG_CREATE_STG, tableIdStr, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
@@ -86,72 +87,88 @@ public class StageController extends AllDirectives {
     }
 
     private CompletionStage<HttpResponse> updateStage(UserData user, Map<String, String> pathParams, UpdateStage form) {
-        final String resourceOwnerIdStr = pathParams.get("userId");
-        final String tableIdStr = pathParams.get("tableId");
-        final String stageIdStr = pathParams.get("stageId");
+        final String resourceOwnerIdStr = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableIdStr = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageIdStr = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
 
         return logAction(LOGGER, user, LOG_UPDATE_STG, tableIdStr, stageIdStr, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canWriteStages)
-                .thenApply(userCtx -> new UserAndForm<UpdateStage>(userCtx, form)).thenApply(UserAndForm::validate)
+                .thenApply(userCtx -> new UserAndForm<UpdateStage>(userCtx, form))
+                .thenApply(UserAndForm::validate)
                 .thenApply(uaf -> toUpdateStageRequest(uaf.userContext(), tableIdStr, stageIdStr, uaf.form()))
-                .thenCompose(stageService::updateStage).thenApply(response::jsonFromObject);
+                .thenCompose(stageService::updateStage)
+                .thenApply(response::jsonFromObject);
     }
 
     private CompletionStage<HttpResponse> deleteStage(UserData user, Map<String, String> pathParams) {
-        final String resourceOwnerIdStr = pathParams.get("userId");
-        final String tableIdStr = pathParams.get("tableId");
-        final String stageIdStr = pathParams.get("stageId");
+        final String resourceOwnerIdStr = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableIdStr = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageIdStr = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
 
         return logAction(LOGGER, user, LOG_DEL_STG_BY_ID, tableIdStr, stageIdStr)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canWriteStages)
                 .thenApply(userCtx -> toDeleteStageRequest(userCtx, tableIdStr, stageIdStr))
-                .thenCompose(stageService::deleteStage).thenApply(response::jsonFromObject);
+                .thenCompose(stageService::deleteStage)
+                .thenApply(response::jsonFromObject);
     }
 
     private CompletionStage<HttpResponse> getStageById(UserData user, Map<String, String> pathParams) {
-        final String resourceOwnerIdStr = pathParams.get("userId");
-        final String tableIdStr = pathParams.get("tableId");
-        final String stageIdStr = pathParams.get("stageId");
+        final String resourceOwnerIdStr = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableIdStr = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageIdStr = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
 
         return logAction(LOGGER, user, LOG_GET_STG_BY_ID, tableIdStr, stageIdStr)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canReadStages)
                 .thenApply(userCtx -> toGetStageRequest(userCtx, tableIdStr, stageIdStr))
-                .thenCompose(stageService::getStage).thenApply(response::jsonFromOptional);
+                .thenCompose(stageService::getStage)
+                .thenApply(response::jsonFromOptional);
     }
 
     private CompletionStage<HttpResponse> getTableStages(UserData user, Map<String, String> pathParams) {
-        final String resourceOwnerIdStr = pathParams.get("userId");
-        final String tableIdStr = pathParams.get("tableId");
+        final String resourceOwnerIdStr = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableIdStr = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
 
         return logAction(LOGGER, user, LOG_LIST_STGS, tableIdStr)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canReadStages)
                 .thenApply(userCtx -> toListTableStagesRequest(userCtx, tableIdStr))
-                .thenCompose(stageService::getTableStages).thenApply(response::jsonFromObject);
+                .thenCompose(stageService::getTableStages)
+                .thenApply(response::jsonFromObject);
     }
 
     private ListTableStagesRequest toListTableStagesRequest(UserContext userCtx, String tableIdStr) {
-        return new ListTableStagesRequest(TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr));
+        return new ListTableStagesRequest(
+                TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr)
+        );
     }
 
     private DeleteStageRequest toDeleteStageRequest(UserContext userCtx, String tableIdStr, String stageIdStr) {
-        return new DeleteStageRequest(StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+        return new DeleteStageRequest(
+                StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr)
+        );
     }
 
     private UpdateStageRequest toUpdateStageRequest(UserContext userCtx, String tableIdStr, String stageIdStr, UpdateStage form) {
-        return new UpdateStageRequest(form.title(), StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+        return new UpdateStageRequest(
+                form.title(),
+                StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr)
+        );
     }
 
     private NewStageRequest toNewStageRequest(UserContext userCtx, String tableIdStr, NewStage form) {
-        return new NewStageRequest(form.title(), userCtx.resourceOwnerIdOrError(),
-                TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr));
+        return new NewStageRequest(
+                form.title(),
+                userCtx.resourceOwnerIdOrError(),
+                TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr)
+        );
     }
 
     private GetStageRequest toGetStageRequest(UserContext userCtx, String tableIdStr, String stageIdStr) {
-
-        return new GetStageRequest(StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+        return new GetStageRequest(
+                StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr)
+        );
     }
 }

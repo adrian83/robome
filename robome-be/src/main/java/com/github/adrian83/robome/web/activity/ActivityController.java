@@ -23,6 +23,7 @@ import com.github.adrian83.robome.domain.stage.model.StageKey;
 import com.github.adrian83.robome.web.activity.model.NewActivity;
 import com.github.adrian83.robome.web.activity.model.UpdateActivity;
 import com.github.adrian83.robome.web.auth.Authorization;
+import com.github.adrian83.robome.web.common.PathParams;
 import com.github.adrian83.robome.web.common.Response;
 import com.github.adrian83.robome.web.common.Security;
 import static com.github.adrian83.robome.web.common.http.HttpMethod.DELETE;
@@ -36,12 +37,12 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
 
-public class ActivityController extends AllDirectives {
+public class ActivityController extends AllDirectives implements PathParams {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
-    private static final String ACTIVITIES_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/";
-    private static final String ACTIVITY_PATH = "/users/{userId}/tables/{tableId}/stages/{stageId}/activities/{activityId}/";
+    private static final String ACTIVITIES_PATH = "/users/{" + PATH_PARAM_USER_ID + "}/tables/{" + PATH_PARAM_TABLE_ID + "}/stages/{" + PATH_PARAM_STAGE_ID + "}/activities/";
+    private static final String ACTIVITY_PATH = "/users/{" + PATH_PARAM_USER_ID + "}/tables/{" + PATH_PARAM_TABLE_ID + "}/stages/{" + PATH_PARAM_STAGE_ID + "}/activities/{" + PATH_PARAM_ACTIVITY_ID + "}/";
 
     private static final String LOG_LIST_ACTS = "list stage's activities request, tableId: {}, stageId: {}";
     private static final String LOG_CREATE_ACT = "persist activity request, tableId: {}, stageId: {}, data: {}";
@@ -49,9 +50,9 @@ public class ActivityController extends AllDirectives {
     private static final String LOG_DEL_ACT_BY_ID = "delete activity by id request, tableId: {}, stageId: {}, activityId: {}";
     private static final String LOG_UPDATE_ACT = "update activity request, tableId: {}, stageId: {}, activityId: {}, data: {}";
 
-    private ActivityService activityService;
-    private Security security;
-    private Response response;
+    private final ActivityService activityService;
+    private final Security security;
+    private final Response response;
 
     @Inject
     public ActivityController(ActivityService activityService, Response response, Security security) {
@@ -72,9 +73,9 @@ public class ActivityController extends AllDirectives {
     }
 
     private CompletionStage<HttpResponse> persistActivity(final UserData user, Map<String, String> pathParams, final NewActivity form) {
-        final String resourceOwnerId = pathParams.get("userId");
-        final String tableId = pathParams.get("tableId");
-        final String stageId = pathParams.get("stageId");
+        final String resourceOwnerId = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableId = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageId = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
 
         return logAction(LOGGER, user, LOG_CREATE_ACT, tableId, stageId, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
@@ -85,88 +86,91 @@ public class ActivityController extends AllDirectives {
     }
 
     private CompletionStage<HttpResponse> updateActivity(final UserData user, Map<String, String> pathParams, final UpdateActivity form) {
-        final String resourceOwnerId = pathParams.get("userId");
-        final String tableId = pathParams.get("tableId");
-        final String stageId = pathParams.get("stageId");
-        final String activityId = pathParams.get("activityId");
+        final String resourceOwnerId = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableId = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageId = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
+        final String activityId = pathParams.get(PathParams.PATH_PARAM_ACTIVITY_ID);
 
         return logAction(LOGGER, user, LOG_UPDATE_ACT, tableId, stageId, activityId, form)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
                 .thenApply(Authorization::canWriteAcivities)
-                .thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form)).thenApply(UserAndForm::validate)
+                .thenApply(userCtx -> new UserAndForm<UpdateActivity>(userCtx, form))
+                .thenApply(UserAndForm::validate)
                 .thenApply(uaf -> toUpdateActivityRequest(uaf, tableId, stageId, activityId))
-                .thenCompose(activityService::updateActivity).thenApply(response::jsonFromObject);
+                .thenCompose(activityService::updateActivity)
+                .thenApply(response::jsonFromObject);
     }
 
     private CompletionStage<HttpResponse> deleteActivity(final UserData user, Map<String, String> pathParams) {
-        final String resourceOwnerId = pathParams.get("userId");
-        final String tableId = pathParams.get("tableId");
-        final String stageId = pathParams.get("stageId");
-        final String activityId = pathParams.get("activityId");
+        final String resourceOwnerId = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableId = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageId = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
+        final String activityId = pathParams.get(PathParams.PATH_PARAM_ACTIVITY_ID);
 
         return logAction(LOGGER, user, LOG_DEL_ACT_BY_ID, tableId, stageId, activityId)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
                 .thenApply(Authorization::canWriteAcivities)
                 .thenApply(userCtx -> toDeleteActivityRequest(userCtx, tableId, stageId, activityId))
-                .thenCompose(activityService::deleteActivity).thenApply(response::jsonFromObject);
+                .thenCompose(activityService::deleteActivity)
+                .thenApply(response::jsonFromObject);
     }
 
     private CompletionStage<HttpResponse> getActivityById(final UserData user, Map<String, String> pathParams) {
-        final String resourceOwnerId = pathParams.get("userId");
-        final String tableId = pathParams.get("tableId");
-        final String stageId = pathParams.get("stageId");
-        final String activityId = pathParams.get("activityId");
+        final String resourceOwnerId = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableId = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageId = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
+        final String activityId = pathParams.get(PathParams.PATH_PARAM_ACTIVITY_ID);
 
         return logAction(LOGGER, user, LOG_GET_ACT_BY_ID, tableId, stageId, activityId)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
                 .thenApply(Authorization::canReadAcivities)
                 .thenApply(userCtx -> toGetActivityRequest(userCtx, tableId, stageId, activityId))
-                .thenCompose(activityService::getActivity).thenApply(response::jsonFromOptional);
+                .thenCompose(activityService::getActivity)
+                .thenApply(response::jsonFromOptional);
     }
 
     private CompletionStage<HttpResponse> getStageActivities(final UserData user, Map<String, String> pathParams) {
-        final String resourceOwnerId = pathParams.get("userId");
-        final String tableId = pathParams.get("tableId");
-        final String stageId = pathParams.get("stageId");
+        final String resourceOwnerId = pathParams.get(PathParams.PATH_PARAM_USER_ID);
+        final String tableId = pathParams.get(PathParams.PATH_PARAM_TABLE_ID);
+        final String stageId = pathParams.get(PathParams.PATH_PARAM_STAGE_ID);
 
         return logAction(LOGGER, user, LOG_LIST_ACTS, tableId, stageId)
                 .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerId)))
                 .thenApply(Authorization::canReadAcivities)
                 .thenApply(userCtx -> toListStageActivitiesRequest(userCtx, tableId, stageId))
-                .thenCompose(activityService::getStageActivities).thenApply(response::jsonFromObject);
+                .thenCompose(activityService::getStageActivities)
+                .thenApply(response::jsonFromObject);
     }
 
-    private NewActivityRequest toNewActivityRequest(final UserAndForm<NewActivity> userAndForm, final String tableIdStr,
-            final String stageIdStr) {
-
-        return new NewActivityRequest(userAndForm.form().name(),
-                StageKey.create(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+    private NewActivityRequest toNewActivityRequest(final UserAndForm<NewActivity> userAndForm, final String tableIdStr, final String stageIdStr) {
+        return new NewActivityRequest(
+                userAndForm.form().name(),
+                StageKey.create(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr)
+        );
     }
 
-    private UpdateActivityRequest toUpdateActivityRequest(final UserAndForm<UpdateActivity> userAndForm,
-            final String tableIdStr, final String stageIdStr, final String activityIdStr) {
-
-        return new UpdateActivityRequest(userAndForm.form().name(), ActivityKey
-                .create(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
+    private UpdateActivityRequest toUpdateActivityRequest(final UserAndForm<UpdateActivity> userAndForm, final String tableIdStr, final String stageIdStr, final String activityIdStr) {
+        return new UpdateActivityRequest(
+                userAndForm.form().name(),
+                ActivityKey.create(userAndForm.userContext().resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr)
+        );
     }
 
-    private GetActivityRequest toGetActivityRequest(final UserContext userCtx, final String tableIdStr,
-            final String stageIdStr, final String activityIdStr) {
-
+    private GetActivityRequest toGetActivityRequest(final UserContext userCtx, final String tableIdStr, final String stageIdStr, final String activityIdStr) {
         return new GetActivityRequest(
-                ActivityKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
+                ActivityKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr)
+        );
     }
 
-    private DeleteActivityRequest toDeleteActivityRequest(final UserContext userCtx, final String tableIdStr,
-            final String stageIdStr, final String activityIdStr) {
-
+    private DeleteActivityRequest toDeleteActivityRequest(final UserContext userCtx, final String tableIdStr, final String stageIdStr, final String activityIdStr) {
         return new DeleteActivityRequest(
-                ActivityKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr));
+                ActivityKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr, activityIdStr)
+        );
     }
 
-    private ListStageActivitiesRequest toListStageActivitiesRequest(final UserContext userCtx, final String tableIdStr,
-            final String stageIdStr) {
+    private ListStageActivitiesRequest toListStageActivitiesRequest(final UserContext userCtx, final String tableIdStr, final String stageIdStr) {
         return new ListStageActivitiesRequest(
-                StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr));
+                StageKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr, stageIdStr)
+        );
     }
 }
