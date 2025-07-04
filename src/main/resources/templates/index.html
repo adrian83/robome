@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Robome Application</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .welcome-message {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        .info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .timestamp {
+            color: #888;
+            font-style: italic;
+            margin-top: 20px;
+        }
+        .api-links {
+            margin-top: 30px;
+        }
+        .api-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .api-link:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 th:text="${title}">Welcome to Robome</h1>
+        <p class="welcome-message" th:text="${message}">Your application is running successfully!</p>
+        
+        <div class="info-section">
+            <h3>Server Information</h3>
+            <p><strong>Version:</strong> <span th:text="${version}">1.0.0</span></p>
+            <p><strong>Environment:</strong> <span th:text="${environment}">Development</span></p>
+            <p><strong>Server Time:</strong> <span th:text="${serverTime}">Loading...</span></p>
+        </div>
+        
+        <div class="api-links">
+            <h3>Available Pages</h3>
+            <a href="/register" class="api-link">Create Account</a>
+            <a href="/api/v1/health/" class="api-link">Health Check</a>
+            <a href="/api/v1/users" class="api-link">Users API</a>
+            <a href="/api/v1/auth/login/" class="api-link">Authentication</a>
+        </div>
+        
+        <div class="timestamp" th:text="'Page generated at: ' + ${timestamp}">
+            Page generated at: Loading...
+        </div>
+    </div>
+</body>
+</html>

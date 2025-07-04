@@ -10,35 +10,26 @@ deps:
 	echo "starting cassandra image (version 3.11.9)"
 	docker rm robome_cassandra ||:
 	docker run -d -p 9042:9042 --name=robome_cassandra cassandra:3.11.9
-	docker cp robome-be/src/main/resources/cassandra.cql robome_cassandra:/schema.cql
+	docker cp src/main/resources/cassandra.cql robome_cassandra:/schema.cql
 	sleep 15
 	docker exec robome_cassandra cqlsh -f /schema.cql
 
-fe-get:
-	echo "getting frontend dependencies" 
-	cd robome-fe && npm install 
-
-fe-run: 
-	echo "running frontend"
-	cd robome-fe && npm run start
-
-fe-all: fe-get fe-run
 
 
-be-test: 
+test: 
 	echo "testing backend" 
-	cd robome-be && mvn clean test 
+	mvn clean test 
 
-be-build: 
+build: 
 	echo "building backend" 
-	cd robome-be && mvn clean install -DskipTests
+	mvn clean install -DskipTests
 	
-be-run: 
+run: 
 	echo "running backend"
-	java -jar robome-be/target/robome-1.0.0-allinone.jar 
+	java -jar target/robome-1.0.0-allinone.jar 
 
-be-check:
+check:
 	echo "checking backend with pmd"
-	cd robome-be && mvn pmd:check
+	mvn pmd:check
 
-be-all: be-test be-build be-run
+be-all: test build run

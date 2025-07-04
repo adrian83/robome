@@ -1,5 +1,5 @@
 # ROBOME
-Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cassandra) and JavaScript (React). Apache Cassandra is used as main data storage.
+Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cassandra). Apache Cassandra is used as main data storage.
 
 ## Running
 
@@ -11,27 +11,25 @@ Simple CRUD application written with: Java (Akka Streams, Akka Http, Alpakka Cas
 
 #### Steps
 1. Run `docker-compose up --build`
-2. Navigate in browser to `localhost:3000`
+2. Navigate in browser to `localhost:6060`
 
 ### Running locally
 
 #### Prerequisites
 - Docker
-- Java 18
+- Java 24
 - Maven
-- Npm
 
 #### Steps
 1. Start Infrastructure (Apache Cassandra): `make deps`
-2. Start backend: `make be-all`
-3. Start frontend `make fe-all`
+2. Start app: `make all`
 4. Navigate in browser to `localhost:3000`
 
 
 ### Misc
-1. Backend checked with [PMD](https://pmd.github.io/)
-- Execute `cd robome-be && mvn pmd:check`
-- Open file `robome-be/target/site/pmd.html`
+1. App checked with [PMD](https://pmd.github.io/)
+- Execute `mvn pmd:check`
+- Open file `target/site/pmd.html`
 
 
 In case of `Error: ENOSPC: System limit for number of file watchers reached, watch...`

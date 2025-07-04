@@ -16,21 +16,14 @@ services:
       depends_on:
         - cassandra
       volumes:
-        - ./robome-be/src/main/resources/cassandra.cql:/schema.cql 
+        - ./src/main/resources/cassandra.cql:/schema.cql 
       command: /bin/bash -c "sleep 60 && echo loading cassandra keyspace && cqlsh cassandra -f /schema.cql"
 
   backend:
-    build: ./robome-be
+    build: .
     ports:
     - "6060:6060"
     volumes:
     - .:/robome-backend
     depends_on:
     - 'cassandra'
-
-  frontend:
-    build: ./robome-fe
-    ports:
-    - "3000:3000"
-    volumes:
-    - .:/robome-frontend
