@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.adrian83.robome.web.staticfiles.StaticController;
 import com.github.adrian83.robome.web.template.ThymeleafService;
 import com.google.inject.AbstractModule;
 import com.typesafe.config.Config;
@@ -38,6 +39,7 @@ public class RobomeModule extends AbstractModule {
         initializeObjectMapper();
         initializeMarshaller();
         initializeThymeleafService();
+        initializeStaticController();
     }
 
     private void initializeConfig() {
@@ -84,5 +86,9 @@ public class RobomeModule extends AbstractModule {
 
     private void initializeThymeleafService() {
         this.bind(ThymeleafService.class);
+    }
+
+    private void initializeStaticController() {
+        this.bind(StaticController.class);
     }
 }

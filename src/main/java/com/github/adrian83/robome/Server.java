@@ -11,6 +11,7 @@ import com.github.adrian83.robome.web.activity.ActivityController;
 import com.github.adrian83.robome.web.auth.AuthController;
 import com.github.adrian83.robome.web.health.HealthController;
 import com.github.adrian83.robome.web.stage.StageController;
+import com.github.adrian83.robome.web.staticfiles.StaticController;
 import com.github.adrian83.robome.web.table.TableController;
 import com.github.adrian83.robome.web.web.WebController;
 import com.google.inject.Guice;
@@ -27,36 +28,37 @@ public class Server {
 
     @SafeVarargs
     private static Route createRoutes(Supplier<Route>... controllers) {
-	return Arrays.stream(controllers).reduce((r1, r2) -> () -> r1.get().orElse(r2.get())).get().get();
+        return Arrays.stream(controllers).reduce((r1, r2) -> () -> r1.get().orElse(r2.get())).get().get();
     }
 
     public static void main(String[] args) throws Exception {
+        LOGGER.info("starting server");
 
-	LOGGER.info("starting server");
+        Injector injector = Guice.createInjector(new RobomeModule());
 
-	Injector injector = Guice.createInjector(new RobomeModule());
+        TableController tableController = injector.getInstance(TableController.class);
+        StageController stageController = injector.getInstance(StageController.class);
+        ActivityController activityController = injector.getInstance(ActivityController.class);
+        AuthController authController = injector.getInstance(AuthController.class);
+        HealthController healthController = injector.getInstance(HealthController.class);
+        WebController webController = injector.getInstance(WebController.class);
+        StaticController staticController = injector.getInstance(StaticController.class);
 
-	TableController tableController = injector.getInstance(TableController.class);
-	StageController stageController = injector.getInstance(StageController.class);
-	ActivityController activityController = injector.getInstance(ActivityController.class);
-	AuthController authController = injector.getInstance(AuthController.class);
-	HealthController healthController = injector.getInstance(HealthController.class);
-	WebController webController = injector.getInstance(WebController.class);
+        Route route = createRoutes(
+            () -> staticController.createRoute(),
+            () -> webController.createRoute(),
+            () -> authController.createRoute(),
+            () -> healthController.createRoute(),
+            () -> activityController.createRoute(),
+            () -> stageController.createRoute(),
+            () -> tableController.createRoute());
 
-	Route route = createRoutes(
-		() -> webController.createRoute(),
-		() -> authController.createRoute(),
-		() -> healthController.createRoute(),
-		() -> activityController.createRoute(),
-		() -> stageController.createRoute(),
-		() -> tableController.createRoute());
+        ActorSystem system = injector.getInstance(ActorSystem.class);
+        ServerBuilder server = injector.getInstance(ServerBuilder.class);
+        CompletionStage<ServerBinding> binding = server.bind(route);
 
-	ActorSystem system = injector.getInstance(ActorSystem.class);
-	ServerBuilder server = injector.getInstance(ServerBuilder.class);
-	CompletionStage<ServerBinding> binding = server.bind(route);
-
-	Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-	    binding.thenCompose(ServerBinding::unbind).thenAccept(unbound -> system.terminate());
-	}));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            binding.thenCompose(ServerBinding::unbind).thenAccept(unbound -> system.terminate());
+        }));
     }
 }
