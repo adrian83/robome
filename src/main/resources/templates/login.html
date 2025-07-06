@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">Register - Robome Application</title>
+    <title th:text="${title}">Sign In - Robome Application</title>
     <th:block th:replace="~{fragments/common :: common-styles}"></th:block>
     <style>
         body {
@@ -90,14 +90,17 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-        .back-link {
+        .navigation-links {
+            margin-top: 30px;
+        }
+        .nav-link {
             display: inline-block;
-            margin-top: 20px;
+            margin: 5px 10px;
             color: #667eea;
             text-decoration: none;
             font-size: 14px;
         }
-        .back-link:hover {
+        .nav-link:hover {
             text-decoration: underline;
         }
         .loading {
@@ -105,15 +108,19 @@
             margin-top: 10px;
             color: #666;
         }
+        .welcome-message {
+            color: #666;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
     <th:block th:replace="~{fragments/common :: navigation}"></th:block>
     <div class="container">
-        <h1 th:text="${title}">Create Account</h1>
-        <p th:text="${message}">Please fill in the form below to create your account.</p>
+        <h1 th:text="${title}">Sign In</h1>
+        <p class="welcome-message" th:text="${message}">Please sign in to your account to continue.</p>
         
-        <form id="registerForm">
+        <form id="loginForm">
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" required>
@@ -124,17 +131,20 @@
                 <input type="password" id="password" name="password" required>
             </div>
             
-            <button type="submit" class="btn" id="submitBtn">Create Account</button>
-            <div class="loading" id="loading">Creating account...</div>
+            <button type="submit" class="btn" id="submitBtn">Sign In</button>
+            <div class="loading" id="loading">Signing in...</div>
         </form>
         
         <div class="message" id="message"></div>
         
-        <a href="/" class="back-link">← Back to Home</a>
+        <div class="navigation-links">
+            <a href="/" class="nav-link">← Back to Home</a>
+            <a href="/register" class="nav-link">Create New Account</a>
+        </div>
     </div>
 
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
@@ -157,7 +167,7 @@
             messageDiv.style.display = 'none';
             
             try {
-                const response = await fetch('/api/v1/auth/register/', {
+                const response = await fetch('/api/v1/auth/login/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -169,11 +179,22 @@
                 });
                 
                 if (response.ok) {
-                    showMessage('Account created successfully! You can now log in.', 'success');
-                    document.getElementById('registerForm').reset();
+                    // Check if there's an authorization header with token
+                    const authHeader = response.headers.get('Authorization');
+                    if (authHeader) {
+                        // Store the token (you might want to use localStorage or sessionStorage)
+                        localStorage.setItem('authToken', authHeader);
+                    }
+                    
+                    showMessage('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect to home page after successful login
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
                 } else {
                     const errorText = await response.text();
-                    let errorMessage = 'Registration failed. Please try again.';
+                    let errorMessage = 'Login failed. Please check your credentials.';
                     
                     try {
                         const errorData = JSON.parse(errorText);

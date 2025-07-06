@@ -21,7 +21,9 @@ public class WebController extends AllDirectives implements PathParams {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebController.class);
 
     public static final String ROOT = "/";
+    public static final String LOGIN = "/login";
     public static final String REGISTER = "/register";
+    public static final String LOGOUT = "/logout";
 
     private final ThymeleafService thymeleafService;
 
@@ -32,6 +34,8 @@ public class WebController extends AllDirectives implements PathParams {
 
     public Route createRoute() {
         return route(
+                get(new RouteSupplier(LOGOUT, (pathParams) -> renderLogoutPage())),
+                get(new RouteSupplier(LOGIN, (pathParams) -> renderLoginPage())),
                 get(new RouteSupplier(REGISTER, (pathParams) -> renderRegisterPage())),
                 get(new RouteSupplier(ROOT, (pathParams) -> renderIndexPage()))
         );
@@ -41,10 +45,7 @@ public class WebController extends AllDirectives implements PathParams {
         LOGGER.info("Rendering index page");
         
         Map<String, Object> templateVariables = new HashMap<>();
-        templateVariables.put("title", "Welcome to Robome");
-        templateVariables.put("message", "Your Robome application is running successfully with Thymeleaf!");
-        templateVariables.put("version", "1.0.0");
-        templateVariables.put("environment", "Development");
+        templateVariables.put("title", "Welcome");
 
         try {
             String html = thymeleafService.processTemplate("index", templateVariables);
@@ -82,6 +83,58 @@ public class WebController extends AllDirectives implements PathParams {
             );
         } catch (Exception e) {
             LOGGER.error("Error rendering register page", e);
+            return complete(
+                HttpResponse.create()
+                    .withStatus(500)
+                    .withEntity(ContentTypes.TEXT_HTML_UTF8, 
+                        "<html><body><h1>Error</h1><p>Failed to render page: " + e.getMessage() + "</p></body></html>")
+            );
+        }
+    }
+
+    private Route renderLoginPage() {
+        LOGGER.info("Rendering login page");
+        
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("title", "Sign In");
+        templateVariables.put("message", "Please sign in to your account to continue.");
+
+        try {
+            String html = thymeleafService.processTemplate("login", templateVariables);
+            
+            return complete(
+                HttpResponse.create()
+                    .withStatus(200)
+                    .withEntity(ContentTypes.TEXT_HTML_UTF8, html)
+            );
+        } catch (Exception e) {
+            LOGGER.error("Error rendering login page", e);
+            return complete(
+                HttpResponse.create()
+                    .withStatus(500)
+                    .withEntity(ContentTypes.TEXT_HTML_UTF8, 
+                        "<html><body><h1>Error</h1><p>Failed to render page: " + e.getMessage() + "</p></body></html>")
+            );
+        }
+    }
+
+    private Route renderLogoutPage() {
+        LOGGER.info("Rendering logout page");
+        
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("title", "Logged Out");
+        templateVariables.put("message", "You have been successfully logged out of your account.");
+
+        try {
+            String html = thymeleafService.processTemplate("logout", templateVariables);
+            
+            return complete(
+                HttpResponse.create()
+                    .withStatus(200)
+                    .withEntity(ContentTypes.TEXT_HTML_UTF8, html)
+            );
+        } catch (Exception e) {
+            LOGGER.error("Error rendering logout page", e);
             return complete(
                 HttpResponse.create()
                     .withStatus(500)
