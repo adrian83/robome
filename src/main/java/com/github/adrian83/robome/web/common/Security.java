@@ -56,6 +56,11 @@ public class Security extends AllDirectives {
         return entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(form)));
     }
 
+    public Route secured(Function<UserData, CompletionStage<HttpResponse>> logic) {
+        Function<UserData, Route> userToRoute = userData -> handleExceptions(logic.apply(userData));
+        return withUserFromAuthHeader(userToRoute);
+    }
+
     private Route withUserFromAuthHeader(Function<UserData, Route> inner) {
         return optionalHeaderValueByName(AUTHORIZATION, maybeToken -> maybeToken.map((token) -> inner.apply(authentication.findUserByToken(token)))
                 .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION));

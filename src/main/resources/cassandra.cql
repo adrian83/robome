@@ -47,3 +47,16 @@ CREATE TABLE robome.activities (
   modified_at timestamp,
   PRIMARY KEY (user_id, table_id, stage_id, activity_id)
 );
+
+CREATE TABLE robome.refresh_tokens (
+  token_id uuid,
+  user_id uuid,
+  refresh_token varchar,
+  token_family uuid,
+  issued_at timestamp,
+  expires_at timestamp,
+  PRIMARY KEY (token_id)
+);
+
+CREATE INDEX rt_user_id ON robome.refresh_tokens (user_id);
+CREATE INDEX rt_token ON robome.refresh_tokens (refresh_token);

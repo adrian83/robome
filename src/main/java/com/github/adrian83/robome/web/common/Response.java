@@ -69,6 +69,10 @@ public class Response {
                 .addHeaders(concantenateHeaders(Lists.newArrayList(Cors.methods(methods)), corsHeaders()));
     }
 
+    public HttpResponse response204() {
+        return HttpResponse.create().withStatus(StatusCodes.NO_CONTENT).addHeaders(corsHeaders());
+    }
+
     public HttpResponse response201(HttpHeader... hdrs) {
         return HttpResponse.create().withStatus(StatusCodes.CREATED)
                 .addHeaders(concantenateHeaders(headers(hdrs), corsHeaders()));

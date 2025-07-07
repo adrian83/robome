@@ -1,10 +1,5 @@
 package com.github.adrian83.robome.domain.user;
 
-import static akka.stream.alpakka.cassandra.CassandraWriteSettings.defaults;
-import static com.github.adrian83.robome.common.Time.toInstant;
-import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
-import static com.github.adrian83.robome.domain.user.model.Role.fromString;
-
 import java.util.UUID;
 
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -12,12 +7,16 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import static com.github.adrian83.robome.common.Time.toInstant;
+import static com.github.adrian83.robome.common.Time.toUtcLocalDate;
 import com.github.adrian83.robome.domain.user.model.Role;
+import static com.github.adrian83.robome.domain.user.model.Role.fromString;
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
 import akka.NotUsed;
 import akka.japi.Function2;
+import static akka.stream.alpakka.cassandra.CassandraWriteSettings.defaults;
 import akka.stream.alpakka.cassandra.javadsl.CassandraFlow;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSession;
 import akka.stream.alpakka.cassandra.javadsl.CassandraSource;
@@ -27,6 +26,7 @@ import akka.stream.javadsl.Source;
 public class UserRepository {
 
     private static final String SELECT_USER_BY_EMAIL = "SELECT * FROM robome.users WHERE email = ?";
+    private static final String SELECT_USER_BY_ID = "SELECT * FROM robome.users WHERE id = ?";
     private static final String INSERT_USER_STMT = "INSERT INTO robome.users (id, email, " + "password_hash, "
 	    + "roles, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -46,7 +46,11 @@ public class UserRepository {
 
     public Source<User, NotUsed> getByEmail(String email) {
 	Statement<?> stmt = SimpleStatement.newInstance(SELECT_USER_BY_EMAIL, email);
+	return CassandraSource.create(session, stmt).map(this::fromRow);
+    }
 
+    public Source<User, NotUsed> getById(UUID userId) {
+	Statement<?> stmt = SimpleStatement.newInstance(SELECT_USER_BY_ID, userId);
 	return CassandraSource.create(session, stmt).map(this::fromRow);
     }
 

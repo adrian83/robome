@@ -38,6 +38,10 @@ public class JwtAuthorizer {
     public JwtAuthorizer() {
     }
 
+    public long getTokenExpirationInSeconds() {
+        return TOKEN_EXPIRE_IN_HOURS.getSeconds();
+    }
+
     public String createToken(UserData user) {
         try {
             return JWT.create()

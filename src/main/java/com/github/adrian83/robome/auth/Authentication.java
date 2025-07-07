@@ -1,6 +1,7 @@
 package com.github.adrian83.robome.auth;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -14,6 +15,8 @@ import static com.github.adrian83.robome.domain.user.model.Role.DEFAULT_USER_ROL
 import com.github.adrian83.robome.domain.user.model.User;
 import com.google.inject.Inject;
 
+import akka.actor.ActorSystem;
+
 public class Authentication {
 
     private static final RuntimeException INVALID_PASS_OR_EMAIL_EXCEPTION = new InvalidSignInDataException(
@@ -21,11 +24,24 @@ public class Authentication {
 
     private final UserService userService;
     private final JwtAuthorizer jwtAuthorizer;
+    private final ActorSystem actorSystem;
 
     @Inject
-    public Authentication(UserService userService, JwtAuthorizer jwtAuthorizer) {
+    public Authentication(UserService userService, JwtAuthorizer jwtAuthorizer, ActorSystem actorSystem) {
         this.userService = userService;
         this.jwtAuthorizer = jwtAuthorizer;
+        this.actorSystem = actorSystem;
+    }
+
+    public CompletionStage<UserData> findUserById(UUID userId) {
+        return userService.findUserById(userId)
+                .thenApply(maybeUser -> maybeUser
+                        .map(user -> new UserData(user.id(), user.email(), user.roles()))
+                        .orElseThrow(() -> new InvalidSignInDataException("user not found")));
+    }
+
+    public ActorSystem getMaterializer() {
+        return actorSystem;
     }
 
     public CompletionStage<UserData> loginUser(LoginCommand cmd) {

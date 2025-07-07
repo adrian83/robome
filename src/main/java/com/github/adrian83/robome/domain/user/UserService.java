@@ -3,6 +3,7 @@ package com.github.adrian83.robome.domain.user;
 import static java.util.concurrent.CompletableFuture.completedStage;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -42,6 +43,10 @@ public class UserService {
 
     public CompletionStage<Optional<User>> findUserByEmail(String email) {
 	return userRepository.getByEmail(email).runWith(Sink.headOption(), actorSystem);
+    }
+
+    public CompletionStage<Optional<User>> findUserById(UUID userId) {
+        return userRepository.getById(userId).runWith(Sink.headOption(), actorSystem);
     }
 
     private CompletionStage<User> storeUser(User user) {
