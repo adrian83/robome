@@ -3,40 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">Sign In - Robome Application</title>
+    <title th:text="${title}">Create New Table - Robome Application</title>
     <th:block th:replace="~{fragments/common :: common-styles}"></th:block>
 </head>
 <body>
     <th:block th:replace="~{fragments/common :: navigation}"></th:block>
     <div class="container small">
-        <h1 th:text="${title}">Sign In</h1>
-        <p class="welcome-message" th:text="${message}">Please sign in to your account to continue.</p>
+        <h1 th:text="${title}">Create New Table</h1>
+        <p class="welcome-message" th:text="${message}">Create a new table to organize your work.</p>
         
-        <form id="loginForm">
+        <form id="createTableForm">
             <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required>
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
             </div>
             
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <label for="description">Description</label>
+                <textarea id="description" name="description" required></textarea>
             </div>
             
-            <button type="submit" class="btn" id="submitBtn">Sign In</button>
-            <div class="loading" id="loading">Signing in...</div>
+            <button type="submit" class="btn" id="submitBtn">Create Table</button>
+            <div class="loading" id="loading">Creating table...</div>
         </form>
         
         <div class="message" id="message"></div>
         
         <div class="navigation-links">
             <a href="/" class="nav-link">← Back to Home</a>
-            <a href="/register" class="nav-link">Create New Account</a>
         </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('createTableForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
@@ -44,12 +43,19 @@
             const messageDiv = document.getElementById('message');
             
             // Get form data
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
             
             // Validate form
-            if (!email || !password) {
+            if (!title || !description) {
                 showMessage('Please fill in all fields.', 'error');
+                return;
+            }
+            
+            // Get auth token
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                window.location.href = '/login';
                 return;
             }
             
@@ -59,36 +65,32 @@
             messageDiv.style.display = 'none';
             
             try {
-                const response = await fetch('/api/v1/auth/login/', {
+                // Get the current user's ID from the auth token
+                const tokenPayload = parseJwt(authToken);
+                const userId = tokenPayload.sub;
+
+                const response = await fetch(`/api/v1/users/${userId}/tables/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': authToken
                     },
                     body: JSON.stringify({
-                        email: email,
-                        password: password
+                        title: title,
+                        description: description
                     })
                 });
                 
                 if (response.ok) {
-                    const tokens = await response.json();
-                    // Store tokens in cookies
-                    if (tokens.authToken) {
-                        document.cookie = `auth_token=${tokens.authToken}; path=/; secure; max-age=7200`; // 2 hours
-                    }
-                    if (tokens.refreshToken) {
-                        document.cookie = `refresh_token=${tokens.refreshToken}; path=/; secure; max-age=2592000`; // 30 days
-                    }
+                    showMessage('Table created successfully! Redirecting...', 'success');
                     
-                    showMessage('Login successful! Redirecting...', 'success');
-                    
-                    // Redirect to home page after successful login
+                    // Redirect to home page after successful creation
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1500);
                 } else {
                     const errorText = await response.text();
-                    let errorMessage = 'Login failed. Please check your credentials.';
+                    let errorMessage = 'Failed to create table. Please try again.';
                     
                     try {
                         const errorData = JSON.parse(errorText);
@@ -117,6 +119,20 @@
             messageDiv.textContent = text;
             messageDiv.className = 'message ' + type;
             messageDiv.style.display = 'block';
+        }
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error('Error parsing JWT token:', e);
+                return {};
+            }
         }
     </script>
 </body>

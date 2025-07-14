@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.adrian83.robome.auth.AuthTokenService;
 import com.github.adrian83.robome.auth.Authentication;
-import com.github.adrian83.robome.auth.JwtAuthorizer;
-import com.github.adrian83.robome.domain.auth.RefreshTokenRepository;
-import com.github.adrian83.robome.domain.auth.RefreshTokenService;
+import com.github.adrian83.robome.auth.RefreshTokenRepository;
 import com.github.adrian83.robome.web.staticfiles.StaticController;
 import com.github.adrian83.robome.web.template.ThymeleafService;
 import com.google.inject.AbstractModule;
@@ -99,8 +98,7 @@ public class RobomeModule extends AbstractModule {
 
     private void initializeAuthComponents() {
         this.bind(Authentication.class);
-        this.bind(JwtAuthorizer.class);
         this.bind(RefreshTokenRepository.class);
-        this.bind(RefreshTokenService.class);
+        this.bind(AuthTokenService.class);
     }
 }

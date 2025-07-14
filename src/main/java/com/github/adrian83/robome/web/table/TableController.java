@@ -63,11 +63,11 @@ public class TableController extends AllDirectives implements PathParams {
 
     public Route createRoute() {
         return route(
-                get(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured2(pathParams, this::getTableById))),
-                get(new RouteSupplier(TABLES_PATH, (pathParams) -> security.secured2(pathParams, this::getTables))),
-                post(new RouteSupplier(TABLES_PATH, (pathParams) -> security.secured2(pathParams, NewTable.class, this::persistTable))),
-                put(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured2(pathParams, UpdateTable.class, this::updateTable))),
-                delete(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured2(pathParams, this::deleteTable))),
+                get(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured(pathParams, this::getTableById))),
+                get(new RouteSupplier(TABLES_PATH, (pathParams) -> security.secured(pathParams, this::getTables))),
+                post(new RouteSupplier(TABLES_PATH, (pathParams) -> security.secured(pathParams, NewTable.class, this::persistTable))),
+                put(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured(pathParams, UpdateTable.class, this::updateTable))),
+                delete(new RouteSupplier(TABLE_PATH, (pathParams) -> security.secured(pathParams, this::deleteTable))),
                 options(new RouteSupplier(TABLE_PATH, (pathParams) -> complete(response.response200(GET, PUT, DELETE)))),
                 options(new RouteSupplier(TABLES_PATH, (pathParams) -> complete(response.response200(GET, POST))))
         );

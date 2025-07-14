@@ -63,11 +63,11 @@ public class StageController extends AllDirectives implements PathParams {
 
     public Route createRoute() {
         return route(
-                get(new RouteSupplier(STAGE_PATH, (pathParams) -> security.secured2(pathParams, this::getStageById))),
-                get(new RouteSupplier(STAGES_PATH, (pathParams) -> security.secured2(pathParams, this::getTableStages))),
-                delete(new RouteSupplier(STAGE_PATH, (pathParams) -> security.secured2(pathParams, this::deleteStage))),
-                post(new RouteSupplier(STAGES_PATH, (pathParams) -> security.secured2(pathParams, NewStage.class, this::persistStage))),
-                put(new RouteSupplier(STAGE_PATH, (pathParams) -> security.secured2(pathParams, UpdateStage.class, this::updateStage))),
+                get(new RouteSupplier(STAGE_PATH, (pathParams) -> security.secured(pathParams, this::getStageById))),
+                get(new RouteSupplier(STAGES_PATH, (pathParams) -> security.secured(pathParams, this::getTableStages))),
+                delete(new RouteSupplier(STAGE_PATH, (pathParams) -> security.secured(pathParams, this::deleteStage))),
+                post(new RouteSupplier(STAGES_PATH, (pathParams) -> security.secured(pathParams, NewStage.class, this::persistStage))),
+                put(new RouteSupplier(STAGE_PATH, (pathParams) -> security.secured(pathParams, UpdateStage.class, this::updateStage))),
                 options(new RouteSupplier(STAGE_PATH, (pathParams) -> complete(response.response200(GET, DELETE, PUT)))),
                 options(new RouteSupplier(STAGES_PATH, (pathParams) -> complete(response.response200(GET, POST))))
         );

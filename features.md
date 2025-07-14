@@ -9,7 +9,6 @@
     - refresh_token (String)
     - issued_at (Timestamp)
     - expires_at (Timestamp)
-    - is_revoked (Boolean)
 
 2. Model Changes:
 
@@ -26,9 +25,7 @@
 
     - generateRefreshToken(UserData) - Creates new refresh token
     - validateRefreshToken(String) - Validates token and returns associated user
-    - revokeRefreshToken(String) - Invalidates a refresh token
-    - revokeAllUserTokens(UUID) - Invalidates all user's refresh tokens
-    - cleanupExpiredTokens() - Periodic cleanup of expired tokens
+
 
 4. Authentication Class Changes:
 

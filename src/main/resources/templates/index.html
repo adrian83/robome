@@ -14,9 +14,15 @@
         
         <div class="api-links">
             <h3>Available Pages</h3>
-            <a href="/login" class="api-link">Sign In</a>
-            <a href="/register" class="api-link">Create Account</a>
-            <a href="/logout" class="api-link">Logout</a>
+            <div th:if="${isLoggedIn}">
+                <a href="/tables" class="api-link">My Tables</a>
+                <a href="/create-table" class="api-link">Create New Table</a>
+                <a href="/logout" class="api-link">Logout</a>
+            </div>
+            <div th:unless="${isLoggedIn}">
+                <a href="/login" class="api-link">Sign In</a>
+                <a href="/register" class="api-link">Create Account</a>
+            </div>
             <a href="/api/v1/health/" class="api-link">Health Check</a>
         </div>
         

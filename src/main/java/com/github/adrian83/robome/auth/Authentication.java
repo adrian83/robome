@@ -23,13 +23,13 @@ public class Authentication {
             "invalid password or email");
 
     private final UserService userService;
-    private final JwtAuthorizer jwtAuthorizer;
     private final ActorSystem actorSystem;
+    private final AuthTokenService authTokenService;
 
     @Inject
-    public Authentication(UserService userService, JwtAuthorizer jwtAuthorizer, ActorSystem actorSystem) {
+    public Authentication(UserService userService, AuthTokenService authTokenService, ActorSystem actorSystem) {
         this.userService = userService;
-        this.jwtAuthorizer = jwtAuthorizer;
+        this.authTokenService = authTokenService;
         this.actorSystem = actorSystem;
     }
 
@@ -59,11 +59,11 @@ public class Authentication {
     }
 
     public UserData findUserByToken(String token) {
-        return jwtAuthorizer.extractUserDataFromToken(token);
+        return authTokenService.extractUserDataFromToken(token);
     }
 
     public String createAuthToken(UserData user) {
-        return jwtAuthorizer.createToken(user);
+        return authTokenService.createAuthToken(user);
     }
 
     private User userExists(Optional<User> maybeUser) {

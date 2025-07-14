@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">My Tables</title>
+    <th:block th:replace="~{fragments/common :: common-styles}"></th:block>
+</head>
+<body>
+    <th:block th:replace="~{fragments/common :: navigation}"></th:block>
+
+    <div class="container">
+        <h1 th:text="${title}">My Tables</h1>
+        <p th:text="${message}">Loading tables...</p>
+
+        <div id="tables-container"></div>
+    </div>
+
+    <script th:inline="javascript">
+        // Get userId from Thymeleaf context
+        const userId = /*[[${userId}]]*/ 'default-user-id';
+
+        // Function to render a single table
+        function renderTable(table) {
+            return `
+                <div class="table-card">
+                    <h3>${table.title}</h3>
+                    <p>${table.description || 'No description'}</p>
+                    <div class="table-actions">
+                        <button onclick="deleteTable('${table.key.tableId}')">Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to load and render tables
+        async function loadTables() {
+            try {
+                const response = await fetch(`/api/v1/users/${userId}/tables/`, {
+                    headers: {
+                        'Authorization': localStorage.getItem('token')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch tables');
+                }
+
+                const tables = await response.json();
+                const container = document.getElementById('tables-container');
+                
+                if (tables.length === 0) {
+                    container.innerHTML = '<p>No tables found. <a href="/create-table">Create your first table</a></p>';
+                    return;
+                }
+
+                container.innerHTML = tables.map(renderTable).join('');
+            } catch (error) {
+                console.error('Error loading tables:', error);
+                document.getElementById('tables-container').innerHTML = 
+                    '<p class="error">Error loading tables. Please refresh the page to try again.</p>';
+            }
+        }
+
+        // Function to delete a table
+        async function deleteTable(tableId) {
+            if (!confirm('Are you sure you want to delete this table?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/users/${userId}/tables/${tableId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': localStorage.getItem('token')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete table');
+                }
+
+                // Reload tables after successful deletion
+                loadTables();
+            } catch (error) {
+                console.error('Error deleting table:', error);
+                alert('Failed to delete table. Please try again.');
+            }
+        }
+
+        // Load tables when page loads
+        document.addEventListener('DOMContentLoaded', loadTables);
+    </script>
+</body>
+</html>

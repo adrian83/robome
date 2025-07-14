@@ -63,11 +63,11 @@ public class ActivityController extends AllDirectives implements PathParams {
 
     public Route createRoute() {
         return route(
-                get(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured2(pathParams, this::getActivityById))),
-                get(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> security.secured2(pathParams, this::getStageActivities))),
-                delete(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured2(pathParams, this::deleteActivity))),
-                put(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured2(pathParams, UpdateActivity.class, this::updateActivity))),
-                post(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> security.secured2(pathParams, NewActivity.class, this::persistActivity))),
+                get(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured(pathParams, this::getActivityById))),
+                get(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> security.secured(pathParams, this::getStageActivities))),
+                delete(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured(pathParams, this::deleteActivity))),
+                put(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> security.secured(pathParams, UpdateActivity.class, this::updateActivity))),
+                post(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> security.secured(pathParams, NewActivity.class, this::persistActivity))),
                 options(new RouteSupplier(ACTIVITY_PATH, (pathParams) -> complete(response.response200(GET, DELETE, PUT)))),
                 options(new RouteSupplier(ACTIVITIES_PATH, (pathParams) -> complete(response.response200(GET, POST)))));
     }

@@ -2,11 +2,15 @@ package com.github.adrian83.robome.web.web;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.web.common.PathParams;
+import com.github.adrian83.robome.web.common.Security;
 import com.github.adrian83.robome.web.common.routes.RouteSupplier;
 import com.github.adrian83.robome.web.template.ThymeleafService;
 import com.google.inject.Inject;
@@ -24,12 +28,20 @@ public class WebController extends AllDirectives implements PathParams {
     public static final String LOGIN = "/login";
     public static final String REGISTER = "/register";
     public static final String LOGOUT = "/logout";
+    public static final String CREATE_TABLE = "/create-table";
+    public static final String LIST_TABLES = "/tables";
+
+    private static final HttpResponse DEAFULT_VIEW_RENDERING_ERROR_RESP = HttpResponse.create()
+            .withStatus(500)
+            .withEntity(ContentTypes.TEXT_HTML_UTF8, "<html><body><h1>Error</h1><p>Failed to render page</p></body></html>");
 
     private final ThymeleafService thymeleafService;
+    private final Security security;
 
     @Inject
-    public WebController(ThymeleafService thymeleafService) {
+    public WebController(ThymeleafService thymeleafService, Security security) {
         this.thymeleafService = thymeleafService;
+        this.security = security;
     }
 
     public Route createRoute() {
@@ -37,110 +49,88 @@ public class WebController extends AllDirectives implements PathParams {
                 get(new RouteSupplier(LOGOUT, (pathParams) -> renderLogoutPage())),
                 get(new RouteSupplier(LOGIN, (pathParams) -> renderLoginPage())),
                 get(new RouteSupplier(REGISTER, (pathParams) -> renderRegisterPage())),
-                get(new RouteSupplier(ROOT, (pathParams) -> renderIndexPage()))
+                get(new RouteSupplier(CREATE_TABLE, (pathParams) -> security.secured(pathParams, this::handleCreateTablePage))),
+                get(new RouteSupplier(LIST_TABLES, (pathParams) -> security.secured(pathParams, this::handleListTablesPage))),
+                get(new RouteSupplier(ROOT, (pathParams) -> security.secured(pathParams, this::renderIndexPageForLoggedInUser, this::renderIndexPageForUnloggedUser)))
         );
     }
 
-    private Route renderIndexPage() {
-        LOGGER.info("Rendering index page");
-        
-        Map<String, Object> templateVariables = new HashMap<>();
-        templateVariables.put("title", "Welcome");
+    private Route renderIndexPageForUnloggedUser() {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("isLoggedIn", false);
+        variables.put("message", "Welcome");
+        variables.put("title", "Welcome");
+        return renderPage("index", variables);
+    }
 
-        try {
-            String html = thymeleafService.processTemplate("index", templateVariables);
-            
-            return complete(
-                HttpResponse.create()
-                    .withStatus(200)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, html)
-            );
-        } catch (Exception e) {
-            LOGGER.error("Error rendering index page", e);
-            return complete(
-                HttpResponse.create()
-                    .withStatus(500)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, 
-                        "<html><body><h1>Error</h1><p>Failed to render page: " + e.getMessage() + "</p></body></html>")
-            );
-        }
+    private CompletionStage<HttpResponse> renderIndexPageForLoggedInUser(UserData user, Map<String, String> pathParams) {
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("isLoggedIn", true);
+        templateVariables.put("message", "Welcome");
+        return renderPage2("index", templateVariables);
     }
 
     private Route renderRegisterPage() {
-        LOGGER.info("Rendering register page");
-        
         Map<String, Object> templateVariables = new HashMap<>();
-        templateVariables.put("title", "Create Account");
         templateVariables.put("message", "Please fill in the form below to create your account.");
-
-        try {
-            String html = thymeleafService.processTemplate("register", templateVariables);
-            
-            return complete(
-                HttpResponse.create()
-                    .withStatus(200)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, html)
-            );
-        } catch (Exception e) {
-            LOGGER.error("Error rendering register page", e);
-            return complete(
-                HttpResponse.create()
-                    .withStatus(500)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, 
-                        "<html><body><h1>Error</h1><p>Failed to render page: " + e.getMessage() + "</p></body></html>")
-            );
-        }
+        templateVariables.put("title", "Register");
+        return renderPage("register", templateVariables);
     }
 
     private Route renderLoginPage() {
-        LOGGER.info("Rendering login page");
-        
         Map<String, Object> templateVariables = new HashMap<>();
-        templateVariables.put("title", "Sign In");
         templateVariables.put("message", "Please sign in to your account to continue.");
+        templateVariables.put("title", "Sign In");
+        return renderPage("login", templateVariables);
+    }
 
-        try {
-            String html = thymeleafService.processTemplate("login", templateVariables);
-            
-            return complete(
-                HttpResponse.create()
-                    .withStatus(200)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, html)
-            );
-        } catch (Exception e) {
-            LOGGER.error("Error rendering login page", e);
-            return complete(
-                HttpResponse.create()
-                    .withStatus(500)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, 
-                        "<html><body><h1>Error</h1><p>Failed to render page: " + e.getMessage() + "</p></body></html>")
-            );
-        }
+    private CompletionStage<HttpResponse> handleListTablesPage(UserData user, Map<String, String> pathParams) {
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("title", "My Tables");
+        templateVariables.put("message", "Here are all your tables");
+        templateVariables.put("userId", user.id());
+        return renderPage2("list-tables", templateVariables);
     }
 
     private Route renderLogoutPage() {
-        LOGGER.info("Rendering logout page");
-        
         Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("message", "You have been logged out successfully.");
         templateVariables.put("title", "Logged Out");
-        templateVariables.put("message", "You have been successfully logged out of your account.");
+        return renderPage("logout", templateVariables);
+    }
 
+    private CompletionStage<HttpResponse> handleCreateTablePage(UserData user, Map<String, String> pathParams) {
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("title", "Create New Table");
+        templateVariables.put("message", "Create a new table to organize your work.");
+        return renderPage2("create-table", templateVariables);
+    }
+
+    private HttpResponse renderHtmlResponse(String templateName, Map<String, Object> variables) {
+        String html = thymeleafService.processTemplate(templateName, variables);
+        return HttpResponse.create()
+                .withStatus(200)
+                .withEntity(ContentTypes.TEXT_HTML_UTF8, html);
+    }
+
+    private Route renderPage(String templateName, Map<String, Object> variables) {
         try {
-            String html = thymeleafService.processTemplate("logout", templateVariables);
-            
-            return complete(
-                HttpResponse.create()
-                    .withStatus(200)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, html)
-            );
+            var pageResponse = renderHtmlResponse(templateName, variables);
+            return complete(pageResponse);
         } catch (Exception e) {
-            LOGGER.error("Error rendering logout page", e);
-            return complete(
-                HttpResponse.create()
-                    .withStatus(500)
-                    .withEntity(ContentTypes.TEXT_HTML_UTF8, 
-                        "<html><body><h1>Error</h1><p>Failed to render page: " + e.getMessage() + "</p></body></html>")
-            );
+            LOGGER.error("Error rendering {} page", templateName, e);
+            return complete(DEAFULT_VIEW_RENDERING_ERROR_RESP);
         }
     }
+
+    private CompletionStage<HttpResponse> renderPage2(String templateName, Map<String, Object> variables) {
+        try {
+            var pageResponse = renderHtmlResponse(templateName, variables);
+            return CompletableFuture.completedFuture(pageResponse);
+        } catch (Exception e) {
+            LOGGER.error("Error rendering create table page", e);
+            return CompletableFuture.completedFuture(DEAFULT_VIEW_RENDERING_ERROR_RESP);
+        }
+    }
+
 }

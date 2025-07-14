@@ -1,4 +1,4 @@
-package com.github.adrian83.robome.domain.auth;
+package com.github.adrian83.robome.auth;
 
 import java.util.UUID;
 

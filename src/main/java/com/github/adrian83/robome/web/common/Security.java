@@ -3,6 +3,7 @@ package com.github.adrian83.robome.web.common;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
@@ -42,12 +43,17 @@ public class Security extends AllDirectives {
         return completeWithFuture(respF.exceptionally(exceptionHandler::handle));
     }
 
-    public Route secured2(Map<String, String> pathParams, Parameter1Request<Map<String, String>> logic) {
+    public Route secured(Map<String, String> pathParams, Parameter1Request<Map<String, String>> logic) {
         Function<UserData, Route> userToRoute = userData -> handleExceptions(logic.apply(userData, pathParams));
         return withUserFromAuthHeader(userToRoute);
     }
 
-    public <S> Route secured2(Map<String, String> pathParams, Class<S> clazz, Parameter1WithBodyRequest<Map<String, String>, S> logic) {
+    public Route secured(Map<String, String> pathParams, Parameter1Request<Map<String, String>> logic, Supplier<Route> unauthorized) {
+        Function<UserData, Route> userToRoute = userData -> handleExceptions(logic.apply(userData, pathParams));
+        return withUserFromAuthHeader(userToRoute, unauthorized);
+    }
+
+    public <S> Route secured(Map<String, String> pathParams, Class<S> clazz, Parameter1WithBodyRequest<Map<String, String>, S> logic) {
         Function<UserData, Route> apply = userData -> entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(userData, pathParams, form)));
         return withUserFromAuthHeader(apply);
     }
@@ -61,8 +67,19 @@ public class Security extends AllDirectives {
         return withUserFromAuthHeader(userToRoute);
     }
 
+    public Route secured(Function<UserData, CompletionStage<HttpResponse>> logic, Supplier<Route> unauthorized) {
+        Function<UserData, Route> userToRoute = userData -> handleExceptions(logic.apply(userData));
+        return withUserFromAuthHeader(userToRoute);
+    }
+
     private Route withUserFromAuthHeader(Function<UserData, Route> inner) {
         return optionalHeaderValueByName(AUTHORIZATION, maybeToken -> maybeToken.map((token) -> inner.apply(authentication.findUserByToken(token)))
                 .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION));
+    }
+
+    private Route withUserFromAuthHeader(Function<UserData, Route> inner, Supplier<Route> unauthorized) {
+        return optionalHeaderValueByName(
+                AUTHORIZATION,
+                maybeToken -> maybeToken.map((token) -> inner.apply(authentication.findUserByToken(token))).orElse(unauthorized.get()));
     }
 }

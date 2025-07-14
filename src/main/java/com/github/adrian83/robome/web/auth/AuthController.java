@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.adrian83.robome.auth.AuthTokenService;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.model.UserData;
 import com.github.adrian83.robome.auth.model.command.LoginCommand;
@@ -13,7 +14,6 @@ import com.github.adrian83.robome.auth.model.command.RefreshTokenCommand;
 import com.github.adrian83.robome.auth.model.command.RegisterCommand;
 import static com.github.adrian83.robome.common.function.Functions.use;
 import com.github.adrian83.robome.common.validation.Validation;
-import com.github.adrian83.robome.domain.auth.RefreshTokenService;
 import com.github.adrian83.robome.web.auth.model.Login;
 import com.github.adrian83.robome.web.auth.model.Register;
 import com.github.adrian83.robome.web.common.PathParams;
@@ -44,10 +44,10 @@ public class AuthController extends AllDirectives implements PathParams {
     private final Response response;
     private final Security security;
     private final Authentication authentication;
-    private final RefreshTokenService refreshTokenService;
+    private final AuthTokenService refreshTokenService;
 
     @Inject
-    public AuthController(Authentication authentication, Response response, Security security, RefreshTokenService refreshTokenService) {
+    public AuthController(Authentication authentication, Response response, Security security, AuthTokenService refreshTokenService) {
         this.authentication = authentication;
         this.security = security;
         this.response = response;
