@@ -75,7 +75,7 @@ public class AuthController extends AllDirectives implements PathParams {
                 .thenApply(v -> toLoginRequest(login))
                 .thenCompose(authentication::loginUser)
                 .thenCompose(userData -> {
-                    String accessToken = authentication.createAuthToken(userData);
+                    String accessToken = refreshTokenService.createAuthToken(userData);
                     return refreshTokenService.createTokens(userData)
                             .thenApply(tokens -> security.createAuthHeader(accessToken));
                 })

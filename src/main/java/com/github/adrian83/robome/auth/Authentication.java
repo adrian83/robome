@@ -24,12 +24,10 @@ public class Authentication {
 
     private final UserService userService;
     private final ActorSystem actorSystem;
-    private final AuthTokenService authTokenService;
 
     @Inject
-    public Authentication(UserService userService, AuthTokenService authTokenService, ActorSystem actorSystem) {
+    public Authentication(UserService userService, ActorSystem actorSystem) {
         this.userService = userService;
-        this.authTokenService = authTokenService;
         this.actorSystem = actorSystem;
     }
 
@@ -58,13 +56,7 @@ public class Authentication {
                 .thenApply(savedUser -> new UserData(savedUser.id(), savedUser.email(), savedUser.roles()));
     }
 
-    public UserData findUserByToken(String token) {
-        return authTokenService.extractUserDataFromToken(token);
-    }
 
-    public String createAuthToken(UserData user) {
-        return authTokenService.createAuthToken(user);
-    }
 
     private User userExists(Optional<User> maybeUser) {
         return maybeUser.orElseThrow(() -> INVALID_PASS_OR_EMAIL_EXCEPTION);
@@ -85,4 +77,6 @@ public class Authentication {
     private boolean isPasswordValid(String password, String passwordHash) {
         return BCrypt.checkpw(password, passwordHash);
     }
+
+    
 }

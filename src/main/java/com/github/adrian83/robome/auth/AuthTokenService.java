@@ -21,6 +21,7 @@ import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.model.RefreshToken;
 import com.github.adrian83.robome.auth.model.TokenResponse;
 import com.github.adrian83.robome.auth.model.UserData;
+import com.github.adrian83.robome.domain.user.UserService;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.google.inject.Inject;
 
@@ -48,15 +49,14 @@ public class AuthTokenService {
     private static final Duration REFRESH_TOKEN_EXPIRE_IN = Duration.ofDays(30);
 
     private final RefreshTokenRepository repository;
-    private final Authentication authentication;
+    private final UserService userService;
     private final ActorSystem actorSystem;
 
     @Inject
-    public AuthTokenService(RefreshTokenRepository repository,
-            Authentication authentication, ActorSystem actorSystem) {
+    public AuthTokenService(RefreshTokenRepository repository, UserService userService, ActorSystem actorSystem) {
         this.repository = repository;
-        this.authentication = authentication;
         this.actorSystem = actorSystem;
+        this.userService = userService;
     }
 
     public CompletionStage<TokenResponse> createTokens(UserData user) {
@@ -85,13 +85,18 @@ public class AuthTokenService {
                 .thenApply(done -> null);
     }
 
+
+
+
     private CompletionStage<TokenResponse> handleValidToken(RefreshToken token) {
         if (token.isExpired()) {
             return revokeTokenFamily(token.tokenFamily())
                     .thenCompose(v -> failedFuture(new RefreshTokenException("Refresh token expired")));
         }
-
-        return authentication.findUserById(token.userId())
+                return userService.findUserById(token.userId())
+                .thenApply(maybeUser -> maybeUser
+                        .map(user -> new UserData(user.id(), user.email(), user.roles()))
+                        .orElseThrow(() -> new InvalidSignInDataException("user not found")))
                 .thenCompose(user -> {
                     String accessToken = createAuthToken(user);
                     long accessTokenExpiresIn;

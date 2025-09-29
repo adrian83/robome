@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.github.adrian83.robome.auth.AuthTokenService;
 import com.github.adrian83.robome.auth.Authentication;
 import com.github.adrian83.robome.auth.exception.TokenNotFoundException;
 import com.github.adrian83.robome.auth.model.UserData;
@@ -27,11 +28,13 @@ public class Security extends AllDirectives {
             "security token cannot be found");
 
     protected Authentication authentication;
+    private final AuthTokenService authTokenService;
     private final ExceptionHandler exceptionHandler;
 
     @Inject
-    public Security(Authentication authentication, ExceptionHandler exceptionHandler) {
+    public Security(Authentication authentication, AuthTokenService authTokenService, ExceptionHandler exceptionHandler) {
         this.authentication = authentication;
+        this.authTokenService = authTokenService;
         this.exceptionHandler = exceptionHandler;
     }
 
@@ -73,13 +76,13 @@ public class Security extends AllDirectives {
     }
 
     private Route withUserFromAuthHeader(Function<UserData, Route> inner) {
-        return optionalHeaderValueByName(AUTHORIZATION, maybeToken -> maybeToken.map((token) -> inner.apply(authentication.findUserByToken(token)))
+        return optionalHeaderValueByName(AUTHORIZATION, maybeToken -> maybeToken.map((token) -> inner.apply(authTokenService.extractUserDataFromToken(token)))
                 .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION));
     }
 
     private Route withUserFromAuthHeader(Function<UserData, Route> inner, Supplier<Route> unauthorized) {
         return optionalHeaderValueByName(
                 AUTHORIZATION,
-                maybeToken -> maybeToken.map((token) -> inner.apply(authentication.findUserByToken(token))).orElse(unauthorized.get()));
+                maybeToken -> maybeToken.map((token) -> inner.apply(authTokenService.extractUserDataFromToken(token))).orElse(unauthorized.get()));
     }
 }
