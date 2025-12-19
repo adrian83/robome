@@ -34,7 +34,7 @@ public class TableControllerTest extends JUnitRouteTest {
         var userId = UUID.randomUUID().toString();
         var tableId = UUID.randomUUID().toString();
 
-        var path = "/users/" + userId + "/tables/" + tableId + "/";
+        var path = "/tables/" + tableId + "/";
 
         // TestRoute appRoute = testRoute(tableController.createRoute());
         var route = tableController.createRoute();

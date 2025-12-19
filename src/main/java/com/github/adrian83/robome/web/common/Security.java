@@ -65,6 +65,10 @@ public class Security extends AllDirectives {
         return entity(unmarshaller(clazz), form -> handleExceptions(logic.apply(form)));
     }
 
+    public Route unsecured(Map<String, String> pathParams, Function<Map<String, String>, CompletionStage<HttpResponse>> logic) {
+        return handleExceptions(logic.apply(pathParams));
+    }
+
     public Route secured(Function<UserData, CompletionStage<HttpResponse>> logic) {
         Function<UserData, Route> userToRoute = userData -> handleExceptions(logic.apply(userData));
         return withUserFromAuthHeader(userToRoute);
@@ -84,5 +88,19 @@ public class Security extends AllDirectives {
         return optionalHeaderValueByName(
                 AUTHORIZATION,
                 maybeToken -> maybeToken.map((token) -> inner.apply(authTokenService.extractUserDataFromToken(token))).orElse(unauthorized.get()));
+    }
+
+    private Route withUserFromAuthCookie(Function<UserData, Route> inner) {
+        return optionalCookie("access_token", maybeCookie ->
+            maybeCookie.map(cookie -> inner.apply(authTokenService.extractUserDataFromToken(cookie.value())))
+                .orElseThrow(() -> TOKEN_NOT_FOUND_EXCEPTION)
+        );
+    }
+
+    private Route withUserFromAuthCookie(Function<UserData, Route> inner, Supplier<Route> unauthorized) {
+        return optionalCookie("access_token", maybeCookie ->
+            maybeCookie.map(cookie -> inner.apply(authTokenService.extractUserDataFromToken(cookie.value())))
+                .orElseGet(unauthorized)
+        );
     }
 }

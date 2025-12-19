@@ -74,12 +74,8 @@ public class AuthController extends AllDirectives implements PathParams {
                 .thenApply(Validation::validate)
                 .thenApply(v -> toLoginRequest(login))
                 .thenCompose(authentication::loginUser)
-                .thenCompose(userData -> {
-                    String accessToken = refreshTokenService.createAuthToken(userData);
-                    return refreshTokenService.createTokens(userData)
-                            .thenApply(tokens -> security.createAuthHeader(accessToken));
-                })
-                .thenApply(response::response200);
+                .thenCompose(refreshTokenService::createTokens)
+                .thenApply(response::jsonFromObject);
     }
 
     private CompletionStage<HttpResponse> registerUser(Register register) {

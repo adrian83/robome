@@ -32,4 +32,4 @@ check:
 	echo "checking backend with pmd"
 	mvn pmd:check
 
-be-all: test build run
+all: build run

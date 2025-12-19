@@ -35,10 +35,12 @@
 
         // Function to load and render tables
         async function loadTables() {
+            console.log('Loading tables for token:', getCookie('access_token'));
+
             try {
-                const response = await fetch(`/api/v1/users/${userId}/tables/`, {
+                const response = await fetch(`/api/v1/tables/`, {
                     headers: {
-                        'Authorization': localStorage.getItem('token')
+                        'Authorization': getCookie('access_token')
                     }
                 });
 
@@ -69,10 +71,10 @@
             }
 
             try {
-                const response = await fetch(`/api/v1/users/${userId}/tables/${tableId}/`, {
+                const response = await fetch(`/api/v1/tables/${tableId}/`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': localStorage.getItem('token')
+                        'Authorization': getCookie('auth_token')
                     }
                 });
 
@@ -86,6 +88,16 @@
                 console.error('Error deleting table:', error);
                 alert('Failed to delete table. Please try again.');
             }
+        }
+
+        // Helper to get cookie by name
+        function getCookie(name) {
+            console.log('Getting cookie:', name);
+            const value = `; ${document.cookie}`;
+            console.log('Cookie value string:', value);
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
         }
 
         // Load tables when page loads

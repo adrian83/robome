@@ -72,19 +72,22 @@
                 
                 if (response.ok) {
                     const tokens = await response.json();
+
+                    console.log('Received tokens:', tokens);
+
                     // Store tokens in cookies
-                    if (tokens.authToken) {
-                        document.cookie = `auth_token=${tokens.authToken}; path=/; secure; max-age=7200`; // 2 hours
+                    if (tokens.accessToken) {
+                        document.cookie = `access_token=${encodeURIComponent(tokens.accessToken)}; path=/; max-age=7200`; // 2 hours
                     }
                     if (tokens.refreshToken) {
-                        document.cookie = `refresh_token=${tokens.refreshToken}; path=/; secure; max-age=2592000`; // 30 days
+                        document.cookie = `refresh_token=${encodeURIComponent(tokens.refreshToken)}; path=/; max-age=2592000`; // 30 days
                     }
                     
                     showMessage('Login successful! Redirecting...', 'success');
                     
                     // Redirect to home page after successful login
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = '/tables';
                     }, 1500);
                 } else {
                     const errorText = await response.text();

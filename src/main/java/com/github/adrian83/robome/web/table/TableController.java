@@ -1,7 +1,6 @@
 package com.github.adrian83.robome.web.table;
 
 import java.util.Map;
-import static java.util.UUID.fromString;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -10,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import com.github.adrian83.robome.auth.model.UserData;
 import static com.github.adrian83.robome.common.Logging.logAction;
 import com.github.adrian83.robome.domain.common.UserAndForm;
-import com.github.adrian83.robome.domain.common.UserContext;
-import static com.github.adrian83.robome.domain.common.UserContext.withUserAndResourceOwnerId;
 import com.github.adrian83.robome.domain.table.TableService;
 import com.github.adrian83.robome.domain.table.model.TableKey;
 import com.github.adrian83.robome.domain.table.model.request.DeleteTableRequest;
@@ -38,11 +35,10 @@ import akka.http.javadsl.server.Route;
 
 public class TableController extends AllDirectives implements PathParams {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TableController.class);
 
-    private static final String TABLES_PATH = "/api/v1/users/{" + PATH_PARAM_USER_ID + "}/tables/";
-    private static final String TABLE_PATH = "/api/v1/users/{" + PATH_PARAM_USER_ID + "}/tables/{" + PATH_PARAM_TABLE_ID + "}/";
+    private static final String TABLES_PATH = "/api/v1/tables/";
+    private static final String TABLE_PATH = "/api/v1/tables/{" + PATH_PARAM_TABLE_ID + "}/";
 
     private static final String LOG_LIST_TABS = "list tables request";
     private static final String LOG_CREATE_TAB = "persist table request, data: {}";
@@ -73,39 +69,32 @@ public class TableController extends AllDirectives implements PathParams {
         );
     }
 
-    private CompletionStage<HttpResponse> persistTable(UserData user, Map<String, String> pathParams, NewTable form) {
-        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
-
-        return logAction(LOGGER, user, LOG_CREATE_TAB, form)
-                .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+    private CompletionStage<HttpResponse> persistTable(UserData userData, Map<String, String> pathParams, NewTable form) {
+        return logAction(LOGGER, userData, LOG_CREATE_TAB, form)
                 .thenApply(Authorization::canWriteTables)
-                .thenApply(userCtx -> new UserAndForm<NewTable>(userCtx, form))
+                .thenApply(ud -> new UserAndForm<NewTable>(userData, form))
                 .thenApply(UserAndForm::validate)
-                .thenApply(uaf -> toNewTableRequest(uaf.userContext(), uaf.form()))
+                .thenApply(uaf -> toNewTableRequest(uaf.userData(), uaf.form()))
                 .thenCompose(tableService::saveTable)
                 .thenApply(table -> response.jsonFromObject(table));
     }
 
-    private CompletionStage<HttpResponse> updateTable(UserData user, Map<String, String> pathParams, UpdateTable form) {
-        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
+    private CompletionStage<HttpResponse> updateTable(UserData userData, Map<String, String> pathParams, UpdateTable form) {
         String tableIdStr = pathParams.get(PATH_PARAM_TABLE_ID);
 
-        return logAction(LOGGER, user, LOG_UPDATE_TAB, tableIdStr, form)
-                .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
+        return logAction(LOGGER, userData, LOG_UPDATE_TAB, tableIdStr, form)
                 .thenApply(Authorization::canWriteTables)
-                .thenApply(userCtx -> new UserAndForm<UpdateTable>(userCtx, form))
+                .thenApply(ud -> new UserAndForm<UpdateTable>(userData, form))
                 .thenApply(UserAndForm::validate)
-                .thenApply(uaf -> toUpdateTableRequest(uaf.userContext(), tableIdStr, uaf.form()))
+                .thenApply(uaf -> toUpdateTableRequest(uaf.userData(), tableIdStr, uaf.form()))
                 .thenCompose(tableService::updateTable)
                 .thenApply(table -> response.jsonFromObject(table));
     }
 
     private CompletionStage<HttpResponse> deleteTable(UserData user, Map<String, String> pathParams) {
-        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
         String tableIdStr = pathParams.get(PATH_PARAM_TABLE_ID);
-        
+
         return logAction(LOGGER, user, LOG_DEL_TAB_BY_ID, tableIdStr)
-                .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canWriteTables)
                 .thenApply(u -> toDeleteTableRequest(u, tableIdStr))
                 .thenCompose(tableService::deleteTable)
@@ -113,11 +102,9 @@ public class TableController extends AllDirectives implements PathParams {
     }
 
     private CompletionStage<HttpResponse> getTableById(UserData user, Map<String, String> pathParams) {
-        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
         String tableIdStr = pathParams.get(PATH_PARAM_TABLE_ID);
 
         return logAction(LOGGER, user, LOG_GET_TAB_BY_ID, tableIdStr)
-                .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canReadTables)
                 .thenApply(userCtx -> toGetTableRequest(userCtx, tableIdStr))
                 .thenCompose(tableService::getTable)
@@ -125,50 +112,45 @@ public class TableController extends AllDirectives implements PathParams {
     }
 
     private CompletionStage<HttpResponse> getTables(UserData user, Map<String, String> pathParams) {
-        String resourceOwnerIdStr = pathParams.get(PATH_PARAM_USER_ID);
-        
         return logAction(LOGGER, user, LOG_LIST_TABS)
-                .thenApply(userData -> withUserAndResourceOwnerId(userData, fromString(resourceOwnerIdStr)))
                 .thenApply(Authorization::canReadTables)
                 .thenApply(this::toListTablesRequest)
                 .thenCompose(tableService::getTables)
                 .thenApply(response::jsonFromObject);
     }
 
-    private ListTablesRequest toListTablesRequest(UserContext userCtx) {
-        return new ListTablesRequest(
-                userCtx.resourceOwnerIdOrError()
-        );
+    private ListTablesRequest toListTablesRequest(UserData userData) {
+        return new ListTablesRequest(userData.id());
     }
 
-    private GetTableRequest toGetTableRequest(UserContext userCtx, String tableIdStr) {
+    private GetTableRequest toGetTableRequest(UserData userData, String tableIdStr) {
         return new GetTableRequest(
-                userCtx.resourceOwnerIdOrError(),
-                TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr)
+                userData.id(),
+                TableKey.create(userData.id(), tableIdStr)
         );
     }
 
-    private DeleteTableRequest toDeleteTableRequest(UserContext userCtx, String tableIdStr) {
+    private DeleteTableRequest toDeleteTableRequest(UserData userData, String tableIdStr) {
         return new DeleteTableRequest(
-                userCtx.resourceOwnerIdOrError(),
-                TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr)
+                userData.id(),
+                TableKey.create(userData.id(), tableIdStr)
         );
     }
 
-    private UpdateTableRequest toUpdateTableRequest(UserContext userCtx, String tableIdStr, UpdateTable form) {
+    private UpdateTableRequest toUpdateTableRequest(UserData userData, String tableIdStr, UpdateTable form) {
         return new UpdateTableRequest(
                 form.title(),
                 form.description(),
-                userCtx.resourceOwnerIdOrError(),
-                TableKey.create(userCtx.resourceOwnerIdOrError(), tableIdStr)
+                userData.id(),
+                TableKey.create(userData.id(), tableIdStr)
         );
     }
 
-    private NewTableRequest toNewTableRequest(UserContext userCtx, NewTable form) {
+    private NewTableRequest toNewTableRequest(UserData userData, NewTable form) {
         return new NewTableRequest(
                 form.title(),
                 form.description(),
-                userCtx.resourceOwnerIdOrError()
+                userData.id()
         );
     }
 }

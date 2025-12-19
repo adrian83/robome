@@ -1,6 +1,5 @@
 package com.github.adrian83.robome.web.auth;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import com.github.adrian83.robome.auth.exception.UserNotAuthorizedException;
 import com.github.adrian83.robome.auth.model.UserData;
-import com.github.adrian83.robome.domain.common.UserContext;
 import com.github.adrian83.robome.domain.user.model.Role;
 import com.google.common.collect.Sets;
 
@@ -151,10 +149,8 @@ public class AuthorizationTest {
                 .isInstanceOf(UserNotAuthorizedException.class);
     }
 
-    private UserContext ownerWithRoles(Role... roles) {
+    private UserData ownerWithRoles(Role... roles) {
         var userId = UUID.randomUUID();
-        var userData = new UserData(userId, "johndoe@somedomain.com", Sets.newHashSet(roles));
-
-        return new UserContext(userData, Optional.of(userId));
+        return new UserData(userId, "johndoe@somedomain.com", Sets.newHashSet(roles));
     }
 }

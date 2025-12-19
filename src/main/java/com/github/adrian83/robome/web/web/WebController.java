@@ -49,8 +49,8 @@ public class WebController extends AllDirectives implements PathParams {
                 get(new RouteSupplier(LOGOUT, (pathParams) -> renderLogoutPage())),
                 get(new RouteSupplier(LOGIN, (pathParams) -> renderLoginPage())),
                 get(new RouteSupplier(REGISTER, (pathParams) -> renderRegisterPage())),
-                get(new RouteSupplier(CREATE_TABLE, (pathParams) -> security.secured(pathParams, this::handleCreateTablePage))),
-                get(new RouteSupplier(LIST_TABLES, (pathParams) -> security.secured(pathParams, this::handleListTablesPage))),
+                get(new RouteSupplier(CREATE_TABLE, (pathParams) -> security.unsecured(pathParams, this::handleCreateTablePage))),
+                get(new RouteSupplier(LIST_TABLES, (pathParams) -> security.unsecured(pathParams, this::handleListTablesPage))),
                 get(new RouteSupplier(ROOT, (pathParams) -> security.secured(pathParams, this::renderIndexPageForLoggedInUser, this::renderIndexPageForUnloggedUser)))
         );
     }
@@ -84,11 +84,10 @@ public class WebController extends AllDirectives implements PathParams {
         return renderPage("login", templateVariables);
     }
 
-    private CompletionStage<HttpResponse> handleListTablesPage(UserData user, Map<String, String> pathParams) {
+    private CompletionStage<HttpResponse> handleListTablesPage(Map<String, String> pathParams) {
         Map<String, Object> templateVariables = new HashMap<>();
         templateVariables.put("title", "My Tables");
         templateVariables.put("message", "Here are all your tables");
-        templateVariables.put("userId", user.id());
         return renderPage2("list-tables", templateVariables);
     }
 
@@ -99,7 +98,7 @@ public class WebController extends AllDirectives implements PathParams {
         return renderPage("logout", templateVariables);
     }
 
-    private CompletionStage<HttpResponse> handleCreateTablePage(UserData user, Map<String, String> pathParams) {
+    private CompletionStage<HttpResponse> handleCreateTablePage(Map<String, String> pathParams) {
         Map<String, Object> templateVariables = new HashMap<>();
         templateVariables.put("title", "Create New Table");
         templateVariables.put("message", "Create a new table to organize your work.");

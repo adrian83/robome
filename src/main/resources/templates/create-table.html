@@ -32,6 +32,10 @@
         <div class="navigation-links">
             <a href="/" class="nav-link">← Back to Home</a>
         </div>
+        <div class="navigation-links" id="postCreateLinks" style="display:none; margin-top: 1em;">
+            <a href="/tables" class="nav-link">View All Tables</a> |
+            <a href="/create-table" class="nav-link">Create Another Table</a>
+        </div>
     </div>
 
     <script>
@@ -52,8 +56,8 @@
                 return;
             }
             
-            // Get auth token
-            const authToken = localStorage.getItem('authToken');
+            // Get auth token from cookie
+            const authToken = getCookie('access_token') || getCookie('auth_token');
             if (!authToken) {
                 window.location.href = '/login';
                 return;
@@ -66,10 +70,9 @@
             
             try {
                 // Get the current user's ID from the auth token
-                const tokenPayload = parseJwt(authToken);
-                const userId = tokenPayload.sub;
+                // const tokenPayload = parseJwt(authToken); // Not needed for auth
 
-                const response = await fetch(`/api/v1/users/${userId}/tables/`, {
+                const response = await fetch(`/api/v1/tables/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -82,12 +85,8 @@
                 });
                 
                 if (response.ok) {
-                    showMessage('Table created successfully! Redirecting...', 'success');
-                    
-                    // Redirect to home page after successful creation
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1500);
+                    showMessage('Table created successfully! See options below.', 'success');
+                    document.getElementById('postCreateLinks').style.display = 'block';
                 } else {
                     const errorText = await response.text();
                     let errorMessage = 'Failed to create table. Please try again.';
@@ -121,18 +120,12 @@
             messageDiv.style.display = 'block';
         }
 
-        function parseJwt(token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
-            } catch (e) {
-                console.error('Error parsing JWT token:', e);
-                return {};
-            }
+        // Helper to get cookie by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
         }
     </script>
 </body>

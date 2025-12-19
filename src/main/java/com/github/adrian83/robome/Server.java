@@ -46,12 +46,12 @@ public class Server {
 
         Route route = createRoutes(
             () -> staticController.createRoute(),
-            () -> webController.createRoute(),
             () -> authController.createRoute(),
             () -> healthController.createRoute(),
             () -> activityController.createRoute(),
             () -> stageController.createRoute(),
-            () -> tableController.createRoute());
+            () -> tableController.createRoute(),
+            () -> webController.createRoute());
 
         ActorSystem system = injector.getInstance(ActorSystem.class);
         ServerBuilder server = injector.getInstance(ServerBuilder.class);
